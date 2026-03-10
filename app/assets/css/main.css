@@ -1,0 +1,52 @@
+:root {
+  --primary-red: #dd0000;
+  --bg-teal: #009688;
+  --text-main: #333;
+  --text-light: #666;
+  --border-color: #eee;
+  --white: #fff;
+  --accent-orange: #ff9800;
+  --link-color: #0066cc;
+  --container-width: 1240px;
+  --sidebar-w: 240px;
+  --gap: 15px;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: var(--bg-teal);
+  color: var(--text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  /* subtle repeating background pattern simulation if needed, but let's stick to solid color with a large background image on the sides maybe later */
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+ul {
+  list-style: none;
+}
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 10px;
+}
+.page-wrapper {
+  background-color: var(--white);
+  min-height: 800px;
+  display: flex;
+  margin-top: 0; /* Removed 10px gap */
+  border-radius: 0; /* Flat bottom to connect to footer */
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.main-content {
+  flex: 1;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
