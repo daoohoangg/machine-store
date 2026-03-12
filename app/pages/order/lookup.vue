@@ -56,11 +56,11 @@
             <button class="reorder">Đặt hàng lại</button>
           </div>
 
-          <textarea rows="2" placeholder="Để lại lời nhắn cho META (nếu có)..."></textarea>
+          <textarea rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)..."></textarea>
 
           <h3>Tiến trình giao hàng</h3>
           <div class="timeline-top">
-            <p><strong>Gửi từ:</strong> META</p>
+            <p><strong>Gửi từ:</strong> Tuấn Minh</p>
             <p><strong>Đến:</strong> Quận Bắc Từ Liêm, Hà Nội</p>
             <p><strong>Thời gian giao hàng dự kiến:</strong> 11/03/2026 - 15/03/2026 (Không tính ngày nghỉ & ngày lễ, không bao gồm sản phẩm đặt hàng trước)</p>
           </div>
@@ -139,7 +139,7 @@ const maskedName = computed(() => {
 const rightBoxes = [
   {
     title: 'Thông tin Công ty',
-    items: ['Giới thiệu về META', 'Liên hệ', 'Tuyển dụng']
+    items: ['Giới thiệu về Tuấn Minh', 'Liên hệ', 'Tuyển dụng']
   },
   {
     title: 'Chính sách và quy định',

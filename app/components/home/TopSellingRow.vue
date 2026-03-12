@@ -12,17 +12,6 @@
 import { computed } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 
-const fallbackDeals = [
-  { icon: '📺', name: 'Mua Tivi chỉ từ', price: '2.590.000đ', color: '#5b2cd5' },
-  { icon: '🧊', name: 'Tủ lạnh giá chỉ từ', price: '2.450.000đ', color: '#2f6ca7' },
-  { icon: '🧺', name: 'Máy giặt chỉ từ', price: '3.290.000đ', color: '#2b73bf' },
-  { icon: '🫧', name: 'Máy lọc không khí giá từ', price: '1.290.000đ', color: '#7dc7ea' },
-  { icon: '🚰', name: 'Cây nước nóng lạnh giá từ', price: '990.000đ', color: '#7fdce9' },
-  { icon: '🧹', name: 'Máy hút bụi giảm tới', price: '40%', color: '#f4b263' },
-  { icon: '☕', name: 'Máy pha cà phê giá từ', price: '899.000đ', color: '#cdc389' },
-  { icon: '💧', name: 'Bình nóng lạnh giá từ', price: '1.490.000đ', color: '#e7d772' }
-]
-
 const colors = ['#5b2cd5', '#2f6ca7', '#2b73bf', '#7dc7ea', '#7fdce9', '#f4b263', '#cdc389', '#e7d772']
 
 const iconByName = (name: string) => {
@@ -42,12 +31,12 @@ const formatPrice = (price: number) => `${price.toString().replace(/\B(?=(\d{3})
 const { products } = useHomeProducts()
 
 const quickDeals = computed(() => {
-  if (!products.value.length) return fallbackDeals
+  if (!products.value.length) return []
 
   const grouped = new Map<string, { minPrice: number; sold: number }>()
 
   for (const item of products.value) {
-    const name = item.category || 'Sản phẩm nổi bật'
+    const name = item.category || 'Sản phẩm'
     const current = grouped.get(name)
 
     if (!current) {
@@ -61,7 +50,7 @@ const quickDeals = computed(() => {
     })
   }
 
-  const mapped = Array.from(grouped.entries())
+  return Array.from(grouped.entries())
     .sort((a, b) => b[1].sold - a[1].sold)
     .slice(0, 8)
     .map(([name, data], idx) => ({
@@ -70,8 +59,6 @@ const quickDeals = computed(() => {
       price: formatPrice(data.minPrice),
       color: colors[idx % colors.length]
     }))
-
-  return mapped.length ? mapped : fallbackDeals
 })
 </script>
 
@@ -109,7 +96,10 @@ const quickDeals = computed(() => {
   font-size: 14px;
   line-height: 1.25;
   color: #1f1f1f;
-  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
 }
 
 .deal-item strong {

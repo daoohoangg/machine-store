@@ -53,10 +53,10 @@
         <label class="radio-row"><input v-model="form.payment" type="radio" value="bnpl" /> Mua trước trả sau - BNPL</label>
       </div>
 
-      <label class="check-row"><input v-model="form.needInvoice" type="checkbox" /> Yêu cầu META xuất hóa đơn</label>
+      <label class="check-row"><input v-model="form.needInvoice" type="checkbox" /> Yêu cầu Tuấn Minh xuất hóa đơn</label>
       <label class="check-row"><input v-model="form.needEmail" type="checkbox" /> Nhập email để theo dõi đơn hàng</label>
 
-      <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho META (nếu có)"></textarea>
+      <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)"></textarea>
 
       <button class="submit-btn" :disabled="selectedItems.length === 0" @click="submitOrder">🛒 Gửi đơn hàng</button>
     </section>

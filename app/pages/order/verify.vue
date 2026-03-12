@@ -7,7 +7,7 @@
       </div>
 
       <p>
-        Để giúp META xử lý đơn hàng nhanh nhất, Quý khách vui lòng nhập mã xác thực gồm 6 số
+        Để giúp Tuấn Minh xử lý đơn hàng nhanh nhất, Quý khách vui lòng nhập mã xác thực gồm 6 số
         đã được gửi đến <strong>{{ maskedPhone }}</strong> (vui lòng kiểm tra tin nhắn hoặc Zalo trên điện thoại)
       </p>
 

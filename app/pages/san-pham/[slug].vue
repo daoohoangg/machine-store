@@ -172,7 +172,7 @@ const { addToCart } = useCart()
 
 const activeImageIndex = ref(0)
 const quantity = ref(1)
-const viewedProductIds = useState<string[]>('meta-viewed-product-ids', () => [])
+const viewedProductIds = useState<string[]>('tuanminh-viewed-product-ids', () => [])
 
 const routeSlug = computed(() => {
   const param = route.params.slug
@@ -202,7 +202,10 @@ useSeoMeta({
 
 const galleryImages = computed(() => {
   if (!product.value) return []
-  return [product.value.image, product.value.image, product.value.image]
+  if (product.value.images && product.value.images.length) {
+    return product.value.images
+  }
+  return [product.value.image]
 })
 
 const activeImage = computed(() => {
@@ -299,7 +302,7 @@ const pushToViewed = (id: string) => {
   viewedProductIds.value = [id, ...viewedProductIds.value.filter((itemId) => itemId !== id)].slice(0, 20)
 
   if (process.client) {
-    localStorage.setItem('meta_viewed_products', JSON.stringify(viewedProductIds.value))
+    localStorage.setItem('tuanminh_viewed_products', JSON.stringify(viewedProductIds.value))
   }
 }
 
@@ -324,7 +327,7 @@ const handleBuyNow = () => {
 onMounted(() => {
   if (!process.client) return
 
-  const saved = localStorage.getItem('meta_viewed_products')
+  const saved = localStorage.getItem('tuanminh_viewed_products')
   if (!saved) return
 
   try {

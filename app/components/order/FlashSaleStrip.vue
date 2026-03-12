@@ -1,7 +1,7 @@
 <template>
   <section class="flash-sale">
     <div class="flash-head">
-      <h3>⚡ GIỜ VÀNG</h3>
+      <h3>⚡ FLASH SALE</h3>
       <a href="#">Xem tất cả ›</a>
     </div>
 
@@ -13,7 +13,7 @@
         </div>
 
         <p class="title">{{ item.title }}</p>
-        <p class="brand">{{ item.brand || 'Cửa hàng META' }}</p>
+        <p class="brand">{{ item.brand || 'Tuấn Minh' }}</p>
 
         <div class="price-box">
           <strong>{{ formatPrice(item.price) }}đ</strong>
@@ -29,15 +29,6 @@
 import { computed } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 
-const fallbackItems = [
-  { title: 'Tủ lạnh ô tô Alpicool Sword 18 lít', brand: 'Alpicool Việt Nam', price: 3790000, oldPrice: 4460000, endIn: '20 ngày', image: '' },
-  { title: 'Tủ lạnh mini Alpicool G22', brand: 'Alpicool Việt Nam', price: 4460000, oldPrice: 4990000, endIn: '20 ngày', image: '' },
-  { title: 'Máy hút ẩm Glucklich GLD30 Pro', brand: 'Glucklich', price: 4590000, oldPrice: 4990000, endIn: '3 ngày', image: '' },
-  { title: 'Máy phun xịt rửa áp lực cao Bosch Easy AQT', brand: 'Bosch', price: 1990000, oldPrice: 2190000, endIn: '20 ngày', image: '' },
-  { title: 'Máy rửa xe Bosch Easy AQT 100', brand: 'Bosch', price: 1790000, oldPrice: 2160000, endIn: '20 ngày', image: '' },
-  { title: 'Máy phun xịt rửa Bosch Easy AQT 1000', brand: 'Bosch', price: 1399000, oldPrice: 1990000, endIn: '20 ngày', image: '' }
-]
-
 const { products } = useHomeProducts()
 
 const hasDiscount = (discount: string | null) => Boolean(discount && discount.trim())
@@ -50,22 +41,20 @@ const discountValue = (discount: string | null, price: number, oldPrice: number 
 }
 
 const items = computed(() => {
-  if (!products.value.length) return fallbackItems
+  if (!products.value.length) return []
 
-  const mapped = products.value
+  return products.value
     .filter((item) => hasDiscount(item.discount) || (item.oldPrice || 0) > item.price)
     .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
     .slice(0, 6)
     .map((item, idx) => ({
       title: item.title,
-      brand: item.brand || 'Cửa hàng META',
+      brand: item.brand || 'Tuấn Minh',
       price: item.price,
       oldPrice: item.oldPrice,
       endIn: `${Math.max(3, 20 - idx * 2)} ngày`,
       image: item.image
     }))
-
-  return mapped.length ? mapped : fallbackItems
 })
 
 const formatPrice = (value: number | null) => {
@@ -133,11 +122,16 @@ const formatPrice = (value: number | null) => {
 }
 
 .title {
+  min-height: 38px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 14px;
   color: #1f1f1f;
-  line-height: 1.3;
+  line-height: 1.35;
   margin: 8px 8px 2px;
-  min-height: 54px;
 }
 
 .brand {

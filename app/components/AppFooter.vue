@@ -71,9 +71,9 @@
 
         <!-- Column 4 -->
         <div class="footer-col">
-          <h5>Về META.vn</h5>
+          <h5>Về Tuấn Minh</h5>
           <ul>
-            <li><a href="#">Giới thiệu về META</a></li>
+            <li><a href="#">Giới thiệu về Tuấn Minh</a></li>
             <li><a href="#">Liên hệ</a></li>
             <li><a href="#">Tuyển dụng</a></li>
             <li><a href="#">Sơ đồ website</a></li>
@@ -101,7 +101,7 @@
     <div class="company-info-section">
       <div class="footer-inner-content">
         <div class="app-download-row">
-          <span>Tải app META.vn nhận ưu đãi</span>
+          <span>Tải app Tuấn Minh nhận ưu đãi</span>
           <div class="app-badges">
             <span class="app-store">Tải trên App Store</span>
             <span class="google-play">Tải trên Google Play</span>
@@ -112,14 +112,14 @@
         
         <div class="company-details-grid">
           <div class="company-desc">
-            <h4>CÔNG TY CỔ PHẦN MẠNG TRỰC TUYẾN META</h4>
+            <h4>HỆ THỐNG MÁY NÔNG NGHIỆP TUẤN MINH</h4>
             <p>Trải qua 19 năm Uy tín cung cấp Dịch vụ Bán hàng & Thu tiền tại nhà toàn quốc</p>
             <p>Giấy chứng nhận ĐKDN số <strong>0102196915</strong> do Sở KH&ĐT TP. Hà Nội cấp ngày 29/03/2007.</p>
           </div>
           <div class="company-address">
             <p><strong>HÀ NỘI:</strong> 56 Duy Tân, P. Dịch Vọng Hậu, Q. Cầu Giấy. <strong>Điện thoại:</strong> (024) 3568 6969</p>
             <p><strong>TP.HCM:</strong> 716-718 Điện Biên Phủ, P. 10, Q. 10. <strong>Điện thoại:</strong> (028) 3833 6666</p>
-            <p><strong>Email:</strong> info@meta.vn</p>
+            <p><strong>Email:</strong> info@tuanminh.vn</p>
           </div>
         </div>
       </div>

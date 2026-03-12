@@ -4,7 +4,7 @@
       <div class="success-box">
         <h1>☑ Đặt hàng thành công</h1>
         <p>
-          Cảm ơn Quý khách đã mua hàng tại META.vn, đơn hàng số <strong>{{ orderId }}</strong>.
+          Cảm ơn Quý khách đã mua hàng tại Tuấn Minh, đơn hàng số <strong>{{ orderId }}</strong>.
           Nếu cần hỗ trợ Quý khách vui lòng liên hệ:
         </p>
         <p>
@@ -75,7 +75,7 @@
         <p>Để tránh mất tiền vào tay kẻ lừa đảo mạo danh shipper (Nhân viên giao hàng), Quý khách tuyệt đối:</p>
         <ul>
           <li>KHÔNG chuyển khoản cho shipper khi chưa nhận hàng.</li>
-          <li>KHÔNG thanh toán bất kỳ phụ phí nào phát sinh khi chưa có xác nhận từ tổng đài META.vn.</li>
+          <li>KHÔNG thanh toán bất kỳ phụ phí nào phát sinh khi chưa có xác nhận từ tổng đài Tuấn Minh.</li>
           <li>KHÔNG nhập vào đường link lạ của shipper gửi.</li>
         </ul>
         <p>
@@ -97,7 +97,7 @@
 
       <div class="panel">
         <h4>Chat với chúng tôi</h4>
-        <p>meta.vn</p>
+        <p>tuanminh.vn</p>
         <p>Chat Zalo</p>
       </div>
 
@@ -105,7 +105,7 @@
         <h4>Chăm sóc khách hàng</h4>
         <p>Góp ý, khiếu nại: (8h00 - 17h30)</p>
         <p>Toàn quốc: (028) 3833 3222</p>
-        <p>Email: care@meta.vn</p>
+        <p>Email: care@tuanminh.vn</p>
       </div>
     </aside>
 

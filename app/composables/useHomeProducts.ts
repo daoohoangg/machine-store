@@ -1,5 +1,4 @@
-import { computed, ref } from 'vue'
-import productsData from '~/data/products.json'
+import { useAbahaApi } from './useAbahaApi'
 
 export interface HomeProduct {
   id: string
@@ -15,6 +14,7 @@ export interface HomeProduct {
   reviews: number
   isNew: boolean
   sold: number
+  images?: string[]
   specs?: string[]
   fullSpecs?: string[]
 }
@@ -26,8 +26,11 @@ const inferDiscount = (price: number, oldPrice: number | null): string | null =>
   return `-${percent}%`
 }
 
-const normalizeText = (value: unknown) => {
-  return String(value || '')
+const cleanHtml = (html: string | undefined | null) => {
+  if (!html) return ''
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -44,59 +47,64 @@ export const slugifyProduct = (value: string) => {
     .replace(/^-+|-+$/g, '')
 }
 
-const parseSpecs = (rawValue: unknown): string[] => {
-  const raw = String(rawValue || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-  if (!raw) return []
-
-  return raw
-    .split(/\n+/)
-    .flatMap((line) => line.split(/\s*;\s*/))
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-}
-
 export const useHomeProducts = () => {
-  const products = computed<HomeProduct[]>(() => {
-    return productsData.map((item: any, index: number) => {
-      const price = item.price || 0
-      const oldPrice = item.oldPrice > 0 ? item.oldPrice : null
-      const discountText = inferDiscount(price, oldPrice)
-      const title = normalizeText(item.name) || 'Sản phẩm'
-      const id = normalizeText(item.id) || `prod_${index + 1}`
-      const slugBase = slugifyProduct(title) || `san-pham-${index + 1}`
-      const slugTail = slugifyProduct(id).slice(-8)
-      const slug = slugTail ? `${slugBase}-${slugTail}` : slugBase
-      const fullSpecs = parseSpecs(item.specs)
+  const { request } = useAbahaApi()
 
-      return {
-        id,
-        slug,
-        title,
-        price,
-        oldPrice,
-        discount: discountText || null,
-        image: item.image || 'https://placehold.co/400x400/eeeeee/999999?text=Kh%C3%B4ng+c%C3%B3+%E1%BA%A3nh',
-        category: normalizeText(item.category) || 'Danh mục',
-        brand: normalizeText(item.brand) || 'Thương hiệu',
-        rating: Number(item.rating) || 5,
-        reviews: Number(item.reviews) || 0,
-        isNew: Boolean(item.isNew),
-        sold: Number(item.reviews) || 0,
-        specs: fullSpecs.slice(0, 3),
-        fullSpecs
-      }
-    }).filter((item) => item.price > 0)
+  const { data: products, pending, error, refresh } = useAsyncData<HomeProduct[]>('home-products', async () => {
+    try {
+      const response = await request<any>('product/index', {
+        method: 'POST',
+        body: {
+          limit: 20,
+          page: 1
+        }
+      })
+
+      const rawProducts = response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
+      return rawProducts.map((item: any): HomeProduct => {
+        const price = Number(item.price) || 0
+        const oldPrice = Number(item.discount) > price ? Number(item.discount) : null
+        const discountText = inferDiscount(price, oldPrice)
+        
+        // Extract images
+        const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)
+        const mainImage = item.image || gallery[0] || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'
+
+        // Extract specs from content
+        const cleanedContent = cleanHtml(item.content)
+        const specs = cleanedContent.split('. ').slice(0, 3).filter(Boolean)
+
+        return {
+          id: String(item.id),
+          slug: item.slug || `product-${item.id}`,
+          title: item.name || 'Sản phẩm',
+          price,
+          oldPrice,
+          discount: discountText,
+          image: mainImage,
+          images: gallery.length ? gallery : [mainImage],
+          brand: item.brand || 'No Brand',
+          category: 'Sản phẩm',
+          rating: Number(item.rate) || 5,
+          reviews: Number(item.comment_count) || 0,
+          isNew: false,
+          sold: Number(item.sales) || 0,
+          specs: specs,
+          fullSpecs: [cleanedContent]
+        }
+      })
+    } catch (err) {
+      console.error('API Error:', err)
+      return [] as HomeProduct[]
+    }
+  }, {
+    default: () => [] as HomeProduct[]
   })
-
-  // Mock pending/error for compatibility
-  const pending = ref(false)
-  const error = ref(null)
 
   return {
     products,
     pending,
-    error
+    error,
+    refresh
   }
 }

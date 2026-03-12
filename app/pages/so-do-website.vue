@@ -1,7 +1,7 @@
 <template>
   <section class="site-map-page">
     <div class="site-map-card">
-      <h1>Sơ đồ website META.vn</h1>
+      <h1>Sơ đồ website Tuấn Minh</h1>
 
       <NuxtLink to="/" class="home-link">Trang chủ</NuxtLink>
 

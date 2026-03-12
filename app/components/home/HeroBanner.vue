@@ -4,7 +4,7 @@
 
     <div class="hero-content">
       <p class="sub-title">Tươi mát mỗi ngày</p>
-      <h2>Tủ lạnh tại META.vn</h2>
+      <h2>Máy nông nghiệp Tuấn Minh</h2>
       <p class="price-note">Giá chỉ từ 2.190.000đ</p>
       <button class="cta-btn">Khám phá ngay</button>
     </div>

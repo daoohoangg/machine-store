@@ -18,7 +18,7 @@ const isInitialized = ref(false)
 export const useCart = () => {
   // 1. Initialize from localStorage on client side
   if (!isInitialized.value && process.client) {
-    const savedCart = localStorage.getItem('meta_cart')
+    const savedCart = localStorage.getItem('tuanminh_cart')
     if (savedCart) {
       try {
         cart.value = JSON.parse(savedCart)
@@ -32,7 +32,7 @@ export const useCart = () => {
   // 2. Watchers to sync with localStorage
   if (process.client) {
     watch(cart, (newCart) => {
-      localStorage.setItem('meta_cart', JSON.stringify(newCart))
+      localStorage.setItem('tuanminh_cart', JSON.stringify(newCart))
     }, { deep: true })
   }
 
