@@ -191,6 +191,15 @@ const product = computed<HomeProduct | null>(() => {
   )
 })
 
+useSeoMeta({
+  title: () => product.value ? `${product.value.title} - Tuấn Minh` : 'Sản phẩm | Tuấn Minh',
+  ogTitle: () => product.value ? `${product.value.title} - Tuấn Minh` : 'Sản phẩm',
+  description: () => product.value ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. ${product.value.category} chất lượng cao, bảo hành toàn quốc.` : '',
+  ogDescription: () => product.value ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. ${product.value.category} chất lượng cao, bảo hành toàn quốc.` : '',
+  ogImage: () => product.value?.image,
+  twitterCard: 'summary_large_image',
+})
+
 const galleryImages = computed(() => {
   if (!product.value) return []
   return [product.value.image, product.value.image, product.value.image]

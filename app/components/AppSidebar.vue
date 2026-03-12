@@ -85,6 +85,7 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 .app-sidebar {
   width: var(--sidebar-w);
   flex: 0 0 var(--sidebar-w);
+  align-self: flex-start;
   background: #fff;
   border-right: 1px solid #d8d8d8;
 }
@@ -151,6 +152,7 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 @media (max-width: 1024px) {
   .app-sidebar {
     width: 100%;
+    align-self: stretch;
     border-right: none;
     border-bottom: 1px solid #d8d8d8;
   }

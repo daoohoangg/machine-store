@@ -15,6 +15,13 @@
 
 <script setup lang="ts">
 import ProductSection from '~/components/product/ProductSection.vue'
+
+useSeoMeta({
+  title: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
+  description: 'Chuyên cung cấp các loại máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng Oshima, Kasei... Giao hàng toàn quốc, bảo hành uy tín.',
+  ogTitle: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
+  ogDescription: 'Chuyên cung cấp các loại máy nông nghiệp chính hãng. Giao hàng toàn quốc.',
+})
 </script>
 
 <style scoped>
@@ -30,7 +37,7 @@ import ProductSection from '~/components/product/ProductSection.vue'
 
 .home-bleed-left {
   width: calc(100% + var(--sidebar-w));
-  margin-left: calc(var(--sidebar-w) * -1);
+  margin-left: calc(0px - var(--sidebar-w));
 }
 
 @media (max-width: 1024px) {

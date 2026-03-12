@@ -134,8 +134,7 @@ const toggleCategories = () => {
 <style scoped>
 .category-section {
   background: #fff;
-  border: 1px solid #d9d9d9;
-  border-top: none;
+  border: none;
 }
 
 .category-grid {

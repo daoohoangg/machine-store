@@ -2,7 +2,7 @@
   <section class="auth-page container">
     <div class="auth-grid">
       <div class="hero-side">
-        <div class="hero-logo">META.vn</div>
+        <div class="hero-logo">TUẤN MINH</div>
         <h2>ĐIỆN MÁY GIÁ CỰC TỐT<br/>HÀNG HIỆU CHÍNH HÃNG</h2>
         <div class="hero-icons">
           <span>DỊCH VỤ<br/>UY TÍN</span>
@@ -34,7 +34,7 @@
         <button class="social-btn">Zalo Đăng ký bằng Zalo</button>
         <button class="social-btn">G Đăng ký bằng Google</button>
 
-        <p class="policy">Khi Quý khách "Đăng ký" có nghĩa là đồng ý với <a href="#">các chính sách của META.vn</a>.</p>
+        <p class="policy">Khi Quý khách "Đăng ký" có nghĩa là đồng ý với <a href="#">các chính sách của TUẤN MINH</a>.</p>
       </div>
     </div>
   </section>

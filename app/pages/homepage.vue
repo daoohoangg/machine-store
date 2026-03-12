@@ -40,6 +40,11 @@ const filteredProducts = computed(() => {
     (p) => p.category.toLowerCase() === currentCategory.value?.toLowerCase()
   )
 })
+
+useSeoMeta({
+  title: () => currentCategory.value ? `${currentCategory.value} | Tuấn Minh` : 'Danh mục sản phẩm | Tuấn Minh',
+  description: () => currentCategory.value ? `Danh sách các sản phẩm thuộc nhóm ${currentCategory.value} chính hãng tại Tuấn Minh.` : 'Khám phá danh mục sản phẩm máy nông nghiệp tại Tuấn Minh.',
+})
 </script>
 
 <style scoped>
