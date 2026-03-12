@@ -14,19 +14,18 @@
       </li>
     </ul>
 
-    <button
+    <NuxtLink
       v-if="hasMoreCategories"
       class="view-more"
-      type="button"
-      @click="toggleCategories"
+      to="/so-do-website"
     >
-      {{ isExpanded ? 'Thu gọn chuyên mục' : 'Xem thêm chuyên mục' }}
-    </button>
+      Xem thêm chuyên mục
+    </NuxtLink>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import excelCategoriesData from '~/data/excel-categories.json'
 
 const iconByName = (name: string) => {
@@ -73,24 +72,19 @@ const categories = computed(() => {
     }))
 })
 
-const maxVisibleCategories = 16
-const isExpanded = ref(false)
+const maxVisibleCategories = 8
 
 const displayedCategories = computed(() => {
-  if (isExpanded.value) return categories.value
   return categories.value.slice(0, maxVisibleCategories)
 })
 
 const hasMoreCategories = computed(() => categories.value.length > maxVisibleCategories)
-
-const toggleCategories = () => {
-  isExpanded.value = !isExpanded.value
-}
 </script>
 
 <style scoped>
 .app-sidebar {
-  width: 250px;
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
   background: #fff;
   border-right: 1px solid #d8d8d8;
 }
@@ -99,9 +93,9 @@ const toggleCategories = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid #e2e2e2;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #222;
 }
@@ -120,7 +114,7 @@ const toggleCategories = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 14px;
+  padding: 8px 12px;
   cursor: pointer;
   border-bottom: 1px solid #f1f1f1;
   text-decoration: none;
@@ -138,7 +132,7 @@ const toggleCategories = () => {
 }
 
 .item-name {
-  font-size: 15px;
+  font-size: 14px;
   color: #222;
   line-height: 1.3;
 }

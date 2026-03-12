@@ -25,6 +25,7 @@ const pageTitle = computed(() => {
     '/checkout-installment': 'Thanh toán trả góp',
     '/auth/login': 'Đăng nhập',
     '/auth/register': 'Đăng ký',
+    '/so-do-website': 'Sơ đồ website',
     '/order/verify': 'Xác thực đơn hàng',
     '/order/success': 'Đặt hàng thành công',
     '/order/lookup': 'Tra cứu đơn hàng'

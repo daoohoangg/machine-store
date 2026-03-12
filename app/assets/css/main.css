@@ -8,7 +8,7 @@
   --accent-orange: #ff9800;
   --link-color: #0066cc;
   --container-width: 1260px;
-  --sidebar-w: 250px;
+  --sidebar-w: 200px;
   --gap: 15px;
 }
 * {
@@ -40,6 +40,7 @@ ul {
   background-color: var(--white);
   min-height: 700px;
   display: flex;
+  align-items: stretch;
   margin-top: 0;
   border: 1px solid #cfd5db;
   border-top: none;
@@ -48,6 +49,7 @@ ul {
 }
 .main-content {
   flex: 1;
+  min-width: 0;
   padding: 0;
   background-color: #efefef;
 }

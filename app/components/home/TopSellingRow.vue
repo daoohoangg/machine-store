@@ -80,6 +80,9 @@ const quickDeals = computed(() => {
   background: #fff;
   border: 1px solid #d9d9d9;
   border-top: none;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 4px;

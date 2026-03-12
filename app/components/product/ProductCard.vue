@@ -1,11 +1,7 @@
 <template>
   <article class="product-card">
     <NuxtLink v-if="detailPath" :to="detailPath" class="card-link" :aria-label="product.title">
-      <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
-
-      <div v-if="product.specs?.length" class="spec-row">
-        <span v-for="(spec, idx) in product.specs" :key="`${spec}-${idx}`">{{ spec }}</span>
-      </div>
+      <span v-if="discountPercent" class="discount-badge">{{ discountPercent }}</span>
 
       <div class="thumb-wrap">
         <img
@@ -28,11 +24,7 @@
     </NuxtLink>
 
     <div v-else class="card-link">
-      <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
-
-      <div v-if="product.specs?.length" class="spec-row">
-        <span v-for="(spec, idx) in product.specs" :key="`${spec}-${idx}`">{{ spec }}</span>
-      </div>
+      <span v-if="discountPercent" class="discount-badge">{{ discountPercent }}</span>
 
       <div class="thumb-wrap">
         <img
@@ -84,6 +76,12 @@ const soldPercent = computed(() => {
   return Math.min(100, Math.max(6, raw))
 })
 
+const discountPercent = computed(() => {
+  const discount = props.product.discount || ''
+  const match = discount.match(/-?\d+\s*%/)
+  return match ? match[0].replace(/\s+/g, '') : ''
+})
+
 const formatPrice = (value: number | string) => {
   if (typeof value === 'number') {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
@@ -114,25 +112,18 @@ const formatPrice = (value: number | string) => {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #ff9800;
+  z-index: 2;
+  background: #e31b1b;
   color: #fff;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  padding: 2px 10px;
-  z-index: 2;
-}
-
-.spec-row {
-  display: flex;
-  gap: 12px;
-  color: #999;
-  font-size: 11px;
-  margin-bottom: 6px;
+  padding: 2px 9px;
+  line-height: 1.2;
 }
 
 .thumb-wrap {
-  height: 150px;
+  height: 190px;
   border-radius: 4px;
   overflow: hidden;
   background: #f3f3f3;
@@ -164,9 +155,10 @@ const formatPrice = (value: number | string) => {
 .price {
   margin: 0 0 8px;
   color: #df1f12;
-  font-size: 34px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1;
+  text-align: center;
 }
 
 .sold-bar {
@@ -196,11 +188,11 @@ const formatPrice = (value: number | string) => {
 
 @media (max-width: 1200px) {
   .price {
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .thumb-wrap {
-    height: 130px;
+    height: 160px;
   }
 }
 </style>
