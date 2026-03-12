@@ -1,216 +1,206 @@
 <template>
-  <div class="product-card" :class="{ 'list-view': isListView }">
-    <div class="product-img-wrapper">
-      <div class="product-img"></div>
-      <div class="discount-badge" v-if="product.discount">{{ product.discount }}</div>
-      <div class="gift-badge" v-if="product.gift">🎁 TẶNG QUÀ</div>
-    </div>
-    
-    <div class="product-info">
+  <article class="product-card">
+    <NuxtLink v-if="detailPath" :to="detailPath" class="card-link" :aria-label="product.title">
+      <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
+
+      <div v-if="product.specs?.length" class="spec-row">
+        <span v-for="(spec, idx) in product.specs" :key="`${spec}-${idx}`">{{ spec }}</span>
+      </div>
+
+      <div class="thumb-wrap">
+        <img
+          v-if="product.image"
+          class="product-img"
+          :src="product.image"
+          :alt="product.title"
+          loading="lazy"
+        />
+        <div v-else class="product-img placeholder"></div>
+      </div>
+
       <h4 class="product-title">{{ product.title }}</h4>
-      <p class="product-desc" v-if="isListView && product.desc">{{ product.desc }}</p>
-      
-      <div class="rating" v-if="product.ratingCount">
-        <span class="stars">★★★★★</span>
-        <span class="count">({{ product.ratingCount }})</span>
+      <p class="price">{{ formatPrice(product.price) }} đ</p>
+
+      <div class="sold-bar">
+        <span class="sold-fill" :style="{ width: `${soldPercent}%` }"></span>
+        <small>Đã bán {{ product.sold || 0 }}</small>
       </div>
-      <div class="price-row">
-        <span class="current-price">{{ product.price }} đ</span>
-        <span class="old-price" v-if="product.oldPrice">{{ product.oldPrice }} đ</span>
+    </NuxtLink>
+
+    <div v-else class="card-link">
+      <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
+
+      <div v-if="product.specs?.length" class="spec-row">
+        <span v-for="(spec, idx) in product.specs" :key="`${spec}-${idx}`">{{ spec }}</span>
+      </div>
+
+      <div class="thumb-wrap">
+        <img
+          v-if="product.image"
+          class="product-img"
+          :src="product.image"
+          :alt="product.title"
+          loading="lazy"
+        />
+        <div v-else class="product-img placeholder"></div>
+      </div>
+
+      <h4 class="product-title">{{ product.title }}</h4>
+      <p class="price">{{ formatPrice(product.price) }} đ</p>
+
+      <div class="sold-bar">
+        <span class="sold-fill" :style="{ width: `${soldPercent}%` }"></span>
+        <small>Đã bán {{ product.sold || 0 }}</small>
       </div>
     </div>
-    
-    <div class="action-row">
-      <button class="buy-btn" @click.stop="handleAddToCart">MUA NGAY</button>
-    </div>
-  </div>
+  </article>
 </template>
 
-<script setup>
-import { useCart } from '~/composables/useCart'
+<script setup lang="ts">
+import { computed } from 'vue'
 
-const props = defineProps({
+const props = defineProps<{
   product: {
-    type: Object,
-    required: true
-  },
-  isListView: {
-    type: Boolean,
-    default: false
+    id?: string
+    slug?: string
+    title: string
+    price: number | string
+    sold?: number
+    soldPercent?: number
+    discount?: string | null
+    image?: string
+    specs?: string[]
   }
+}>()
+
+const detailPath = computed(() => {
+  if (!props.product.slug) return ''
+  return `/san-pham/${props.product.slug}`
 })
 
-const { addToCart } = useCart()
-const router = useRouter()
+const soldPercent = computed(() => {
+  const raw = Number(props.product.soldPercent || 0)
+  if (Number.isNaN(raw)) return 0
+  return Math.min(100, Math.max(6, raw))
+})
 
-const handleAddToCart = () => {
-  addToCart(props.product)
-  router.push('/checkout')
+const formatPrice = (value: number | string) => {
+  if (typeof value === 'number') {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  }
+
+  const digits = value.toString().replace(/[^\d]/g, '')
+  if (!digits) return '0'
+  return Number(digits).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 </script>
 
 <style scoped>
 .product-card {
-  border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-  padding: 15px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
   background: #fff;
-  transition: box-shadow 0.2s;
-  height: 100%;
-}
-.product-card:hover {
-  box-shadow: 0 0 10px rgba(0,0,0,0.15);
-  z-index: 1;
-}
-
-/* List View Styles */
-.product-card.list-view {
-  flex-direction: row;
-  height: auto;
-  gap: 20px;
-  padding: 20px;
-}
-.product-card.list-view .product-img-wrapper {
-  width: 200px;
-  height: 200px;
-  margin-bottom: 0;
-  flex-shrink: 0;
-}
-.product-card.list-view .product-info {
-  flex-direction: column;
-  justify-content: flex-start;
-}
-.product-card.list-view .product-title {
-  height: auto;
-  font-size: 15px;
-  font-weight: bold;
-  -webkit-line-clamp: unset;
-  margin-bottom: 10px;
-}
-.product-card.list-view .product-desc {
-  font-size: 13px;
-  color: #666;
-  margin-top: 10px;
-  line-height: 1.5;
-}
-.product-card.list-view .price-row {
-  margin-top: auto;
-  margin-bottom: 5px;
-  order: 2; /* Move below rating if needed */
-}
-.product-card.list-view .rating {
-  order: 1; /* Move above price */
-  margin-bottom: 5px;
-}
-.product-card.list-view .action-row {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  width: 150px;
-  margin-top: 0;
-}
-
-/* Grid View Styles (Default) */
-.product-img-wrapper {
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
   position: relative;
-  width: 100%;
-  height: 180px;
-  margin-bottom: 10px;
 }
+
+.card-link {
+  display: block;
+  position: relative;
+  color: inherit;
+  padding: 8px;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff9800;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  z-index: 2;
+}
+
+.spec-row {
+  display: flex;
+  gap: 12px;
+  color: #999;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.thumb-wrap {
+  height: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f3f3;
+}
+
 .product-img {
   width: 100%;
   height: 100%;
-  background: #f1f1f1;
-  border-radius: 4px;
+  object-fit: contain;
+  display: block;
 }
-.discount-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #ff9800;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 12px;
+
+.product-img.placeholder {
+  background: linear-gradient(145deg, #f1f1f1, #d6d6d6);
 }
-.gift-badge {
-  position: absolute;
-  bottom: 5px;
-  left: 5px;
-  background: #d4161c;
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
-  padding: 3px 6px;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.product-info {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
+
 .product-title {
-  font-size: 13px;
-  font-weight: normal;
-  color: #333;
-  line-height: 1.4;
-  margin-bottom: 8px;
+  margin: 10px 0 8px;
+  color: #1d1d1d;
+  font-size: 14px;
+  line-height: 1.35;
+  min-height: 56px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 36px;
 }
-.rating {
-  font-size: 11px;
-  color: #f5a623;
-  margin-bottom: 6px;
+
+.price {
+  margin: 0 0 8px;
+  color: #df1f12;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
 }
-.rating .count {
-  color: #999;
-  margin-left: 5px;
+
+.sold-bar {
+  position: relative;
+  height: 16px;
+  border-radius: 999px;
+  background: #cfcfcf;
+  overflow: hidden;
 }
-.price-row {
-  margin-bottom: 15px;
+
+.sold-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #ff9100;
+}
+
+.sold-bar small {
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
 }
-.current-price {
-  color: #d4161c;
-  font-weight: bold;
-  font-size: 15px;
-}
-.old-price {
-  color: #999;
-  text-decoration: line-through;
-  font-size: 12px;
-}
-.action-row {
-  margin-top: auto;
-}
-.buy-btn {
-  width: 100%;
-  background: transparent;
-  color: #0066cc;
-  border: 1px solid #0066cc;
-  padding: 8px;
-  text-align: center;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.buy-btn:hover {
-  background: #0066cc;
-  color: white;
+
+@media (max-width: 1200px) {
+  .price {
+    font-size: 18px;
+  }
+
+  .thumb-wrap {
+    height: 130px;
+  }
 }
 </style>

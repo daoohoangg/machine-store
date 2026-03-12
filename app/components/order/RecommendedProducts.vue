@@ -25,8 +25,8 @@
 const products = [
   { title: 'Máy hút ẩm và lọc không khí', price: '6.750.000 đ', sold: 113, soldPercent: 62, discount: '-32%' },
   { title: 'Máy hút ẩm kết hợp lọc không khí', price: '7.790.000 đ', sold: 185, soldPercent: 70, discount: '-18%' },
-  { title: 'Smart Tivi Coocaa 43 inch', price: '4.190.000 đ', sold: 678, soldPercent: 88, discount: '-28%' },
-  { title: 'Smart tivi HD Coocaa 32', price: '2.990.000 đ', sold: 701, soldPercent: 90, discount: '-23%' },
+  { title: 'TV thông minh Coocaa 43 inch', price: '4.190.000 đ', sold: 678, soldPercent: 88, discount: '-28%' },
+  { title: 'TV thông minh Coocaa HD 32 inch', price: '2.990.000 đ', sold: 701, soldPercent: 90, discount: '-23%' },
   { title: 'Quạt hút gió âm tường', price: '339.000 đ', sold: 516, soldPercent: 83, discount: '-15%' },
   { title: 'Quạt đứng Panasonic F-409K', price: '2.790.000 đ', sold: 946, soldPercent: 92, discount: '-24%' },
   { title: 'Tủ lạnh Funiki FR-135CD.1', price: '3.490.000 đ', sold: 2240, soldPercent: 96, discount: '-13%' },

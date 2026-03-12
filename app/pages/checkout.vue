@@ -49,7 +49,7 @@
       <div class="payment-box">
         <label class="radio-row"><input v-model="form.payment" type="radio" value="cod" /> Giao hàng và thu tiền tại nhà (COD)</label>
         <label class="radio-row"><input v-model="form.payment" type="radio" value="bank" /> Chuyển khoản qua Ngân hàng, quét mã QR</label>
-        <label class="radio-row"><input v-model="form.payment" type="radio" value="online" /> Thanh toán online</label>
+        <label class="radio-row"><input v-model="form.payment" type="radio" value="online" /> Thanh toán trực tuyến</label>
         <label class="radio-row"><input v-model="form.payment" type="radio" value="bnpl" /> Mua trước trả sau - BNPL</label>
       </div>
 

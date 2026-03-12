@@ -1,21 +1,21 @@
 <template>
-  <div class="oshima-main">
+  <div class="home-main">
     <HomeHeroBanner />
     <HomeCategoryGrid />
     <HomeTopSellingRow />
+    <OrderFlashSaleStrip />
     <ProductSection />
-    <HomeBrandInfoSection />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import ProductSection from '~/components/product/ProductSection.vue'
 </script>
 
 <style scoped>
-.oshima-main {
+.home-main {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
 }
 </style>

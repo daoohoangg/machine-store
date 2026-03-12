@@ -1,0 +1,208 @@
+[
+  {
+    "file": "e:/freelance/machine-store/BẢNG BÁO GIÁ  KAMASTSU 2026 (AD 12.01).xlsx",
+    "sheet": "MÁY PHÁT ĐIỆN ",
+    "rows": [
+      [],
+      [
+        "             CÔNG TY TNHH ĐIỆN MÁY TUẤN MINH "
+      ],
+      [
+        "                                             Đ/c văn phòng : HA09 SP.03-95 đường Hải âu 3A VINHOMES OCEANPARK GIA LÂM - Hà Nội                         "
+      ],
+      [
+        null,
+        "    *************************"
+      ],
+      [],
+      [
+        "MÁY PHÁT ĐIỆN XĂNG KAMASTSU , BENLEY , KENSI , KAVANNI"
+      ],
+      [
+        "STT",
+        "TÊN SẢN PHẨM ",
+        "HÌNH ẢNH \r\nSẢN PHẨM",
+        " ĐẠI LÝ\r\n(ĐVT: VNĐ)",
+        "NHÀ PHÂN PHỐI\r\n(ĐVT: VNĐ)",
+        "SỐ LƯỢNG",
+        "CHIẾT KHẤU\r\n(%)",
+        "THÔNG SỐ KỸ THUẬT"
+      ],
+      [],
+      [
+        1,
+        "Maxlock MS3500",
+        null,
+        4190000,
+        3880000,
+        "5 Cái",
+        0.03,
+        "Dung tích xilanh: 200cc\r\nKhởi động: Giật nổ.\r\nCông suất thường: 3,0kw.\r\nCông suất cực đại: 3,2kw.\r\nNhiên liệu: xăng"
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "10 Cái",
+        0.04,
+        null,
+        3569600
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "20 Cái",
+        0.05
+      ],
+      [
+        2,
+        "Maxlock MS3500E",
+        null,
+        4840000,
+        4480000,
+        "5 Cái",
+        0.03,
+        "Dung tích xilanh: 200cc\r\nKhởi động: Giật nổ & đề nổ.\r\nCông suất thường: 3,0kw.\r\nCông suất cực đại: 3,2kw.\r\nNhiên liệu: xăng"
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "10 Cái",
+        0.04
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "20 Cái",
+        0.05
+      ],
+      [
+        3,
+        "Maxlock MS6500",
+        null,
+        8380000,
+        7760000,
+        "5 Cái",
+        0.03,
+        "Dung tích xilanh: 389cc\r\nKhởi động: Giật nổ.\r\nCông suất thường: 5,0kw.\r\nCông suất cực đại: 5,5kw.\r\nNhiên liệu: xăng"
+      ]
+    ]
+  },
+  {
+    "file": "e:/freelance/machine-store/BẢNG BÁO GIÁ HUSPANDA 2026 (AD 12.01).xlsx",
+    "sheet": "MÁY PHÁT ĐIỆN (giá mới)",
+    "rows": [
+      [
+        "             CÔNG TY TNHH ĐIỆN MÁY TUẤN MINH "
+      ],
+      [
+        "                                  Đ/c Văn phòng: HA09 SP.03-95 đường Hải âu 3A VINHOMES OCEANPARK GIA LÂM - Hà Nội  "
+      ],
+      [
+        null,
+        "    *************************"
+      ],
+      [],
+      [
+        "MÁY PHÁT ĐIỆN XĂNG HUSPANDA"
+      ],
+      [
+        "STT",
+        "TÊN SẢN PHẨM ",
+        "HÌNH ẢNH \r\nSẢN PHẨM",
+        " ĐẠI LÝ\r\n(ĐVT: VNĐ)",
+        "NHÀ PHÂN PHỐI\r\n(ĐVT: VNĐ)",
+        "SỐ LƯỢNG ",
+        "CHIẾT KHẤU \r\n(%)",
+        "THÔNG SỐ KỸ THUẬT"
+      ],
+      [],
+      [
+        1,
+        "Huspanda H2300I\r\n(Inverter - siêu cách âm)\r\n(2.0KW - Khởi động cơ)",
+        null,
+        7670000,
+        7100000,
+        "3 Cái\r\n",
+        0.03,
+        "Model : H2300i\r\nKiểu máy: Động cơ xăng 4 kỳ 79.7cc\r\nCủ phát điện dạng Inverter\r\nCông suất cực đại: 2.0KW\r\nCông suất liên tục: 1.9KW\r\nTrọng lượng: 18kg\r\nTiêu hao nhiên liệu: 0.6 - 0.8 lít/giờ\r\nVỏ máy siêu cách âm \r\nThiết kế máy kiểu xách tay gọn nhẹ\r\nBảo hành: 12 tháng "
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "6 Cái\r\n",
+        0.04
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "10 Cái",
+        0.05
+      ],
+      [
+        2,
+        "Huspanda H4300EI\r\n(Inverter - siêu cách âm)\r\n(3.8KW - Khởi động điện)",
+        null,
+        11300000,
+        10500000,
+        "3 Cái\r\n",
+        0.03,
+        "Model : H4300EI\r\nKiểu máy: Động cơ xăng 4 kỳ 157cc\r\nCủ phát điện dạng Inverter\r\nCông suất cực đại: 3.8KW\r\nCông suất liên tục: 3.5KW\r\nTrọng lượng: 27kg\r\nTiêu hao nhiên liệu: 0.7 - 1.0 lít/giờ\r\nVỏ máy siêu cách âm \r\nThiết kế máy kiểu xách tay gọn nhẹ\r\nBảo hành: 12 tháng "
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "6 Cái\r\n",
+        0.04
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "10 Cái",
+        0.05
+      ],
+      [
+        3,
+        "Huspanda HGS6300I\r\n(Inverter xăng - 5.0KW)\r\n(Khởi động cơ)",
+        null,
+        10580000,
+        9800000,
+        "3 Cái\r\n",
+        0.03,
+        "Model : HGS6300I\r\nĐộng cơ xăng Huspanda 7.5HP\r\nCông nghệ máy phát Inverter Japan\r\nCông suất máy phát: 5.0KW\r\nKhởi động máy: Giật nổ\r\nTrọng lượng: 30.0kg\r\nTiêu hao nhiên liệu: 1.5 - 1.8 lít/giờ\r\nBảo hành: 12 tháng "
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        "6 Cái\r\n",
+        0.04
+      ]
+    ]
+  }
+]

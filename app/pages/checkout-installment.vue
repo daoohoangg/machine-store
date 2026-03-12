@@ -146,7 +146,7 @@ const selectedItems = computed(() => cart.value.filter((item) => item.selected))
 
 const providers = [
   { id: 'home-credit', label: 'HOME CREDIT' },
-  { id: 'paylater', label: 'Home PayLater' },
+  { id: 'paylater', label: 'Trả sau Home' },
   { id: 'hd-saison', label: 'HD SAISON' },
   { id: 'kredivo', label: 'Kredivo' }
 ]

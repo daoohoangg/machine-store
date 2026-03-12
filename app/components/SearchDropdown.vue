@@ -1,5 +1,10 @@
 <template>
   <div class="search-dropdown" v-if="isOpen">
+    <div class="modal-head">
+      <p class="modal-title">Gợi ý tìm kiếm</p>
+      <button class="close-btn" type="button" aria-label="Đóng tìm kiếm" @click="emit('close')">✕</button>
+    </div>
+
     <!-- Promotion Banner inside dropdown -->
     <div class="dropdown-promo">
       <span class="promo-icon">%</span>
@@ -31,6 +36,8 @@
 </template>
 
 <script setup>
+const emit = defineEmits(['close'])
+
 defineProps({
   isOpen: {
     type: Boolean,
@@ -53,15 +60,44 @@ const hotCategories = [
 <style scoped>
 .search-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   left: 0;
-  width: 100%; /* Remains 100% of the constrained .header-search-container */
+  width: 100%;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
   background: white;
-  border-radius: 0 0 4px 4px;
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 100;
-  overflow: hidden;
-  border-top: 1px solid #eee;
+  z-index: 1200;
+  border: 1px solid #eee;
+}
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  border-bottom: 1px solid #efefef;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+  font-weight: 700;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
 }
 
 /* Promo Banner */
@@ -163,5 +199,21 @@ const hotCategories = [
   font-size: 13px;
   margin-top: 20px;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .search-dropdown {
+    max-height: calc(100vh - 88px);
+  }
+
+  .hot-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .hot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div :class="{ 'has-search-open': isSearchOpen }">
-    <AppHeader @search-toggle="handleSearchToggle" />
+    <AppHeader align-with-main @search-toggle="handleSearchToggle" />
     <div class="container">
       <div class="page-wrapper">
         <AppSidebar />

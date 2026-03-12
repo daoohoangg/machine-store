@@ -4,7 +4,7 @@
       <div class="success-box">
         <h1>☑ Đặt hàng thành công</h1>
         <p>
-          Cám ơn Quý khách đã mua hàng tại META.vn, đơn hàng số <strong>{{ orderId }}</strong>.
+          Cảm ơn Quý khách đã mua hàng tại META.vn, đơn hàng số <strong>{{ orderId }}</strong>.
           Nếu cần hỗ trợ Quý khách vui lòng liên hệ:
         </p>
         <p>
@@ -19,8 +19,8 @@
         <div class="app-box">
           <div class="qr"></div>
           <div class="store-buttons">
-            <button>App Store</button>
-            <button>Google Play</button>
+            <button>Tải trên App Store</button>
+            <button>Tải trên Google Play</button>
           </div>
         </div>
 

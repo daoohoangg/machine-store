@@ -23,7 +23,7 @@ export const useCart = () => {
       try {
         cart.value = JSON.parse(savedCart)
       } catch (e) {
-        console.error('Failed to parse cart from local storage')
+        console.error('Không thể đọc giỏ hàng từ bộ nhớ cục bộ')
       }
     }
     isInitialized.value = true
@@ -76,7 +76,7 @@ export const useCart = () => {
         price: priceNum,
         oldPrice: oldPriceNum,
         gift: product.gift || false,
-        image: product.image || 'https://placehold.co/100x100?text=Product',
+        image: product.image || 'https://placehold.co/100x100?text=S%E1%BA%A3n+ph%E1%BA%A9m',
         quantity: 1,
         selected: true // Auto select when added
       })

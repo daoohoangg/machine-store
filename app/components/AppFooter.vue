@@ -91,7 +91,7 @@
             <li><a href="#"><span class="social-icon tt">d</span> Tiktok</a></li>
           </ul>
           <div class="language-dropdown">
-            Language/语言/言語/언어/Sprache
+            Ngôn ngữ
           </div>
         </div>
       </div>
@@ -103,11 +103,11 @@
         <div class="app-download-row">
           <span>Tải app META.vn nhận ưu đãi</span>
           <div class="app-badges">
-            <span class="app-store">App Store</span>
-            <span class="google-play">Google Play</span>
+            <span class="app-store">Tải trên App Store</span>
+            <span class="google-play">Tải trên Google Play</span>
             <span class="qr-code">QR</span>
           </div>
-          <div class="bct-logo">Bo Cong Thuong Logo</div>
+          <div class="bct-logo">Logo Bộ Công Thương</div>
         </div>
         
         <div class="company-details-grid">

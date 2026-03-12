@@ -1,207 +1,125 @@
 <template>
-  <div class="product-section">
-    <div class="sort-bar">
-      <button class="sort-btn active">Bán chạy nhất</button>
-      <button class="sort-btn">Giá tăng dần</button>
-      <button class="sort-btn">Giá giảm dần</button>
-      <button class="sort-btn">Giảm giá</button>
-      <button class="sort-btn">Mới nhất</button>
-      
-      <div class="view-modes">
-        <span :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'">☷</span>
-        <span :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">𝌆</span>
-      </div>
+  <section class="product-section">
+    <div class="section-head">
+      <h3>💡 Gợi ý cho bạn</h3>
     </div>
 
-    <div class="product-grid" :class="{ 'list-layout': viewMode === 'list' }">
-      <ProductCard 
-        v-for="(prod, idx) in products" 
-        :key="idx" 
-        :product="prod" 
-        :is-list-view="viewMode === 'list'" 
-      />
+    <div class="product-grid">
+      <ProductCard v-for="item in products" :key="item.title" :product="item" />
     </div>
-  </div>
+
+    <div class="section-foot">
+      <button class="more-btn">Xem thêm sản phẩm ▼</button>
+    </div>
+  </section>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import ProductCard from '~/components/product/ProductCard.vue'
+import { useHomeProducts } from '~/composables/useHomeProducts'
 
-const viewMode = ref('grid') // Default to grid view
-
-const products = [
-  {
-    title: 'Máy chà nhám Oshima CNL-1200 - 1.200W',
-    price: '1.750.000',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 0
-  },
-  {
-    title: 'Bình xịt thuốc diệt côn trùng Oshima OS20',
-    price: '1.320.000',
-    oldPrice: '1.350.000',
-    discount: '-30K',
-    gift: false,
-    ratingCount: 12
-  },
-  {
-    title: 'Bình xịt điện bơm đôi con ong vàng COV20 DP (20 lít)',
-    price: '1.430.000',
-    oldPrice: '1.550.000',
-    discount: '-120K',
-    gift: false,
-    ratingCount: 3
-  },
-  {
-    title: 'Dây xịt áp lực Oshima 8.5mm x 15m',
-    price: '220.000',
-    oldPrice: '290.000',
-    discount: '-24%',
-    gift: false,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy xoa hồ Oshima MXH 750',
-    price: '2.730.000',
-    oldPrice: '3.900.000',
-    discount: '-30%',
-    gift: false,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy cắt sắt Oshima OS 2000',
-    price: '1.730.000',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy cưa xích Oshima OS5280 LT',
-    price: '2.340.000',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 1
-  },
-  {
-    title: 'Máy cắt cỏ 2 thì Oshima Super 430',
-    price: '2.350.000',
-    oldPrice: '2.990.000',
-    discount: '-21%',
-    gift: true,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy cắt cỏ 2 thì Oshima TJ53',
-    price: '3.440.000',
-    oldPrice: '4.550.000',
-    discount: '-24%',
-    gift: true,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy cưa kiếm Oshima CK-650',
-    price: '1.190.000',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 0
-  },
-  {
-    title: 'Máy khoan pin Oshima KP12 TD 12V',
-    price: ' ',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 1
-  },
-  {
-    title: 'Bình xịt thuốc diệt côn trùng Con ong vàng 16D (COV-16)',
-    price: '920.000',
-    oldPrice: '',
-    discount: null,
-    gift: false,
-    ratingCount: 112
-  }
+const fallbackProducts = [
+  { title: 'TV thông minh Coocaa Full HD 43 inch', price: 4190000, discount: '-28%', sold: 679, soldPercent: 72, specs: ['43 inch', 'HD', 'Linux'] },
+  { title: 'TV thông minh Coocaa HD 32 inch', price: 2990000, discount: '-23%', sold: 701, soldPercent: 74, specs: ['32 inch', 'HD', 'Linux'] },
+  { title: 'Quạt treo tường Vinawind', price: 559000, discount: '-20%', sold: 1667, soldPercent: 82 },
+  { title: 'Quạt sàn công nghiệp Ching Hai', price: 590000, discount: '-25%', sold: 499, soldPercent: 46 },
+  { title: 'Máy hút ẩm LG Dual Inverter', price: 9990000, discount: '-23%', sold: 133, soldPercent: 28 },
+  { title: 'Máy hút ẩm kết hợp lọc khí Electrolux', price: 7790000, discount: '-18%', sold: 185, soldPercent: 36 },
+  { title: 'Tủ lạnh LG Inverter 266 lít', price: 5990000, discount: '-33%', sold: 21, soldPercent: 14 },
+  { title: 'Tủ lạnh mini Hisense 82 lít', price: 3390000, discount: '-25%', sold: 118, soldPercent: 37 },
+  { title: 'Máy giặt Electrolux UltimateCare 300', price: 8490000, discount: '-29%', sold: 20, soldPercent: 12 },
+  { title: 'Máy giặt Electrolux UltimateCare 500', price: 8490000, discount: '-29%', sold: 36, soldPercent: 14 },
+  { title: 'Máy sấy quần áo 15kg Whirlpool', price: 17490000, discount: '-13%', sold: 226, soldPercent: 40 },
+  { title: 'Máy sấy thông hơi Electrolux 9kg', price: 9980000, discount: '-1,0M', sold: 81, soldPercent: 26 },
+  { title: 'Điều hòa 1 chiều Funiki Inverter 9000BTU', price: 5590000, discount: '-25%', sold: 267, soldPercent: 44, specs: ['1HP', '<15m²', '1 pha'] },
+  { title: 'Điều hòa 2 chiều Funiki 9000BTU', price: 5500000, discount: '-490K', sold: 87, soldPercent: 22, specs: ['1HP', '<15m²', '1 pha'] },
+  { title: 'Máy rửa chén bát độc lập Bosch SMS8YCI01E', price: 32590000, discount: '-28%', sold: 17, soldPercent: 11 },
+  { title: 'Máy rửa bát độc lập Whirlpool WFE2B19', price: 6790000, discount: '-39%', sold: 21, soldPercent: 12 },
+  { title: 'Máy hút bụi Bosch Serie 4', price: 3490000, discount: '-29%', sold: 41, soldPercent: 17 },
+  { title: 'Máy hút bụi cầm tay Karcher VCH 2', price: 1090000, discount: '-13%', sold: 86, soldPercent: 24 }
 ]
+
+const { products: homeProducts } = useHomeProducts()
+
+const products = computed(() => {
+  if (!homeProducts.value.length) return fallbackProducts
+
+  return homeProducts.value.slice(0, 18).map((item) => ({
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    price: item.price,
+    discount: item.discount,
+    sold: item.sold,
+    soldPercent: Math.min(95, Math.max(10, Math.round((item.sold || 20) / 8))),
+    image: item.image,
+    specs: item.specs || []
+  }))
+})
 </script>
 
 <style scoped>
 .product-section {
-  background: white;
-  padding: 0;
+  margin-top: 12px;
+  border: 1px solid #d8d8d8;
+  background: #ededed;
+  padding: 10px;
 }
 
-/* Sort Bar */
-.sort-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  border: 1px solid var(--border-color);
-  border-bottom: none;
-  background: white;
-}
-.sort-btn {
-  background: white;
-  border: 1px solid #ddd;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 3px;
-  transition: all 0.2s;
-}
-.sort-btn:hover {
-  border-color: #999;
-}
-.sort-btn.active {
-  color: #333;
-  border-color: #ccc;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
-  background-color: #f9f9f9;
-}
-.view-modes {
-  margin-left: auto;
-  font-size: 20px;
-  color: #999;
-  letter-spacing: 5px;
-  cursor: pointer;
-}
-.view-modes span {
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.view-modes span.active {
-  color: #d4161c;
+.section-head {
+  margin-bottom: 10px;
 }
 
-/* Product Grid */
+.section-head h3 {
+  margin: 0;
+  font-size: 36px;
+  color: #222;
+}
+
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  border-top: 1px solid var(--border-color);
-  border-left: 1px solid var(--border-color);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
 }
 
-/* List Layout */
-.product-grid.list-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: none;
+.section-foot {
+  text-align: center;
+  padding: 12px 0 4px;
 }
-.product-grid.list-layout > * {
-  border-left: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+
+.more-btn {
+  border: 1px solid #2a84d8;
+  border-radius: 4px;
+  background: #fff;
+  color: #0869c6;
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
 }
-.product-grid.list-layout > *:first-child {
-  border-top: 1px solid var(--border-color);
+
+@media (max-width: 1200px) {
+  .section-head h3 {
+    font-size: 26px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .more-btn {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .section-head h3 {
+    font-size: 20px;
+  }
 }
 </style>
