@@ -1,15 +1,20 @@
 <template>
   <section class="category-section">
-    <div class="category-grid">
+    <div v-if="isLoading && categories.length === 0" class="loading-state">
+      Đang tải chuyên mục...
+    </div>
+    <div v-else class="category-grid">
       <NuxtLink
         v-for="item in displayedCategories"
-        :key="item.name"
-        :to="`/homepage?category=${encodeURIComponent(item.name)}`"
+        :key="item.id"
+        :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`"
         class="cat-item"
       >
-        <span v-if="item.discount" class="discount">{{ item.discount }}</span>
         <div class="icon-wrap">{{ item.icon }}</div>
-        <p>{{ item.name }}</p>
+        <div class="cat-info">
+          <p class="cat-name">{{ item.name }}</p>
+        </div>
+        <span v-if="item.discount" class="discount">{{ item.discount }}</span>
       </NuxtLink>
     </div>
 
@@ -25,9 +30,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
-import excelCategoriesData from '~/data/excel-categories.json'
+import { useCategories } from '~/composables/useCategories'
+
+const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
+
+onMounted(() => {
+  fetchCategories()
+})
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
@@ -85,35 +96,30 @@ const categoryDiscountMap = computed(() => {
   return grouped
 })
 
-const excelCategories = computed(() => {
-  const seen = new Set<string>()
-  return (excelCategoriesData as string[])
-    .map((name) => normalizeCategoryName(name))
-    .filter((name) => {
-      if (!name) return false
-      const key = name.toLowerCase()
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-})
-
 const categories = computed(() => {
-  const sourceCategories = excelCategories.value.length
-    ? excelCategories.value
-    : Array.from(
-      new Set(
-        products.value
-          .map((item) => normalizeCategoryName(item.category))
-          .filter((name) => !!name)
-      )
-    )
+  const list: any[] = []
+  
+  apiCategories.value.forEach((parent) => {
+    if (parent.children && parent.children.length > 0) {
+      parent.children.forEach((child) => {
+        list.push({
+          id: child.id,
+          name: child.name,
+          icon: iconByName(child.name),
+          discount: categoryDiscountMap.value.get(normalizeCategoryName(child.name)) || null
+        })
+      })
+    } else {
+      list.push({
+        id: parent.id,
+        name: parent.name,
+        icon: iconByName(parent.name),
+        discount: categoryDiscountMap.value.get(normalizeCategoryName(parent.name)) || null
+      })
+    }
+  })
 
-  return sourceCategories.map((name) => ({
-      name,
-      icon: iconByName(name),
-      discount: categoryDiscountMap.value.get(name) || null
-    }))
+  return list
 })
 
 const maxVisibleCategories = 16
@@ -145,19 +151,47 @@ const toggleCategories = () => {
 .cat-item {
   border-right: 1px solid #e8e8e8;
   border-bottom: 1px solid #e8e8e8;
-  padding: 10px 8px;
+  padding: 12px 8px;
   text-align: center;
   position: relative;
-  min-height: 130px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 8px;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.cat-item:hover {
+  background: #fcfcfc;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
 }
 
 .cat-item:nth-child(8n) {
   border-right: none;
 }
+
+.icon-wrap {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.cat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cat-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1b1b1b;
+  line-height: 1.25;
+}
+
 
 .discount {
   position: absolute;
@@ -171,18 +205,6 @@ const toggleCategories = () => {
   border-radius: 2px;
 }
 
-.icon-wrap {
-  font-size: 36px;
-  line-height: 1;
-}
-
-.cat-item p {
-  margin: 0;
-  font-size: 14px;
-  color: #1b1b1b;
-  line-height: 1.25;
-}
-
 .view-more {
   margin: 14px auto 18px;
   display: block;
@@ -192,6 +214,13 @@ const toggleCategories = () => {
   font-size: 16px;
   border-radius: 4px;
   padding: 8px 18px;
+  cursor: pointer;
+}
+
+.loading-state {
+  padding: 40px;
+  text-align: center;
+  color: #888;
 }
 
 @media (max-width: 1200px) {

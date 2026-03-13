@@ -164,15 +164,18 @@ import { useRoute, useRouter } from 'vue-router'
 import ProductCard from '~/components/product/ProductCard.vue'
 import { slugifyProduct, useHomeProducts, type HomeProduct } from '~/composables/useHomeProducts'
 import { useCart } from '~/composables/useCart'
+import { useImageGuard } from '~/composables/useImageGuard'
+import { useViewedProducts } from '~/composables/useViewedProducts'
 
 const route = useRoute()
 const router = useRouter()
 const { products } = useHomeProducts()
 const { addToCart } = useCart()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
+const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
 
 const activeImageIndex = ref(0)
 const quantity = ref(1)
-const viewedProductIds = useState<string[]>('tuanminh-viewed-product-ids', () => [])
 
 const routeSlug = computed(() => {
   const param = route.params.slug
@@ -256,7 +259,7 @@ const relatedProducts = computed(() => {
   if (!product.value) return []
 
   const sameCategory = products.value
-    .filter((item) => item.id !== product.value?.id && item.category === product.value?.category)
+    .filter((item) => item.id !== product.value?.id && item.category === product.value?.category && !isImageFailed(item.image))
     .slice(0, 6)
     .map((item) => ({
       ...item,
@@ -269,20 +272,10 @@ const relatedProducts = computed(() => {
 const viewedProducts = computed(() => {
   if (!product.value) return []
 
-  const historyList = viewedProductIds.value
-    .filter((id) => id !== product.value?.id)
-    .map((id) => products.value.find((item) => item.id === id))
-    .filter((item): item is HomeProduct => Boolean(item))
-
-  if (historyList.length >= 4) {
-    return historyList.slice(0, 4)
-  }
-
-  const fallback = products.value
-    .filter((item) => item.id !== product.value?.id && item.category === product.value?.category)
-    .slice(0, 4 - historyList.length)
-
-  return [...historyList, ...fallback].slice(0, 4)
+  // Filter out current product
+  return historyProducts.value
+    .filter((item) => item.id !== product.value?.id && !isImageFailed(item.image))
+    .slice(0, 5)
 })
 
 const formatPrice = (value: number | string) => {
@@ -298,12 +291,17 @@ const increaseQty = () => {
   quantity.value += 1
 }
 
-const pushToViewed = (id: string) => {
-  viewedProductIds.value = [id, ...viewedProductIds.value.filter((itemId) => itemId !== id)].slice(0, 20)
-
-  if (process.client) {
-    localStorage.setItem('tuanminh_viewed_products', JSON.stringify(viewedProductIds.value))
-  }
+const pushToViewed = (item: HomeProduct) => {
+  addViewedProduct({
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    price: item.price,
+    oldPrice: item.oldPrice,
+    image: item.image,
+    categoryId: item.categoryId,
+    category: item.category
+  })
 }
 
 const handleAddToCart = () => {
@@ -325,27 +323,15 @@ const handleBuyNow = () => {
 }
 
 onMounted(() => {
-  if (!process.client) return
-
-  const saved = localStorage.getItem('tuanminh_viewed_products')
-  if (!saved) return
-
-  try {
-    const parsed = JSON.parse(saved)
-    if (Array.isArray(parsed)) {
-      viewedProductIds.value = parsed.filter((id) => typeof id === 'string')
-    }
-  } catch (error) {
-    console.error('Không đọc được danh sách sản phẩm đã xem', error)
-  }
+  // Logic handled by composable
 })
 
 watch(
-  () => product.value?.id,
-  (id) => {
+  () => product.value,
+  (newProd) => {
     activeImageIndex.value = 0
     quantity.value = 1
-    if (id) pushToViewed(id)
+    if (newProd) pushToViewed(newProd)
   },
   { immediate: true }
 )

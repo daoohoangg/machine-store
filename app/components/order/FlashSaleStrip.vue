@@ -8,7 +8,13 @@
     <div class="flash-grid">
       <article v-for="item in items" :key="item.title" class="flash-card">
         <div class="thumb">
-          <img v-if="item.image" :src="item.image" :alt="item.title" loading="lazy" />
+          <img
+            v-if="item.image"
+            :src="item.image"
+            :alt="item.title"
+            loading="lazy"
+            @error="markImageAsFailed(item.image)"
+          />
           <div v-else class="thumb-placeholder"></div>
         </div>
 
@@ -28,8 +34,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useImageGuard } from '~/composables/useImageGuard'
 
 const { products } = useHomeProducts()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
 
 const hasDiscount = (discount: string | null) => Boolean(discount && discount.trim())
 const discountValue = (discount: string | null, price: number, oldPrice: number | null) => {
@@ -44,7 +52,7 @@ const items = computed(() => {
   if (!products.value.length) return []
 
   return products.value
-    .filter((item) => hasDiscount(item.discount) || (item.oldPrice || 0) > item.price)
+    .filter((item) => (hasDiscount(item.discount) || (item.oldPrice || 0) > item.price) && !isImageFailed(item.image))
     .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
     .slice(0, 6)
     .map((item, idx) => ({

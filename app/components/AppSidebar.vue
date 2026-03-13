@@ -5,12 +5,35 @@
       <h3>Danh mục sản phẩm</h3>
     </div>
 
-    <ul class="category-list">
-      <li v-for="item in displayedCategories" :key="item.name">
-        <NuxtLink :to="`/homepage?category=${encodeURIComponent(item.name)}`" class="category-item">
+    <div v-if="isLoading" class="loading-state">
+      Đang tải danh mục...
+    </div>
+
+    <ul v-else class="category-list">
+      <li 
+        v-for="item in displayedCategories" 
+        :key="item.id" 
+        class="category-li"
+      >
+        <NuxtLink :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`" class="category-item">
           <span class="item-icon">{{ item.icon }}</span>
           <span class="item-name">{{ item.name }}</span>
+          <span v-if="item.children && item.children.length > 0" class="arrow-icon">›</span>
         </NuxtLink>
+
+        <!-- Sub-menu -->
+        <div v-if="item.children && item.children.length > 0" class="sub-menu">
+          <div class="sub-menu-content">
+            <div class="sub-menu-header">{{ item.name }}</div>
+            <ul class="sub-category-list">
+              <li v-for="child in item.children" :key="child.id">
+                <NuxtLink :to="`/homepage?categoryId=${child.id}&categoryName=${encodeURIComponent(child.name)}`" class="sub-category-item">
+                  {{ child.name }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+        </div>
       </li>
     </ul>
 
@@ -25,8 +48,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import excelCategoriesData from '~/data/excel-categories.json'
+import { computed, onMounted } from 'vue'
+import { useCategories } from '~/composables/useCategories'
+
+const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
@@ -56,29 +81,28 @@ const normalizeCategoryName = (value: string | null | undefined) => {
 }
 
 const categories = computed(() => {
-  const seen = new Set<string>()
-  return (excelCategoriesData as string[])
-    .map((name) => normalizeCategoryName(name))
-    .filter((name) => {
-      if (!name) return false
-      const key = name.toLowerCase()
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .map((name) => ({
-      name,
-      icon: iconByName(name)
+  return apiCategories.value.map((cat) => ({
+    ...cat,
+    name: normalizeCategoryName(cat.name),
+    icon: iconByName(cat.name),
+    children: cat.children?.map(child => ({
+      ...child,
+      name: normalizeCategoryName(child.name)
     }))
+  }))
 })
 
-const maxVisibleCategories = 8
+const maxVisibleCategories = 12 // Increased slightly since dynamic
 
 const displayedCategories = computed(() => {
   return categories.value.slice(0, maxVisibleCategories)
 })
 
 const hasMoreCategories = computed(() => categories.value.length > maxVisibleCategories)
+
+onMounted(() => {
+  fetchCategories()
+})
 </script>
 
 <style scoped>
@@ -88,6 +112,7 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
   align-self: flex-start;
   background: #fff;
   border-right: 1px solid #d8d8d8;
+  position: relative;
 }
 
 .sidebar-title {
@@ -96,13 +121,24 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 1px solid #e2e2e2;
-  font-size: 18px;
-  font-weight: 700;
   color: #222;
+}
+
+.sidebar-title h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .menu-icon {
   color: #d82323;
+}
+
+.loading-state {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
 }
 
 .category-list {
@@ -111,19 +147,25 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
   margin: 0;
 }
 
+.category-li {
+  position: relative;
+}
+
 .category-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   cursor: pointer;
   border-bottom: 1px solid #f1f1f1;
   text-decoration: none;
   color: inherit;
+  transition: background 0.2s;
 }
 
 .category-item:hover {
   background: #f8fbff;
+  color: #d82323;
 }
 
 .item-icon {
@@ -133,9 +175,72 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 }
 
 .item-name {
+  flex: 1;
   font-size: 14px;
   color: #222;
   line-height: 1.3;
+  font-weight: 500;
+}
+
+.category-item:hover .item-name {
+  color: #d82323;
+}
+
+.arrow-icon {
+  font-size: 18px;
+  color: #ccc;
+  line-height: 1;
+}
+
+/* Sub-menu logic */
+.sub-menu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 240px;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+  z-index: 100;
+  min-height: 100%;
+}
+
+.category-li:hover .sub-menu {
+  display: block;
+}
+
+.sub-menu-content {
+  padding: 12px;
+}
+
+.sub-menu-header {
+  font-weight: 700;
+  color: #d82323;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f1f1f1;
+  font-size: 15px;
+}
+
+.sub-category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sub-category-item {
+  display: block;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #444;
+  text-decoration: none;
+  transition: padding-left 0.2s, color 0.2s;
+}
+
+.sub-category-item:hover {
+  color: #d82323;
+  padding-left: 5px;
 }
 
 .view-more {
@@ -147,6 +252,9 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
   font-size: 14px;
   border-radius: 4px;
   padding: 6px 14px;
+  text-align: center;
+  text-decoration: none;
+  width: 80%;
 }
 
 @media (max-width: 1024px) {
@@ -164,6 +272,11 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 
   .category-item {
     border-right: 1px solid #f1f1f1;
+  }
+
+  /* Disable hover menu on mobile, maybe just list them or simplify */
+  .sub-menu {
+    display: none !important;
   }
 }
 

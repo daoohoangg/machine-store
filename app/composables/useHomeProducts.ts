@@ -9,6 +9,7 @@ export interface HomeProduct {
   discount: string | null
   image: string
   category: string
+  categoryId: number | null
   brand: string
   rating: number
   reviews: number
@@ -47,17 +48,41 @@ export const slugifyProduct = (value: string) => {
     .replace(/^-+|-+$/g, '')
 }
 
-export const useHomeProducts = () => {
+import { toValue, type MaybeRefOrGetter } from 'vue'
+
+export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | string | null | undefined>) => {
   const { request } = useAbahaApi()
 
-  const { data: products, pending, error, refresh } = useAsyncData<HomeProduct[]>('home-products', async () => {
+  // Use a computed for the key to ensure useAsyncData re-runs when the category changes
+  const fetchKey = computed(() => {
+    const cid = toValue(categoryIdMaybe)
+    return `home-products-fetch-${cid || 'all'}`
+  })
+  
+  // products will contain the data for the current active category
+  const { data: products, pending, error, refresh } = useAsyncData(fetchKey.value, async () => {
+    return await fetchItems(1, 12, toValue(categoryIdMaybe))
+  }, {
+    lazy: false,
+    watch: [fetchKey], // Re-fetch when the key (and thus categoryId) changes
+    default: () => [] as HomeProduct[]
+  })
+
+  // Manual loading state for loadMore
+  const loadingMore = ref(false)
+
+  async function fetchItems(page: number, limit: number, cid?: number | string | null) {
     try {
+      const body: any = { limit, page }
+      if (cid) {
+        body.category_id = cid
+        // Adding cat_id as fallback for different API versions
+        body.cat_id = cid
+      }
+
       const response = await request<any>('product/index', {
         method: 'POST',
-        body: {
-          limit: 20,
-          page: 1
-        }
+        body
       })
 
       const rawProducts = response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
@@ -66,11 +91,9 @@ export const useHomeProducts = () => {
         const oldPrice = Number(item.discount) > price ? Number(item.discount) : null
         const discountText = inferDiscount(price, oldPrice)
         
-        // Extract images
         const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)
         const mainImage = item.image || gallery[0] || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'
 
-        // Extract specs from content
         const cleanedContent = cleanHtml(item.content)
         const specs = cleanedContent.split('. ').slice(0, 3).filter(Boolean)
 
@@ -84,7 +107,8 @@ export const useHomeProducts = () => {
           image: mainImage,
           images: gallery.length ? gallery : [mainImage],
           brand: item.brand || 'No Brand',
-          category: 'Sản phẩm',
+          category: item.category_name || item.category || 'Sản phẩm',
+          categoryId: item.category_id || item.cat_id || null,
           rating: Number(item.rate) || 5,
           reviews: Number(item.comment_count) || 0,
           isNew: false,
@@ -95,16 +119,27 @@ export const useHomeProducts = () => {
       })
     } catch (err) {
       console.error('API Error:', err)
-      return [] as HomeProduct[]
+      return []
     }
-  }, {
-    default: () => [] as HomeProduct[]
-  })
+  }
+
+  const loadMore = async (page: number) => {
+    if (loadingMore.value) return
+    loadingMore.value = true
+    
+    const newItems = await fetchItems(page, 20, toValue(categoryIdMaybe))
+    if (newItems.length > 0 && products.value) {
+      products.value = [...products.value, ...newItems]
+    }
+    
+    loadingMore.value = false
+  }
 
   return {
     products,
-    pending,
+    pending: computed(() => pending.value || loadingMore.value),
     error,
-    refresh
+    refresh,
+    loadMore
   }
 }

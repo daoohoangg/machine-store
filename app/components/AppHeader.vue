@@ -23,7 +23,6 @@
                 placeholder="Bạn cần tìm kiếm sản phẩm gì?"
                 @focus="handleFocus"
               />
-              <button class="voice-btn" aria-label="Tìm kiếm bằng giọng nói">🎤</button>
             </div>
             <button class="search-btn">Tìm kiếm</button>
           </div>
@@ -33,18 +32,18 @@
         <div class="header-actions">
           <button class="action-item" @click="isCartOpen = true">
             <span class="action-icon cart-icon-wrapper">
-              🛒
+              <i class="fa-solid fa-cart-shopping"></i>
               <span v-if="totalItems > 0" class="cart-badge">{{ totalItems }}</span>
             </span>
-            <span>Giỏ hàng</span>
+            <span class="action-label">Giỏ hàng</span>
           </button>
           <button class="action-item">
-            <span class="action-icon">📞</span>
-            <span>Đường dây nóng</span>
+            <span class="action-icon"><i class="fa-solid fa-phone"></i></span>
+            <span class="action-label">Đường dây nóng</span>
           </button>
           <NuxtLink class="action-item" to="/auth/login">
-            <span class="action-icon">👤</span>
-            <span>Đăng nhập</span>
+            <span class="action-icon"><i class="fa-solid fa-user"></i></span>
+            <span class="action-label">Đăng nhập</span>
           </NuxtLink>
         </div>
       </div>
@@ -223,12 +222,6 @@ onBeforeUnmount(() => {
   font-size: 15px;
 }
 
-.voice-btn {
-  border: none;
-  background: transparent;
-  padding: 0 10px;
-  cursor: pointer;
-}
 
 .search-btn {
   border: none;
@@ -243,7 +236,9 @@ onBeforeUnmount(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .action-item {
@@ -255,11 +250,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .action-icon {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -290,8 +285,9 @@ onBeforeUnmount(() => {
   }
 
   .header-inner {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     padding: 10px 0;
+    gap: 12px;
   }
 
   .header-left.with-main-offset {
@@ -300,8 +296,9 @@ onBeforeUnmount(() => {
   }
 
   .header-search-container {
-    order: 3;
-    width: 100%;
+    order: 2;
+    flex: 1;
+    min-width: 150px;
   }
 
   .header-actions {
@@ -314,27 +311,59 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
-  .logo-image {
-    width: 44px;
-    height: 44px;
+  .header-inner {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
   }
 
-  .action-item {
-    font-size: 12px;
-    gap: 4px;
+  .header-search-container {
+    order: 2;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
   }
 
-  .action-icon {
-    font-size: 16px;
+  .header-search {
+    height: 34px;
   }
 
   .search-btn {
-    width: 96px;
-    font-size: 12px;
+    display: none; /* Hide 'Tìm kiếm' text button on mobile */
+  }
+
+  /* Show a search icon instead or just let them tap enter */
+  .input-wrapper::after {
+    content: "🔍";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+  }
+
+  .logo-image {
+    width: 36px;
+    height: 36px;
+  }
+
+  .action-item {
+    padding: 0;
+  }
+
+  .action-label {
+    display: none;
+  }
+
+  .action-icon {
+    font-size: 20px;
   }
 
   .input-wrapper input {
-    font-size: 14px;
+    font-size: 13px;
+    padding-right: 30px;
   }
 }
 </style>

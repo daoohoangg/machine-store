@@ -6,13 +6,13 @@
     <div class="service-badges">
       <div class="footer-inner-content badges-grid">
         <div class="badge-item">
-          <span class="icon shield-icon">🛡️</span> Dịch vụ uy tín
+          <span class="icon"><img src="https://meta.vn/images/icons/dich-vu-uy-tin-icon.svg" alt="Uy tín" class="badge-icon" /></span> Dịch vụ uy tín
         </div>
         <div class="badge-item">
-          <span class="icon exchange-icon">🔁</span> Đổi trả trong 7 ngày
+          <span class="icon"><img src="https://meta.vn/images/icons/doi-tra-hang-icon.svg" alt="Đổi trả" class="badge-icon" /></span> Đổi trả trong 7 ngày
         </div>
         <div class="badge-item">
-          <span class="icon truck-icon">🚚</span> Giao hàng toàn quốc
+          <span class="icon truck-icon"><i class="fa-solid fa-truck"></i></span> Giao hàng toàn quốc
         </div>
       </div>
     </div>
@@ -24,20 +24,18 @@
         <div class="footer-col">
           <h5>Tổng đài hỗ trợ</h5>
           <div class="contact-block">
-            <p><strong>📞 Phía Bắc & Trung</strong></p>
-            <p>Mua hàng: <a href="tel:02435686969" class="phone-link">(024) 3568 6969</a></p>
-            <p>Bảo hành: <a href="tel:02838333222" class="phone-link">(028) 38 333 222</a></p>
-          </div>
-          <div class="contact-block">
-            <p><strong>📞 Phía Nam</strong></p>
-            <p>Mua hàng: <a href="tel:02838336666" class="phone-link">(028) 3833 6666</a></p>
-            <p>Bảo hành: <a href="tel:02838333222" class="phone-link">(028) 38 333 222</a></p>
+            <p><strong>📞 Hotline</strong></p>
+            <p>Mua hàng: <a href="tel:0902229663" class="phone-link">0902.229.663</a></p>
+            <p>Kỹ thuật: <a href="tel:0902229663" class="phone-link">0902.229.663</a></p>
           </div>
           <div class="contact-block">
             <p><strong>🕒 Thời gian</strong></p>
             <p>8h - 19h (Thứ 2 - Thứ 6)</p>
             <p>8h - 17h30 (Thứ 7, CN)</p>
-            <p class="zalo-chat">Chat Zalo <span class="zalo-icon">Zalo</span></p>
+            <p class="zalo-chat">
+              Chat Zalo 
+              <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="zalo-icon-img" />
+            </p>
           </div>
         </div>
 
@@ -85,10 +83,10 @@
         <div class="footer-col">
           <h5>Kết nối với chúng tôi</h5>
           <ul class="social-links">
-            <li><a href="#"><span class="social-icon zalo">Z</span> Zalo</a></li>
-            <li><a href="#"><span class="social-icon fb">f</span> Facebook</a></li>
-            <li><a href="#"><span class="social-icon yt">▶</span> Youtube</a></li>
-            <li><a href="#"><span class="social-icon tt">d</span> Tiktok</a></li>
+            <li><a href="#"><img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" /> Zalo</a></li>
+            <li><a href="#"><img src="https://meta.vn/images/icons/facebook-icon.svg" alt="Facebook" class="social-icon-img" /> Facebook</a></li>
+            <li><a href="#"><img src="https://meta.vn/images/icons/youtube-icon.svg" alt="Youtube" class="social-icon-img" /> Youtube</a></li>
+            <li><a href="#"><img src="https://meta.vn/Data/2025/Thang06/tiktok-meta.svg" alt="Tiktok" class="social-icon-img" /> Tiktok</a></li>
           </ul>
           <div class="language-dropdown">
             Ngôn ngữ
@@ -103,11 +101,19 @@
         <div class="app-download-row">
           <span>Tải app Tuấn Minh nhận ưu đãi</span>
           <div class="app-badges">
-            <span class="app-store">Tải trên App Store</span>
-            <span class="google-play">Tải trên Google Play</span>
-            <span class="qr-code">QR</span>
+            <a href="https://apps.apple.com/vn/app/tu%E1%BA%A5n-minh-%C4%91i%E1%BB%87n-m%C3%A1y/id6757415380?l=vi" class="app-store-link" target="_blank">
+              <span class="app-store">
+                <img src="https://meta.vn/images/icons/apple-icon.svg" alt="Apple" class="apple-icon" />
+                App Store
+              </span>
+            </a>
+            <div class="qr-wrapper">
+              <img src="~/assets/img/image.png" alt="App QR" class="app-qr-img" />
+            </div>
           </div>
-          <div class="bct-logo">Logo Bộ Công Thương</div>
+          <div class="bct-logo">
+            <img src="https://meta.vn/images/bo-cong-thuong.png" alt="Bộ Công Thương" class="bct-img" />
+          </div>
         </div>
         
         <div class="company-details-grid">
@@ -117,9 +123,9 @@
             <p>Giấy chứng nhận ĐKDN số <strong>0102196915</strong> do Sở KH&ĐT TP. Hà Nội cấp ngày 29/03/2007.</p>
           </div>
           <div class="company-address">
-            <p><strong>HÀ NỘI:</strong> 56 Duy Tân, P. Dịch Vọng Hậu, Q. Cầu Giấy. <strong>Điện thoại:</strong> (024) 3568 6969</p>
-            <p><strong>TP.HCM:</strong> 716-718 Điện Biên Phủ, P. 10, Q. 10. <strong>Điện thoại:</strong> (028) 3833 6666</p>
-            <p><strong>Email:</strong> info@tuanminh.vn</p>
+            <p><strong>Địa chỉ:</strong> Thôn Phượng Trì, Xã Văn Giang, Tỉnh Hưng Yên.</p>
+            <p><strong>Điện thoại:</strong> 0902.229.663</p>
+            <p><strong>Email:</strong> lehoang145817629@gmail.com</p>
           </div>
         </div>
       </div>
@@ -164,15 +170,26 @@
   text-align: center;
 }
 .badge-item {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 .icon {
-  font-size: 24px;
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.badge-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.truck-icon {
+  color: #e31b1b;
 }
 
 /* Footer Links */
@@ -209,12 +226,9 @@
   margin-top: 10px;
   font-weight: bold;
 }
-.zalo-icon {
-  color: #0068ff;
-  border: 1px solid #0068ff;
-  border-radius: 10px;
-  padding: 0 5px;
-  font-size: 11px;
+.zalo-icon-img {
+  width: 24px;
+  height: 24px;
 }
 
 /* Social Links */
@@ -223,6 +237,11 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 15px;
+}
+.social-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 .social-icon {
   width: 24px;
@@ -261,20 +280,56 @@
   font-size: 16px;
   font-weight: bold;
 }
-.app-badges span {
-  display: inline-block;
-  background: #333;
-  color: white;
-  padding: 5px 15px;
-  border-radius: 20px;
-  margin-right: 10px;
-  cursor: pointer;
+.app-badges {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
-.qr-code { background: #eee !important; color: #333 !important; }
+.qr-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.app-qr-img {
+  width: 140px;
+  height: 140px;
+  background: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.app-store-link {
+  text-decoration: none;
+}
+.app-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-size: 16px;
+}
+.apple-icon {
+  width: 24px;
+  height: 24px;
+}
+.app-store:hover {
+  color: #d82323;
+}
+.qr-hint {
+  font-size: 10px;
+  color: #666;
+}
 .bct-logo {
   margin-left: auto;
-  color: #0066cc;
-  font-weight: bold;
+}
+.bct-img {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
 }
 
 .company-details-grid {

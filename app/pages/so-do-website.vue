@@ -34,7 +34,11 @@
         </button>
       </div>
 
-      <div v-if="viewMode === 'group'" class="panel">
+      <div v-if="isLoading" class="loading-panel">
+        Đang tải dữ liệu...
+      </div>
+
+      <div v-else-if="viewMode === 'group'" class="panel">
         <div class="group-header">
           <span>🛒</span>
           <strong>Điện máy</strong>
@@ -43,7 +47,7 @@
         <div class="category-grid">
           <NuxtLink
             v-for="item in categories"
-            :key="item.name"
+            :key="item.id"
             :to="`/homepage?category=${encodeURIComponent(item.name)}`"
             class="category-item"
           >
@@ -59,7 +63,7 @@
           <div class="category-grid">
             <NuxtLink
               v-for="item in items"
-              :key="item.name"
+              :key="item.id"
               :to="`/homepage?category=${encodeURIComponent(item.name)}`"
               class="category-item"
             >
@@ -80,13 +84,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import excelCategoriesData from '~/data/excel-categories.json'
+import { computed, ref, onMounted } from 'vue'
+import { useCategories } from '~/composables/useCategories'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 
 type ViewMode = 'group' | 'az' | 'brand'
 
 const viewMode = ref<ViewMode>('group')
+const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
 
 const normalizeCategoryName = (value: string | null | undefined) => {
   return (value || '')
@@ -123,23 +128,37 @@ const iconByName = (name: string) => {
   return '🛍️'
 }
 
+// Get all categories including subcategories for A-Z sorting
+const flattenCategories = (cats: any[]): any[] => {
+  let result: any[] = []
+  cats.forEach(cat => {
+    result.push(cat)
+    if (cat.children && cat.children.length > 0) {
+      result = result.concat(flattenCategories(cat.children))
+    }
+  })
+  return result
+}
+
 const categories = computed(() => {
-  const seen = new Set<string>()
-  return (excelCategoriesData as string[])
-    .map((name) => normalizeCategoryName(name))
-    .filter((name) => {
-      if (!name) return false
-      const key = textKey(name)
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .map((name) => ({ name, icon: iconByName(name) }))
+  return apiCategories.value.map((cat) => ({
+    ...cat,
+    name: normalizeCategoryName(cat.name),
+    icon: iconByName(cat.name)
+  }))
 })
 
 const categoriesByLetter = computed(() => {
-  const grouped = new Map<string, Array<{ name: string; icon: string }>>()
-  const sorted = [...categories.value].sort((a, b) => textKey(a.name).localeCompare(textKey(b.name)))
+  const allCats = flattenCategories(apiCategories.value)
+  const grouped = new Map<string, Array<{ id: number; name: string; icon: string }>>()
+  
+  const processed = allCats.map(cat => ({
+    id: cat.id,
+    name: normalizeCategoryName(cat.name),
+    icon: iconByName(cat.name)
+  }))
+
+  const sorted = processed.sort((a, b) => textKey(a.name).localeCompare(textKey(b.name)))
 
   for (const item of sorted) {
     const letter = textKey(item.name).charAt(0).toUpperCase() || '#'
@@ -166,6 +185,10 @@ const brands = computed(() => {
       return true
     })
     .sort((a, b) => textKey(a).localeCompare(textKey(b)))
+})
+
+onMounted(() => {
+  fetchCategories()
 })
 </script>
 
@@ -198,7 +221,7 @@ h1 {
 
 .section-label {
   margin: 12px 14px 8px;
-  font-size: 28px;
+  font-size: 20px;
   color: #222;
 }
 
@@ -222,6 +245,13 @@ h1 {
 .tab-btn.active {
   color: #1a66d8;
   border-bottom-color: #1a66d8;
+}
+
+.loading-panel {
+  padding: 40px;
+  text-align: center;
+  font-size: 20px;
+  color: #666;
 }
 
 .panel {
@@ -250,6 +280,7 @@ h1 {
   padding: 6px 8px;
   border-radius: 6px;
   color: #1c1c1c;
+  text-decoration: none;
 }
 
 .category-item:hover {

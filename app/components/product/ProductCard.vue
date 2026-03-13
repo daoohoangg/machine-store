@@ -10,6 +10,7 @@
           :src="product.image"
           :alt="product.title"
           loading="lazy"
+          @error="handleImageError"
         />
         <div v-else class="product-img placeholder"></div>
       </div>
@@ -33,6 +34,7 @@
           :src="product.image"
           :alt="product.title"
           loading="lazy"
+          @error="handleImageError"
         />
         <div v-else class="product-img placeholder"></div>
       </div>
@@ -50,6 +52,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useImageGuard } from '~/composables/useImageGuard'
 
 const props = defineProps<{
   product: {
@@ -64,6 +67,16 @@ const props = defineProps<{
     specs?: string[]
   }
 }>()
+
+const emit = defineEmits(['image-error'])
+const { markImageAsFailed } = useImageGuard()
+
+const handleImageError = () => {
+  if (props.product.image) {
+    markImageAsFailed(props.product.image)
+    emit('image-error', props.product.image)
+  }
+}
 
 const detailPath = computed(() => {
   if (!props.product.slug) return ''

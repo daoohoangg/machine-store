@@ -26,24 +26,24 @@ import { useHomeProducts } from '~/composables/useHomeProducts'
 import ProductCard from '~/components/product/ProductCard.vue'
 
 const route = useRoute()
-const { products } = useHomeProducts()
 
+const categoryId = computed(() => route.query.categoryId as string)
 const currentCategory = computed(() => {
-  const cat = route.query.category
-  return Array.isArray(cat) ? cat[0] : cat
+  const name = route.query.categoryName as string
+  return name || 'Danh mục sản phẩm'
 })
 
+// Pass categoryId as a getter to useHomeProducts so it's reactive to URL changes
+const { products, pending } = useHomeProducts(() => categoryId.value)
+const { isImageFailed } = useImageGuard()
+
 const filteredProducts = computed(() => {
-  if (!currentCategory.value) return products.value
-  
-  return products.value.filter(
-    (p) => p.category.toLowerCase() === currentCategory.value?.toLowerCase()
-  )
+  return products.value.filter(p => !isImageFailed(p.image))
 })
 
 useSeoMeta({
-  title: () => currentCategory.value ? `${currentCategory.value} | Tuấn Minh` : 'Danh mục sản phẩm | Tuấn Minh',
-  description: () => currentCategory.value ? `Danh sách các sản phẩm thuộc nhóm ${currentCategory.value} chính hãng tại Tuấn Minh.` : 'Khám phá danh mục sản phẩm máy nông nghiệp tại Tuấn Minh.',
+  title: () => `${currentCategory.value} | Tuấn Minh`,
+  description: () => `Danh sách các sản phẩm thuộc nhóm ${currentCategory.value} chính hãng tại Tuấn Minh.`,
 })
 </script>
 
@@ -64,7 +64,7 @@ useSeoMeta({
 
 .category-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   color: #333;
 }
 

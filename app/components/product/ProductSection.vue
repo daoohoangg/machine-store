@@ -1,35 +1,69 @@
 <template>
   <section class="product-section">
     <div class="section-head">
-      <h3>💡 Gợi ý cho bạn</h3>
+      <h3>{{ sectionTitle }}</h3>
     </div>
 
-    <div class="product-grid">
-      <ProductCard v-for="item in products" :key="item.title" :product="item" />
+    <div v-if="pending && products.length === 0" class="loading-state">
+      Đang tải sản phẩm...
     </div>
 
-    <div class="section-foot">
-      <button class="more-btn">Xem thêm sản phẩm ▼</button>
+    <div v-else-if="products.length > 0" class="product-grid">
+      <ProductCard
+        v-for="item in products"
+        :key="item.title"
+        :product="item"
+      />
+    </div>
+
+    <div v-else class="empty-state">
+      Không tìm thấy sản phẩm gợi ý nào.
+    </div>
+
+    <div class="section-foot" v-if="products.length > 0">
+      <button 
+        class="more-btn" 
+        :disabled="pending"
+        @click="handleLoadMore"
+      >
+        {{ pending ? 'Đang tải...' : 'Xem thêm sản phẩm ▼' }}
+      </button>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-const { products: homeProducts } = useHomeProducts()
+const { lastViewedCategory } = useViewedProducts()
+const { products: homeProducts, loadMore, pending } = useHomeProducts(() => lastViewedCategory.value)
+const { isImageFailed } = useImageGuard()
+
+const currentPage = ref(1)
+
+// Dynamic title based on viewed history
+const sectionTitle = computed(() => {
+  return lastViewedCategory.value ? '💡 Gợi ý dựa trên xem gần đây' : '💡 Gợi ý cho bạn'
+})
 
 const products = computed(() => {
-  return homeProducts.value.slice(0, 18).map((item) => ({
-    id: item.id,
-    slug: item.slug,
-    title: item.title,
-    price: item.price,
-    discount: item.discount,
-    sold: item.sold,
-    soldPercent: Math.min(95, Math.max(10, Math.round((item.sold || 2) / 1))),
-    image: item.image,
-    specs: item.specs || []
-  }))
+  return homeProducts.value
+    .filter(item => !isImageFailed(item.image))
+    .map((item) => ({
+      id: item.id,
+      slug: item.slug,
+      title: item.title,
+      price: item.price,
+      discount: item.discount,
+      sold: item.sold,
+      soldPercent: Math.min(95, Math.max(10, Math.round((item.sold || 2) / 1))),
+      image: item.image,
+      specs: item.specs || []
+    }))
 })
+
+const handleLoadMore = async () => {
+  currentPage.value++
+  await loadMore(currentPage.value)
+}
 </script>
 
 <style scoped>
@@ -54,6 +88,14 @@ const products = computed(() => {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
+}
+
+.loading-state,
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
 }
 
 .section-foot {
