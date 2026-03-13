@@ -3,8 +3,6 @@
     <nav class="breadcrumb" aria-label="breadcrumb">
       <NuxtLink to="/">Trang chủ</NuxtLink>
       <span>/</span>
-      <NuxtLink :to="`/homepage?category=${encodeURIComponent(product.category)}`">{{ product.category }}</NuxtLink>
-      <span>/</span>
       <strong>{{ product.title }}</strong>
     </nav>
 
@@ -36,7 +34,6 @@
             <div class="rating-row">
               <span class="stars">★★★★★</span>
               <span>({{ product.reviews }} đánh giá)</span>
-              <NuxtLink :to="`/homepage?category=${encodeURIComponent(product.category)}`">So sánh</NuxtLink>
             </div>
 
             <p class="brand-row">
@@ -99,7 +96,7 @@
         <section class="desc-card">
           <h2>Thông tin sản phẩm</h2>
           <p>
-            {{ product.title }} là dòng thiết bị thuộc nhóm {{ product.category.toLowerCase() }} của
+            {{ product.title }} là dòng thiết bị của
             {{ product.brand }}, được thiết kế để vận hành ổn định và tiết kiệm điện trong điều kiện sử dụng gia đình
             hoặc cửa hàng nhỏ.
           </p>
@@ -113,7 +110,6 @@
         <section class="related-card">
           <div class="related-head">
             <h2>Sản phẩm tương tự</h2>
-            <NuxtLink :to="`/homepage?category=${encodeURIComponent(product.category)}`">Xem tất cả</NuxtLink>
           </div>
 
           <div class="related-grid">
@@ -235,7 +231,6 @@ const specRows = computed(() => {
   })
 
   return [
-    { label: 'Danh mục', value: product.value.category },
     { label: 'Thương hiệu', value: product.value.brand },
     { label: 'Mã sản phẩm', value: product.value.id },
     ...mappedSpecs

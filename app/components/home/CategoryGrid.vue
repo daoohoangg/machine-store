@@ -122,7 +122,7 @@ const categories = computed(() => {
   return list
 })
 
-const maxVisibleCategories = 16
+const maxVisibleCategories = 12
 const isExpanded = ref(false)
 
 const displayedCategories = computed(() => {
@@ -141,11 +141,13 @@ const toggleCategories = () => {
 .category-section {
   background: #fff;
   border: none;
+  width: calc(100% - var(--sidebar-w));
+  margin-left: var(--sidebar-w);
 }
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .cat-item {
@@ -169,7 +171,7 @@ const toggleCategories = () => {
   box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
 }
 
-.cat-item:nth-child(8n) {
+.cat-item:nth-child(6n) {
   border-right: none;
 }
 
@@ -224,16 +226,27 @@ const toggleCategories = () => {
 }
 
 @media (max-width: 1200px) {
+  .category-section {
+    width: 100%;
+    margin-left: 0;
+  }
   .category-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .cat-item:nth-child(8n) {
+  .cat-item:nth-child(6n) {
     border-right: 1px solid #e8e8e8;
   }
 
   .cat-item:nth-child(4n) {
     border-right: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .category-section {
+    width: 100%;
+    margin-left: 0;
   }
 }
 

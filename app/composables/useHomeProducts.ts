@@ -73,20 +73,44 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
 
   async function fetchItems(page: number, limit: number, cid?: number | string | null) {
     try {
-      const body: any = { limit, page }
+      const body: any = { limit: Number(limit) || 12, page: Number(page) || 1 }
+      const queryParams: any = {}
+      
       if (cid) {
-        body.category_id = cid
-        // Adding cat_id as fallback for different API versions
-        body.cat_id = cid
+        const numericId = Number(cid)
+        if (!isNaN(numericId)) {
+          body.category_id = numericId
+          body.cat_id = numericId
+          body.categories = [numericId]
+          // Also try in query params for some API versions
+          queryParams.cat_id = numericId
+          queryParams.category_id = numericId
+        } else {
+          body.category_id = cid
+          body.cat_id = cid
+          queryParams.cat_id = cid
+        }
       }
 
+      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, page: ${page}, limit: ${limit}`)
       const response = await request<any>('product/index', {
         method: 'POST',
-        body
+        body,
+        query: queryParams
       })
 
       const rawProducts = response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
-      return rawProducts.map((item: any): HomeProduct => {
+      console.log(`[useHomeProducts] API returned ${rawProducts.length} items`)
+      
+      // Strict client-side filter as safe-guard if the API returns mixed results
+      const finalProducts = cid 
+        ? rawProducts.filter((item: any) => {
+            const itemCid = Number(item.category_id || item.cat_id)
+            return itemCid === Number(cid)
+          })
+        : rawProducts
+
+      return finalProducts.map((item: any): HomeProduct => {
         const price = Number(item.price) || 0
         const oldPrice = Number(item.discount) > price ? Number(item.discount) : null
         const discountText = inferDiscount(price, oldPrice)

@@ -2,11 +2,12 @@
   <div class="home-main">
     <div class="home-top">
       <HomeHeroBanner />
-      <HomeCategoryGrid />
     </div>
 
     <div class="home-bleed-left">
       <HomeTopSellingRow />
+      <HomeCategoryGrid />
+      <HomePromoRow />
       <OrderFlashSaleStrip />
       <ProductSection />
     </div>

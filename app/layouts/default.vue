@@ -1,9 +1,9 @@
 <template>
   <div :class="{ 'has-search-open': isSearchOpen }">
-    <AppHeader align-with-main @search-toggle="handleSearchToggle" />
+    <AppHeader :align-with-main="showSidebar" @search-toggle="handleSearchToggle" />
     <div class="container">
       <div class="page-wrapper">
-        <AppSidebar />
+        <AppSidebar v-if="showSidebar" />
         <main class="main-content">
           <slot />
         </main>
@@ -17,9 +17,17 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const isSearchOpen = ref(false)
+
+const showSidebar = computed(() => {
+  // Hide sidebar on product detail page
+  if (route.path.startsWith('/san-pham/')) return false
+  return true
+})
 
 const handleSearchToggle = (isOpen) => {
   isSearchOpen.value = isOpen
