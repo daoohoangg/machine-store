@@ -18,14 +18,16 @@
       </NuxtLink>
     </div>
 
-    <button
-      v-if="hasMoreCategories"
-      class="view-more"
-      type="button"
-      @click="toggleCategories"
-    >
-      {{ isExpanded ? 'Thu gọn chuyên mục' : 'Xem thêm chuyên mục' }}
-    </button>
+    <div class="view-more-container">
+      <button
+        v-if="hasMoreCategories"
+        class="view-more"
+        type="button"
+        @click="toggleCategories"
+      >
+        {{ isExpanded ? 'Thu gọn chuyên mục' : 'Xem thêm chuyên mục' }}
+      </button>
+    </div>
   </section>
 </template>
 
@@ -122,11 +124,26 @@ const categories = computed(() => {
   return list
 })
 
-const maxVisibleCategories = 12
+const maxVisibleCategories = 16
 const isExpanded = ref(false)
+const randomCategories = ref<any[]>([])
+
+// Randomize once when categories are loaded
+watch(categories, (newCats) => {
+  if (newCats.length > 0 && randomCategories.value.length === 0) {
+    // Shuffle the array
+    const shuffled = [...newCats].sort(() => 0.5 - Math.random())
+    randomCategories.value = shuffled
+  }
+}, { immediate: true })
 
 const displayedCategories = computed(() => {
-  if (isExpanded.value) return categories.value
+  if (isExpanded.value) return categories.value // Show original sorted list when expanded
+  
+  // Show 16 random items
+  if (randomCategories.value.length > 0) {
+    return randomCategories.value.slice(0, maxVisibleCategories)
+  }
   return categories.value.slice(0, maxVisibleCategories)
 })
 
@@ -207,8 +224,14 @@ const toggleCategories = () => {
   border-radius: 2px;
 }
 
+.view-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  border-top: 1px solid #e8e8e8;
+}
+
 .view-more {
-  margin: 14px auto 18px;
   display: block;
   border: 1px solid #4095e6;
   background: #fff;

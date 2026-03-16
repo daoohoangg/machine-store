@@ -21,6 +21,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     tokenApi: process.env.TOKEN_API,
+    geminiApiKey: process.env.GEMINI_API_KEY,
     public: {
       apiBaseUrl: process.env.API_BASE_URL || 'https://babystore18787.abaha.vn/',
       productsApiPath: process.env.PRODUCTS_API_PATH || '/api/products',

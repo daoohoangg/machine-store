@@ -1,14 +1,19 @@
 <template>
   <div :class="{ 'has-search-open': isSearchOpen }">
     <AppHeader :align-with-main="showSidebar" @search-toggle="handleSearchToggle" />
-    <div class="container">
-      <div class="page-wrapper">
-        <AppSidebar v-if="showSidebar" />
-        <main class="main-content">
-          <slot />
-        </main>
+    <template v-if="isHomePage">
+      <slot />
+    </template>
+    <template v-else>
+      <div class="container">
+        <div class="page-wrapper">
+          <AppSidebar v-if="showSidebar" />
+          <main class="main-content">
+            <slot />
+          </main>
+        </div>
       </div>
-    </div>
+    </template>
     <AppFooter />
     
     <!-- Transparent Overlay -->
@@ -22,6 +27,7 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const isSearchOpen = ref(false)
+const isHomePage = computed(() => route.path === '/')
 
 const showSidebar = computed(() => {
   // Hide sidebar on product detail page

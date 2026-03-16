@@ -27,13 +27,42 @@ const inferDiscount = (price: number, oldPrice: number | null): string | null =>
   return `-${percent}%`
 }
 
+const decodeHTMLEntities = (text: string) => {
+  const entities: Record<string, string> = {
+    '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ',
+    '&agrave;': 'à', '&aacute;': 'á', '&acirc;': 'â', '&atilde;': 'ã',
+    '&egrave;': 'è', '&eacute;': 'é', '&ecirc;': 'ê',
+    '&igrave;': 'ì', '&iacute;': 'í',
+    '&ograve;': 'ò', '&oacute;': 'ó', '&ocirc;': 'ô', '&otilde;': 'õ',
+    '&ugrave;': 'ù', '&uacute;': 'ú',
+    '&yacute;': 'ý',
+    '&Agrave;': 'À', '&Aacute;': 'Á', '&Acirc;': 'Â', '&Atilde;': 'Ã',
+    '&Egrave;': 'È', '&Eacute;': 'É', '&Ecirc;': 'Ê',
+    '&Igrave;': 'Ì', '&Iacute;': 'Í',
+    '&Ograve;': 'Ò', '&Oacute;': 'Ó', '&Ocirc;': 'Ô', '&Otilde;': 'Õ',
+    '&Ugrave;': 'Ù', '&Uacute;': 'Ú',
+    '&Yacute;': 'Ý',
+    '&deg;': '°'
+  }
+  return text.replace(/&[#a-zA-Z0-9]+;/g, (match) => entities[match] || match)
+}
+
 const cleanHtml = (html: string | undefined | null) => {
   if (!html) return ''
-  return html
-    .replace(/<[^>]*>?/gm, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  const stripTags = html.replace(/<[^>]*>?/gm, '')
+  const decoded = decodeHTMLEntities(stripTags)
+  return decoded.replace(/\s+/g, ' ').trim()
+}
+
+const extractSpecs = (html: string | undefined | null): string[] => {
+  if (!html) return []
+  // Instead of completely stripping HTML, try to keep semantic blocks (p, div, li, br) separate
+  const blocks = html
+    .split(/<br\s*\/?>|<\/p>|<\/li>|<\/div>/i)
+    .map(block => cleanHtml(block))
+    .filter(text => text.length > 0)
+    
+  return blocks
 }
 
 export const slugifyProduct = (value: string) => {
@@ -49,6 +78,7 @@ export const slugifyProduct = (value: string) => {
 }
 
 import { toValue, type MaybeRefOrGetter } from 'vue'
+import { useCategories } from './useCategories'
 
 export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | string | null | undefined>) => {
   const { request } = useAbahaApi()
@@ -79,16 +109,50 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
       if (cid) {
         const numericId = Number(cid)
         if (!isNaN(numericId)) {
+          // Flatten child IDs if the category has children
+          const { categories, fetchCategories } = useCategories()
+          if (!categories.value || categories.value.length === 0) {
+            await fetchCategories()
+          }
+          let targetCategory: any = null
+          
+          const findCategory = (cats: any[]) => {
+            for (const c of cats) {
+              if (c.id === numericId) {
+                targetCategory = c
+                return true
+              }
+              if (c.children && findCategory(c.children)) return true
+            }
+            return false
+          }
+          findCategory(categories.value)
+          
+          const expandedIds = [numericId]
+          const gatherChilrenIds = (cat: any) => {
+            if (cat && cat.children) {
+              cat.children.forEach((child: any) => {
+                expandedIds.push(child.id)
+                gatherChilrenIds(child)
+              })
+            }
+          }
+          gatherChilrenIds(targetCategory)
+          
           body.category_id = numericId
           body.cat_id = numericId
-          body.categories = [numericId]
+          body.categories = expandedIds
           // Also try in query params for some API versions
           queryParams.cat_id = numericId
           queryParams.category_id = numericId
+          
+          // Store for the strict filter below
+          body._strict_ids = expandedIds
         } else {
           body.category_id = cid
           body.cat_id = cid
           queryParams.cat_id = cid
+          body._strict_ids = [cid]
         }
       }
 
@@ -106,6 +170,9 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
       const finalProducts = cid 
         ? rawProducts.filter((item: any) => {
             const itemCid = Number(item.category_id || item.cat_id)
+            if (body._strict_ids) {
+              return body._strict_ids.includes(itemCid) || body._strict_ids.includes(String(item.category_id))
+            }
             return itemCid === Number(cid)
           })
         : rawProducts
@@ -120,6 +187,7 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
 
         const cleanedContent = cleanHtml(item.content)
         const specs = cleanedContent.split('. ').slice(0, 3).filter(Boolean)
+        const detailedSpecs = extractSpecs(item.content)
 
         return {
           id: String(item.id),
@@ -138,7 +206,7 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
           isNew: false,
           sold: Number(item.sales) || 0,
           specs: specs,
-          fullSpecs: [cleanedContent]
+          fullSpecs: detailedSpecs.length > 0 ? detailedSpecs : [cleanedContent]
         }
       })
     } catch (err) {

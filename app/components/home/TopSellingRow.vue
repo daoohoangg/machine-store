@@ -1,16 +1,5 @@
 <template>
   <section class="top-selling-row">
-    <div v-if="hasMore" class="controls">
-      <button
-        class="view-more"
-        type="button"
-        @click="isExpanded = !isExpanded"
-      >
-        <span>{{ isExpanded ? 'Thu gọn chuyên mục' : 'Xem thêm chuyên mục' }}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ rotated: isExpanded }"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </button>
-    </div>
-
     <div class="deals-grid">
       <NuxtLink
         v-for="item in displayedDeals"
@@ -24,16 +13,22 @@
         </div>
         <div class="deal-info">
           <p class="deal-label">
-            <template v-if="item.name.toLowerCase().includes('tivi')">
-              Mua {{ item.name }} chỉ từ
-            </template>
-            <template v-else>
-              {{ item.name }} giá chỉ từ
-            </template>
+            {{ item.name }}
           </p>
-          <p class="deal-price">{{ item.price }}</p>
+          <p class="deal-price" v-if="item.price">{{ item.price }}</p>
         </div>
       </NuxtLink>
+    </div>
+
+    <div v-if="hasMore" class="controls">
+      <button
+        class="view-more"
+        type="button"
+        @click="isExpanded = !isExpanded"
+      >
+        <span>{{ isExpanded ? 'Thu gọn chuyên mục' : 'Xem thêm chuyên mục' }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="{ rotated: isExpanded }"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
     </div>
   </section>
 </template>
@@ -106,7 +101,7 @@ const quickDeals = computed(() => {
           icon: iconByName(child.name),
           imageUrl: child.image,
           name: name,
-          price: minPrice ? formatPrice(minPrice) : 'Giá tốt nhất',
+          price: minPrice ? formatPrice(minPrice) : '',
           color: bgColorByName(child.name)
         })
       })
@@ -118,7 +113,7 @@ const quickDeals = computed(() => {
         icon: iconByName(parent.name),
         imageUrl: parent.image,
         name: name,
-        price: minPrice ? formatPrice(minPrice) : 'Giá tốt nhất',
+        price: minPrice ? formatPrice(minPrice) : '',
         color: bgColorByName(parent.name)
       })
     }
@@ -129,10 +124,10 @@ const quickDeals = computed(() => {
 
 const displayedDeals = computed(() => {
   if (isExpanded.value) return quickDeals.value
-  return quickDeals.value.slice(0, 8)
+  return quickDeals.value.slice(0, 16)
 })
 
-const hasMore = computed(() => quickDeals.value.length > 8)
+const hasMore = computed(() => quickDeals.value.length > 16)
 </script>
 
 <style scoped>
@@ -180,7 +175,8 @@ const hasMore = computed(() => quickDeals.value.length > 8)
 .deals-grid {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  padding: 0 10px;
+  border-top: 1px solid #e8e8e8;
+  border-left: 1px solid #e8e8e8;
 }
 
 .deal-item {
@@ -193,6 +189,8 @@ const hasMore = computed(() => quickDeals.value.length > 8)
   transition: all 0.2s;
   background: #fff;
   text-decoration: none;
+  border-right: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .deal-item:hover {

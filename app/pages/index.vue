@@ -1,15 +1,23 @@
 <template>
   <div class="home-main">
-    <div class="home-top">
-      <HomeHeroBanner />
+    <div class="container">
+      <div class="page-wrapper" style="margin-top: 20px;">
+        <AppSidebar />
+        <main class="main-content">
+          <div class="home-top">
+            <HomeHeroBanner />
+          </div>
+          <HomeTopSellingRow style="width: 100%; margin-left: 0;" />
+        </main>
+      </div>
     </div>
 
-    <div class="home-bleed-left">
-      <HomeTopSellingRow />
-      <HomeCategoryGrid />
-      <HomePromoRow />
-      <OrderFlashSaleStrip />
-      <ProductSection />
+    <div class="full-width-section">
+      <div class="container">
+        <HomePromoRow style="margin-top: 20px;" />
+        <OrderFlashSaleStrip style="margin-top: 20px;" />
+        <ProductSection style="margin-top: 20px;" />
+      </div>
     </div>
   </div>
 </template>
@@ -30,21 +38,14 @@ useSeoMeta({
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-bottom: 40px;
 }
 
 .home-top {
   min-width: 0;
 }
 
-.home-bleed-left {
-  width: calc(100% + var(--sidebar-w));
-  margin-left: calc(0px - var(--sidebar-w));
-}
-
-@media (max-width: 1024px) {
-  .home-bleed-left {
-    width: 100%;
-    margin-left: 0;
-  }
+.full-width-section {
+  width: 100%;
 }
 </style>

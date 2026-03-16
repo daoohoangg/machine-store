@@ -92,7 +92,7 @@ const categories = computed(() => {
   }))
 })
 
-const maxVisibleCategories = 12 // Increased slightly since dynamic
+const maxVisibleCategories = 10 // Adjusted to match deal-grid with bigger fonts
 
 const displayedCategories = computed(() => {
   return categories.value.slice(0, maxVisibleCategories)
@@ -111,8 +111,9 @@ onMounted(() => {
   flex: 0 0 var(--sidebar-w);
   align-self: flex-start;
   background: #fff;
-  border-right: 1px solid #d8d8d8;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-title {
@@ -154,10 +155,10 @@ onMounted(() => {
 .category-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #f1f1f1;
+  border-bottom: 1px solid #f9f9f9;
   text-decoration: none;
   color: inherit;
   transition: background 0.2s;
@@ -177,7 +178,7 @@ onMounted(() => {
 .item-name {
   flex: 1;
   font-size: 14px;
-  color: #222;
+  color: #333;
   line-height: 1.3;
   font-weight: 500;
 }
@@ -244,7 +245,7 @@ onMounted(() => {
 }
 
 .view-more {
-  margin: 10px auto 14px;
+  margin: auto auto -12px;
   display: block;
   border: 1px solid #4095e6;
   background: #fff;

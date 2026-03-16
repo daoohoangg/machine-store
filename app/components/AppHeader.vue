@@ -16,17 +16,24 @@
         </div>
 
         <div class="header-search-container" ref="searchContainerRef">
-          <div class="header-search" :class="{ 'is-focused': isSearchOpen }">
+          <form class="header-search" :class="{ 'is-focused': isSearchOpen }" @submit.prevent="saveSearch">
             <div class="input-wrapper">
               <input
                 type="text"
                 placeholder="Bạn cần tìm kiếm sản phẩm gì?"
+                v-model="searchQuery"
                 @focus="handleFocus"
               />
             </div>
-            <button class="search-btn">Tìm kiếm</button>
-          </div>
-          <SearchDropdown :is-open="isSearchOpen" @close="isSearchOpen = false" />
+            <button type="submit" class="search-btn">Tìm kiếm</button>
+          </form>
+          <SearchDropdown 
+            :is-open="isSearchOpen" 
+            :search-query="searchQuery" 
+            :recent-searches="recentSearches"
+            @close="handleCloseSearch" 
+            @select-recent="handleSelectRecent"
+          />
         </div>
 
         <div class="header-actions">
@@ -75,6 +82,41 @@ const isScrolled = ref(false)
 const searchState = inject('searchState', null)
 const isSearchOpen = searchState ? searchState.isSearchOpen : ref(false)
 const searchContainerRef = ref(null)
+const searchQuery = ref('')
+const recentSearches = ref([])
+
+const loadRecentSearches = () => {
+  try {
+    const saved = localStorage.getItem('recent_searches')
+    if (saved) {
+      recentSearches.value = JSON.parse(saved)
+    }
+  } catch (e) {}
+}
+
+const saveSearch = () => {
+  const query = searchQuery.value.trim()
+  if (!query) return
+  
+  // Remove if exists to push to front
+  const existingIdx = recentSearches.value.indexOf(query)
+  if (existingIdx !== -1) {
+    recentSearches.value.splice(existingIdx, 1)
+  }
+  
+  recentSearches.value.unshift(query)
+  if (recentSearches.value.length > 3) {
+    recentSearches.value = recentSearches.value.slice(0, 3)
+  }
+  
+  try {
+    localStorage.setItem('recent_searches', JSON.stringify(recentSearches.value))
+  } catch(e) {}
+}
+
+const handleSelectRecent = (query) => {
+  searchQuery.value = query
+}
 
 watch(isSearchOpen, (newVal) => {
   emit('search-toggle', newVal)
@@ -87,7 +129,13 @@ const handleFocus = () => {
 const handleClickOutside = (event) => {
   if (searchContainerRef.value && !searchContainerRef.value.contains(event.target)) {
     isSearchOpen.value = false
+    searchQuery.value = ''
   }
+}
+
+const handleCloseSearch = () => {
+  isSearchOpen.value = false
+  searchQuery.value = ''
 }
 
 const handleScroll = () => {
@@ -98,6 +146,7 @@ onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('scroll', handleScroll, { passive: true })
   handleScroll()
+  loadRecentSearches()
 })
 
 onBeforeUnmount(() => {

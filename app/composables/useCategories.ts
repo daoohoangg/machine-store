@@ -16,9 +16,9 @@ export interface Category {
 
 export const useCategories = () => {
   const { request } = useAbahaApi()
-  const categories = ref<Category[]>([])
-  const isLoading = ref(false)
-  const error = ref<any>(null)
+  const categories = useState<Category[]>('abaha-categories-list', () => [])
+  const isLoading = useState('abaha-categories-loading', () => false)
+  const error = useState<any>('abaha-categories-error', () => null)
 
   const fetchCategories = async () => {
     isLoading.value = true
