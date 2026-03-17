@@ -1,5 +1,5 @@
 <template>
-  <section class="product-section">
+  <section class="product-section" v-if="pending || products.length > 0">
     <div class="section-head">
       <h3>{{ sectionTitle }}</h3>
     </div>
@@ -16,11 +16,9 @@
       />
     </div>
 
-    <div v-else class="empty-state">
-      Không tìm thấy sản phẩm gợi ý nào.
-    </div>
 
-    <div class="section-foot" v-if="products.length > 0">
+
+    <div class="section-foot" v-if="products.length > 0 && !limitToOneRow">
       <button 
         class="more-btn" 
         :disabled="pending"
@@ -37,15 +35,22 @@ const { lastViewedCategory } = useViewedProducts()
 const { products: homeProducts, loadMore, pending } = useHomeProducts(() => lastViewedCategory.value)
 const { isImageFailed } = useImageGuard()
 
+const props = defineProps({
+  limitToOneRow: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const currentPage = ref(1)
 
 // Dynamic title based on viewed history
 const sectionTitle = computed(() => {
-  return lastViewedCategory.value ? '💡 Gợi ý dựa trên xem gần đây' : '💡 Gợi ý cho bạn'
+  return 'Sản phẩm đã xem'
 })
 
 const products = computed(() => {
-  return homeProducts.value
+  let list = homeProducts.value
     .filter(item => !isImageFailed(item.image))
     .map((item) => ({
       id: item.id,
@@ -58,6 +63,11 @@ const products = computed(() => {
       image: item.image,
       specs: item.specs || []
     }))
+    
+  if (props.limitToOneRow) {
+    list = list.slice(0, 6)
+  }
+  return list
 })
 
 const handleLoadMore = async () => {
@@ -90,8 +100,7 @@ const handleLoadMore = async () => {
   gap: 12px;
 }
 
-.loading-state,
-.empty-state {
+.loading-state {
   padding: 40px;
   text-align: center;
   color: #666;

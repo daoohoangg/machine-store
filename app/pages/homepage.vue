@@ -1,58 +1,82 @@
 <template>
   <div class="homepage-page">
-    <div class="category-header">
-      <h1>{{ currentCategory || 'Danh mục sản phẩm' }}</h1>
-    </div>
+    <div class="container">
+      <div class="breadcrumb">
+        <NuxtLink to="/">Trang chủ</NuxtLink> 
+        <span class="separator">›</span> 
+        <span class="current">{{ currentCategory || 'Danh mục sản phẩm' }}</span>
+      </div>
+      
+      <div class="category-layout">
+        <!-- Sidebar -->
+        <div class="sidebar-col">
+          <CategorySidebar
+            :category-id="Number(categoryId)"
+            :category-name="currentCategory"
+            :sub-categories="subCategories"
+            :available-products="allCategoryProducts"
+            @filter-changed="onFilterChanged"
+          />
+        </div>
 
-    <ClientOnly>
-      <!-- Render Subcategories Sequentially if they exist -->
-      <template v-if="subCategories.length > 0">
-        <template v-for="sub in subCategories" :key="sub.id">
-          <div class="subcategory-block">
-            <div class="category-subheader container">
-              <NuxtLink :to="`/homepage?categoryId=${sub.id}&categoryName=${encodeURIComponent(sub.name)}`">
-                <h2>{{ sub.name }} <i class="fa-solid fa-chevron-right" style="font-size: 14px; margin-left: 5px;"></i></h2>
+        <!-- Main Content -->
+        <div class="main-col">
+          <ClientOnly>
+            <!-- Subcategory Image Grid -->
+            <div class="subcat-image-grid" v-if="subCategories.length > 0">
+              <NuxtLink 
+                v-for="sub in subCategories" 
+                :key="sub.id"
+                :to="`/homepage?categoryId=${sub.id}&categoryName=${encodeURIComponent(sub.name)}`"
+                class="subcat-box"
+              >
+                <div class="subcat-img">
+                  <img v-if="sub.image" :src="sub.image" :alt="sub.name" />
+                </div>
+                <span class="subcat-name">{{ sub.name }}</span>
               </NuxtLink>
             </div>
             
-            <div class="products-grid container" v-if="getProductsForCategory(sub).length > 0">
+            <div class="top-filters">
+              <CategoryBrandFilter 
+                :available-products="allCategoryProducts"
+                @brand-toggled="onTopBrandToggled"
+              />
+              
+              <CategoryToolbar 
+                :product-count="processedProducts.length"
+                @sort-changed="onSortChanged"
+              />
+            </div>
+            
+            <div v-if="processedProducts.length > 0" class="products-grid">
               <ProductCard
-                v-for="product in getProductsForCategory(sub)"
+                v-for="product in processedProducts"
                 :key="product.id"
                 :product="product"
               />
             </div>
-            <div v-else class="empty-sub container">
-              <p>Không có sản phẩm nào trong danh mục này.</p>
+
+            <div v-else class="empty-state">
+              <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.</p>
             </div>
-          </div>
-        </template>
-      </template>
-
-      <!-- Fallback to Flat Grid if no subcategories exist -->
-      <template v-else>
-        <div v-if="filteredProducts.length > 0" class="products-grid container">
-          <ProductCard
-            v-for="product in filteredProducts"
-            :key="product.id"
-            :product="product"
-          />
+          </ClientOnly>
         </div>
-
-        <div v-else class="empty-state container">
-          <p>Không tìm thấy sản phẩm nào trong danh mục này.</p>
-        </div>
-      </template>
-    </ClientOnly>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 import { useCategories, type Category } from '~/composables/useCategories'
 import ProductCard from '~/components/product/ProductCard.vue'
+import CategorySidebar from '~/components/category/CategorySidebar.vue'
+import CategoryToolbar from '~/components/category/CategoryToolbar.vue'
+import CategoryBrandFilter from '~/components/category/CategoryBrandFilter.vue'
+import { useImageGuard } from '~/composables/useImageGuard'
 
 const route = useRoute()
 const { categories, fetchCategories } = useCategories()
@@ -66,10 +90,6 @@ const currentCategory = computed(() => {
 // Pass categoryId as a getter to useHomeProducts so it's reactive to URL changes
 const { products, pending } = useHomeProducts(() => categoryId.value)
 const { isImageFailed } = useImageGuard()
-
-const filteredProducts = computed(() => {
-  return products.value.filter(p => !isImageFailed(p.image))
-})
 
 const subCategories = computed<Category[]>(() => {
   if (!categories.value.length) return []
@@ -94,20 +114,127 @@ const subCategories = computed<Category[]>(() => {
   return selectedCat?.children || []
 })
 
-const getProductsForCategory = (cat: Category) => {
-  const ids: number[] = [cat.id]
-  const gather = (c: Category) => {
-    if (c.children) {
-      c.children.forEach(child => {
-        ids.push(child.id)
-        gather(child)
-      })
-    }
-  }
-  gather(cat)
+// Get all products that belong to this category OR any of its subcategories
+const allCategoryProducts = computed(() => {
+  if (!products.value) return []
   
-  return filteredProducts.value.filter(p => p.categoryId && ids.includes(Number(p.categoryId)))
+  const cid = Number(categoryId.value)
+  if (!cid) return products.value.filter(p => !isImageFailed(p.image)) // if no ID, return all
+
+  const allIds = new Set<number>()
+  allIds.add(cid)
+  const addChildren = (list: Category[]) => {
+    list.forEach(c => {
+      allIds.add(c.id)
+      if (c.children) addChildren(c.children)
+    })
+  }
+  addChildren(subCategories.value)
+  
+  return products.value.filter(p => !isImageFailed(p.image) && p.categoryId && allIds.has(Number(p.categoryId)))
+})
+
+// Filtering & Sorting State
+const selectedBrands = ref<string[]>([])
+const selectedPrices = ref<string[]>([])
+const currentSort = ref<string>('best_selling')
+
+const onFilterChanged = (filters: { brands: string[], prices: string[] }) => {
+  selectedBrands.value = filters.brands
+  selectedPrices.value = filters.prices
 }
+
+const onTopBrandToggled = (brands: string[]) => {
+  selectedBrands.value = brands
+}
+
+const onSortChanged = (sortId: string) => {
+  currentSort.value = sortId
+}
+
+// Helper to check if a product matches price ranges
+const matchesPrice = (price: number, ranges: string[]) => {
+  if (ranges.length === 0) return true
+  
+  for (const range of ranges) {
+    if (range === 'under_100k' && price < 100000) return true
+    if (range === '100k_500k' && price >= 100000 && price <= 500000) return true
+    if (range === '500k_1m' && price > 500000 && price <= 1000000) return true
+    if (range === '1m_1.5m' && price > 1000000 && price <= 1500000) return true
+    if (range === '1.5m_2m' && price > 1500000 && price <= 2000000) return true
+    if (range === '2m_3m' && price > 2000000 && price <= 3000000) return true
+    if (range === '3m_5m' && price > 3000000 && price <= 5000000) return true
+    if (range === '5m_8m' && price > 5000000 && price <= 8000000) return true
+    if (range === '8m_10m' && price > 8000000 && price <= 10000000) return true
+    if (range === 'over_10m' && price > 10000000) return true
+  }
+  return false
+}
+
+const extractBrand = (p: any): string => {
+  if (p.brand) return p.brand.toUpperCase()
+  if (p.title) {
+    const firstWord = p.title.split(' ')[0]
+    if (firstWord.length > 2 && firstWord.length < 12) return firstWord.toUpperCase()
+  }
+  return ''
+}
+
+const processedProducts = computed(() => {
+  let list = [...allCategoryProducts.value]
+  
+  // Apply brand filters
+  if (selectedBrands.value.length > 0) {
+    list = list.filter(p => {
+      const b = extractBrand(p)
+      return selectedBrands.value.includes(b)
+    })
+  }
+  
+  // Apply price filters
+  if (selectedPrices.value.length > 0) {
+    list = list.filter(p => matchesPrice(p.price, selectedPrices.value))
+  }
+  
+  // Apply sorting
+  switch (currentSort.value) {
+    case 'price_asc':
+      list.sort((a, b) => a.price - b.price)
+      break
+    case 'price_desc':
+      list.sort((a, b) => b.price - a.price)
+      break
+    case 'discount':
+      list.sort((a, b) => {
+        const getDiscount = (p:any) => {
+          if (p.oldPrice && p.oldPrice > p.price) return p.oldPrice - p.price
+          if (p.discount) {
+            const num = Number(p.discount.replace(/[^\d]/g, ''))
+            return Number.isNaN(num) ? 0 : num
+          }
+          return 0
+        }
+        return getDiscount(b) - getDiscount(a)
+      })
+      break
+    case 'newest':
+      list.sort((a, b) => {
+        const ida = typeof a.id === 'number' ? a.id : Number(String(a.id).replace(/\D/g, ''))
+        const idb = typeof b.id === 'number' ? b.id : Number(String(b.id).replace(/\D/g, ''))
+        return idb - ida
+      })
+      break
+    case 'meta':
+    case 'installment':
+    case 'best_selling':
+    default:
+      // Sort by sold count
+      list.sort((a, b) => (b.sold || 0) - (a.sold || 0))
+      break
+  }
+  
+  return list
+})
 
 if (categories.value.length === 0) {
   fetchCategories()
@@ -126,60 +253,101 @@ useSeoMeta({
   padding-bottom: 40px;
 }
 
-.category-header {
-  background: #fff;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  text-align: center;
+.breadcrumb {
+  padding: 15px 0;
+  font-size: 14px;
 }
 
-.category-header h1 {
-  margin: 0;
-  font-size: 20px;
+.breadcrumb a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+.breadcrumb .separator {
+  margin: 0 8px;
+  color: #666;
+}
+
+.breadcrumb .current {
   color: #333;
 }
 
-.subcategory-block {
-  margin-bottom: 40px;
+.category-layout {
+  display: flex;
+  gap: 20px;
 }
 
-.category-subheader {
+.sidebar-col {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.main-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.subcat-image-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
   margin-bottom: 20px;
-  padding: 0 15px;
+  background: #fff;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 4px;
 }
 
-.category-subheader a {
+.subcat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   text-decoration: none;
   color: #333;
-  display: inline-block;
 }
 
-.category-subheader h2 {
-  font-size: 22px;
-  margin: 0;
+.subcat-box:hover .subcat-img {
+  border-color: #1a73e8;
+}
+
+.subcat-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
   display: flex;
   align-items: center;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #de2000;
+  justify-content: center;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+  background: #fff;
 }
 
-.category-subheader a:hover h2 {
-  color: #ff3300;
+.subcat-img img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
 }
 
-.empty-sub {
-  padding: 20px 15px;
-  color: #888;
-  font-style: italic;
+.subcat-name {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.top-filters {
+  background: #fff;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 20px;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 15px;
-  padding: 0 15px;
 }
 
 .empty-state {
@@ -188,23 +356,27 @@ useSeoMeta({
   background: #fff;
   border-radius: 8px;
   color: #666;
+  border: 1px solid #eee;
 }
 
 @media (max-width: 1200px) {
-  .products-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  .subcat-image-grid { grid-template-columns: repeat(4, 1fr); }
+  .products-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 992px) {
-  .products-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .category-layout {
+    flex-direction: column;
   }
+  .sidebar-col {
+    width: 100%;
+  }
+  .products-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .subcat-image-grid { grid-template-columns: repeat(3, 1fr); }
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
+  .breadcrumb { padding: 10px 15px; }
 }
 </style>

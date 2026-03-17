@@ -15,33 +15,80 @@
       <div class="form-card">
         <h1>Đăng nhập</h1>
 
-        <input type="text" placeholder="Nhập số điện thoại" />
+        <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
 
-        <div class="password-row">
-          <input type="password" placeholder="Mật khẩu" />
-          <button type="button">👁</button>
+        <div v-if="step === 1">
+          <input v-model="phone" type="text" placeholder="Nhập số điện thoại" @keyup.enter="sendOtp" />
+          <button class="main-btn" :disabled="isLoading || !phone" @click="sendOtp">
+            {{ isLoading ? 'ĐANG GỬI...' : 'GỬI MÃ OTP' }}
+          </button>
         </div>
 
-        <p class="right-link"><a href="#">Quên mật khẩu?</a></p>
-
-        <button class="main-btn" disabled>ĐĂNG NHẬP</button>
-
-        <p class="switch-text">Bạn chưa có tài khoản? <NuxtLink to="/auth/register">Đăng ký</NuxtLink></p>
-
-        <div class="divider">HOẶC</div>
-
-        <button class="social-btn">✉ Đăng nhập bằng email</button>
-        <button class="social-btn">Zalo Đăng nhập bằng Zalo</button>
-        <button class="social-btn">G Đăng nhập bằng Google</button>
+        <div v-else>
+          <p class="info-text">Mã OTP đã được gửi đến số <b>{{ phone }}</b></p>
+          <input v-model="otp" type="text" placeholder="Nhập mã OTP (6 số)" @keyup.enter="verifyOtp" />
+          <button class="main-btn" :disabled="isLoading || !otp" @click="verifyOtp">
+            {{ isLoading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP' }}
+          </button>
+          <p class="right-link"><a href="#" @click.prevent="step = 1; errorMsg = ''">Sửa số điện thoại</a></p>
+        </div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 definePageMeta({
   layout: 'auth'
 })
+
+const router = useRouter()
+const step = ref(1)
+const phone = ref('')
+const otp = ref('')
+const isLoading = ref(false)
+const errorMsg = ref('')
+
+const sendOtp = async () => {
+  if (!phone.value) return
+  isLoading.value = true
+  errorMsg.value = ''
+  try {
+    const res = await $fetch('/api/auth/send-otp', {
+      method: 'POST',
+      body: { phone: phone.value }
+    })
+    if (res?.success) {
+      step.value = 2
+    }
+  } catch (err) {
+    errorMsg.value = err.data?.statusMessage || 'Có lỗi xảy ra khi gửi OTP'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const verifyOtp = async () => {
+  if (!otp.value) return
+  isLoading.value = true
+  errorMsg.value = ''
+  try {
+    const res = await $fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      body: { phone: phone.value, otp: otp.value }
+    })
+    if (res?.success) {
+      router.push('/')
+    }
+  } catch (err) {
+    errorMsg.value = err.data?.statusMessage || 'Mã OTP không hợp lệ hoặc đã hết hạn'
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -150,10 +197,28 @@ input {
   border: none;
   border-radius: 6px;
   height: 52px;
-  background: #ddd;
-  color: #999;
+  background: #0a67c7;
+  color: #fff;
   font-size: 39px;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.main-btn:disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #ff3333;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.info-text {
+  margin-bottom: 15px;
+  font-size: 16px;
 }
 
 .switch-text {

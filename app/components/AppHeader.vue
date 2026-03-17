@@ -2,8 +2,8 @@
   <header class="app-header">
     <div class="top-strip" :class="{ 'is-hidden': isScrolled }">
       <div class="container top-strip-inner">
-        <p class="top-copy">Pha nhanh - Uống ngon | Máy pha cà phê giá ưu đãi</p>
-        <p class="top-price">Giá từ <strong>890.000đ</strong></p>
+        <p class="top-copy">CÔNG TY ĐIỆN MÁY TUẤN MINH | Chất lượng khẳng định thương hiệu</p>
+        <p class="top-price">Tuấn Minh - Điện Máy</p>
       </div>
     </div>
 
@@ -44,10 +44,18 @@
             </span>
             <span class="action-label">Giỏ hàng</span>
           </button>
-          <button class="action-item">
-            <span class="action-icon"><i class="fa-solid fa-phone"></i></span>
-            <span class="action-label">Đường dây nóng</span>
-          </button>
+          <div class="action-item-wrapper hotline-wrapper">
+            <button class="action-item">
+              <span class="action-icon"><i class="fa-solid fa-phone"></i></span>
+              <span class="action-label">Đường dây nóng</span>
+            </button>
+            <div class="hotline-dropdown">
+              <div class="hotline-dropdown-inner">
+                <p>Tổng đài hỗ trợ: <strong>19005068</strong></p>
+                <p>Hotline: <strong>0995 556 969</strong></p>
+              </div>
+            </div>
+          </div>
           <NuxtLink class="action-item" to="/auth/login">
             <span class="action-icon"><i class="fa-solid fa-user"></i></span>
             <span class="action-label">Đăng nhập</span>
@@ -163,7 +171,7 @@ onBeforeUnmount(() => {
 }
 
 .top-strip {
-  background: linear-gradient(90deg, #5b1d08, #a84d0f, #5b1d08);
+  background: linear-gradient(90deg, #0052cc, #007aff, #0052cc);
   color: #fff;
   max-height: 50px;
   transition: max-height 0.3s ease, opacity 0.3s ease;
@@ -193,8 +201,8 @@ onBeforeUnmount(() => {
 
 .top-price {
   font-size: 16px;
-  background: #fdf5eb;
-  color: #111;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
   border-radius: 999px;
   padding: 6px 14px;
 }
@@ -326,6 +334,69 @@ onBeforeUnmount(() => {
   font-size: 10px;
   font-weight: 800;
   padding: 0 4px;
+}
+
+.action-item-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.hotline-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  padding-top: 12px; /* Invisible hover bridge */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.hotline-wrapper:hover .hotline-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.hotline-dropdown-inner {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  padding: 12px 16px;
+  color: #333;
+  width: max-content;
+  position: relative;
+  border: 1px solid #eaeaea;
+}
+
+.hotline-dropdown-inner::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-top: 1px solid #eaeaea;
+  border-left: 1px solid #eaeaea;
+}
+
+.hotline-dropdown-inner p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.hotline-dropdown-inner p:not(:last-child) {
+  margin-bottom: 6px;
+}
+
+.hotline-dropdown-inner strong {
+  color: #e31b1b;
+  font-size: 16px;
 }
 
 @media (max-width: 1200px) {

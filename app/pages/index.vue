@@ -7,16 +7,29 @@
           <div class="home-top">
             <HomeHeroBanner />
           </div>
-          <HomeTopSellingRow style="width: 100%; margin-left: 0;" />
+          <HomeTopSellingRow style="width: 100%; margin-left: 0; flex: 1;" />
         </main>
       </div>
     </div>
 
     <div class="full-width-section">
       <div class="container">
-        <HomePromoRow style="margin-top: 20px;" />
+        <HomePromoRow />
         <OrderFlashSaleStrip style="margin-top: 20px;" />
-        <ProductSection style="margin-top: 20px;" />
+        <ProductSuggestion />
+        <ProductSection style="margin-top: 20px;" :limit-to-one-row="true" />
+        
+        <!-- Top 3 Categories Blocks -->
+        <CategoryGroupBlock 
+          v-for="cat in top3Categories" 
+          :key="cat.id" 
+          :category="cat" 
+          :all-products="products"
+        />
+
+        <!-- Featured Brands -->
+        <FeaturedBrands />
+        
       </div>
     </div>
   </div>
@@ -24,6 +37,17 @@
 
 <script setup lang="ts">
 import ProductSection from '~/components/product/ProductSection.vue'
+import ProductSuggestion from '~/components/product/ProductSuggestion.vue'
+import CategoryGroupBlock from '~/components/home/CategoryGroupBlock.vue'
+import FeaturedBrands from '~/components/home/FeaturedBrands.vue'
+import { computed } from 'vue'
+
+const { categories } = useCategories()
+const { products } = useHomeProducts()
+
+const top3Categories = computed(() => {
+  return categories.value?.slice(0, 3) || []
+})
 
 useSeoMeta({
   title: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',

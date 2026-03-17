@@ -30,7 +30,7 @@ Yêu cầu ĐẶC BIỆT: Trả về kết quả là một mảng chuỗi JSON h
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -80,8 +80,8 @@ Yêu cầu ĐẶC BIỆT: Trả về kết quả là một mảng chuỗi JSON h
   } catch (err: any) {
     console.error('Error in /api/gemini/product-desc:', err)
     throw createError({
-      statusCode: 500,
-      statusMessage: err.message || 'Internal Server Error'
+      statusCode: err.statusCode || 500,
+      statusMessage: err.statusMessage || err.message || 'Internal Server Error'
     })
   }
 })

@@ -126,7 +126,10 @@ const quickDeals = computed(() => {
 .home-promo-strip {
   background: #fff;
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-top: 20px solid #efefef;
+  border-bottom: 1px solid #cfd5db;
+  border-left: 1px solid #cfd5db;
+  border-right: 1px solid #cfd5db;
   margin-bottom: 12px;
 }
 

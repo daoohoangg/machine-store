@@ -2,42 +2,51 @@
   <section class="flash-sale">
     <div class="flash-head">
       <h3>⚡ FLASH SALE</h3>
-      <a href="#">Xem tất cả ›</a>
+      <div class="head-actions">
+        <div class="nav-buttons" v-if="items.length > 4">
+          <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">‹</button>
+          <button class="nav-btn next" @click="scroll('right')" aria-label="Next">›</button>
+        </div>
+        <a href="#">Xem tất cả ›</a>
+      </div>
     </div>
 
-    <div class="flash-grid">
-      <article v-for="item in items" :key="item.title" class="flash-card">
-        <div class="thumb">
-          <img
-            v-if="item.image"
-            :src="item.image"
-            :alt="item.title"
-            loading="lazy"
-            @error="markImageAsFailed(item.image)"
-          />
-          <div v-else class="thumb-placeholder"></div>
-        </div>
+    <div class="flash-grid-wrapper">
+      <div class="flash-grid" ref="scrollContainer">
+        <article v-for="item in items" :key="item.title" class="flash-card">
+          <div class="thumb">
+            <img
+              v-if="item.image"
+              :src="item.image"
+              :alt="item.title"
+              loading="lazy"
+              @error="markImageAsFailed(item.image)"
+            />
+            <div v-else class="thumb-placeholder"></div>
+          </div>
 
-        <p class="title">{{ item.title }}</p>
-        <p class="brand">{{ item.brand || 'Tuấn Minh' }}</p>
+          <p class="title">{{ item.title }}</p>
+          <p class="brand">{{ item.brand || 'Tuấn Minh' }}</p>
 
-        <div class="price-box">
-          <strong>{{ formatPrice(item.price) }}đ</strong>
-          <small v-if="item.oldPrice">{{ formatPrice(item.oldPrice) }}đ</small>
-          <span class="countdown">Kết thúc sau {{ item.endIn }}</span>
-        </div>
-      </article>
+          <div class="price-box">
+            <strong>{{ formatPrice(item.price) }}đ</strong>
+            <small v-if="item.oldPrice">{{ formatPrice(item.oldPrice) }}đ</small>
+            <span class="countdown">Kết thúc sau {{ item.endIn }}</span>
+          </div>
+        </article>
+      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 import { useImageGuard } from '~/composables/useImageGuard'
 
 const { products } = useHomeProducts()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
+const scrollContainer = ref<HTMLElement | null>(null)
 
 const hasDiscount = (discount: string | null) => Boolean(discount && discount.trim())
 const discountValue = (discount: string | null, price: number, oldPrice: number | null) => {
@@ -54,7 +63,7 @@ const items = computed(() => {
   return products.value
     .filter((item) => (hasDiscount(item.discount) || (item.oldPrice || 0) > item.price) && !isImageFailed(item.image))
     .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
-    .slice(0, 6)
+    .slice(0, 10)
     .map((item, idx) => ({
       title: item.title,
       brand: item.brand || 'Tuấn Minh',
@@ -64,6 +73,16 @@ const items = computed(() => {
       image: item.image
     }))
 })
+
+const scroll = (direction: 'left' | 'right') => {
+  if (!scrollContainer.value) return
+  const scrollAmount = 600 // Scroll by approximately 3-4 cards
+  const currentScroll = scrollContainer.value.scrollLeft
+  scrollContainer.value.scroll({
+    left: direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount,
+    behavior: 'smooth'
+  })
+}
 
 const formatPrice = (value: number | null) => {
   if (!value || value <= 0) return ''
@@ -98,14 +117,62 @@ const formatPrice = (value: number | null) => {
   font-size: 15px;
 }
 
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s;
+  padding-bottom: 3px;
+}
+
+.nav-btn:hover {
+  background: #fff;
+  color: #4f8edb;
+}
+
+.flash-grid-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .flash-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
   gap: 8px;
   padding: 0 8px 8px;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.flash-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .flash-card {
+  flex: 0 0 calc(16.666% - 6.66px); /* 6 items per view */
+  min-width: 160px;
   background: #fff;
   border-radius: 4px;
   overflow: hidden;
@@ -113,7 +180,7 @@ const formatPrice = (value: number | null) => {
 
 .thumb {
   height: 178px;
-  background: #f1f1f1;
+  background: #fff;
 }
 
 .thumb img {
@@ -175,8 +242,8 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 1200px) {
-  .flash-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .flash-card {
+    flex: 0 0 calc(33.333% - 5.33px); /* 3 items per view */
   }
 
   .flash-head h3 {
@@ -210,8 +277,13 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 768px) {
-  .flash-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .flash-card {
+    flex: 0 0 calc(80% - 4px); /* Show 1 full item and part of the next */
+    min-width: 240px;
+  }
+
+  .nav-buttons {
+    display: none;
   }
 
   .thumb {

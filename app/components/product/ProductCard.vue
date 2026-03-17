@@ -139,7 +139,7 @@ const formatPrice = (value: number | string) => {
   height: 190px;
   border-radius: 4px;
   overflow: hidden;
-  background: #f3f3f3;
+  background: #fff;
 }
 
 .product-img {

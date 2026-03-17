@@ -91,7 +91,7 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
   
   // products will contain the data for the current active category
   const { data: products, pending, error, refresh } = useAsyncData(fetchKey.value, async () => {
-    return await fetchItems(1, 12, toValue(categoryIdMaybe))
+    return await fetchItems(1, 20, toValue(categoryIdMaybe))
   }, {
     lazy: false,
     watch: [fetchKey], // Re-fetch when the key (and thus categoryId) changes
@@ -103,7 +103,7 @@ export const useHomeProducts = (categoryIdMaybe?: MaybeRefOrGetter<number | stri
 
   async function fetchItems(page: number, limit: number, cid?: number | string | null) {
     try {
-      const body: any = { limit: Number(limit) || 12, page: Number(page) || 1 }
+      const body: any = { limit: Number(limit) || 20, page: Number(page) || 1 }
       const queryParams: any = {}
       
       if (cid) {
