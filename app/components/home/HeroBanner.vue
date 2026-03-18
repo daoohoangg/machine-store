@@ -167,5 +167,10 @@ onUnmounted(() => {
   .nav-arrow {
     display: none; /* Hide arrows on small screens, rely on swipe or dots */
   }
+  .banner-slide img {
+    height: auto;
+    min-height: unset;
+    object-fit: contain;
+  }
 }
 </style>

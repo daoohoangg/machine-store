@@ -1,6 +1,6 @@
 <template>
   <section class="top-selling-row">
-    <div class="deals-grid">
+    <div class="deals-grid" :class="{ 'is-expanded': isExpanded }">
       <NuxtLink
         v-for="item in displayedDeals"
         :key="item.categoryId"
@@ -143,6 +143,7 @@ const hasMore = computed(() => quickDeals.value.length > 16)
   padding: 12px 0;
   display: flex;
   justify-content: center;
+  background: #fff;
 }
 
 .view-more {
@@ -252,22 +253,47 @@ const hasMore = computed(() => quickDeals.value.length > 16)
 }
 
 @media (max-width: 768px) {
-  .deals-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .top-selling-row {
+    padding-bottom: 0px !important;
+    margin-bottom: 0px !important;
+    border-top: none !important;
   }
   
+  .controls {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+  
+  .deals-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-bottom: none !important;
+    row-gap: 8px;
+  }
+  
+  .deal-item {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+
   .icon-circle {
-    width: 60px;
-    height: 60px;
-    font-size: 28px;
+    width: 44px; /* Reduced from 60px */
+    height: 44px;
+    font-size: 20px;
   }
   
   .deal-label {
-    font-size: 12px;
+    font-size: 11px; /* Reduced text size */
+    line-height: 1.2;
   }
   
   .deal-price {
-    font-size: 16px;
+    font-size: 13px; /* Reduced price size */
+  }
+  
+  /* Show 8 items by default (2 rows of 4) on mobile */
+  .deals-grid:not(.is-expanded) .deal-item:nth-child(n+9) {
+    display: none;
   }
 }
 </style>

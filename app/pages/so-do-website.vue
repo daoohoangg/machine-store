@@ -51,8 +51,11 @@
             :to="`/homepage?category=${encodeURIComponent(item.name)}`"
             class="category-item"
           >
-            <span class="item-icon">{{ item.icon }}</span>
-            <span class="item-name">{{ item.name }}</span>
+              <div class="item-icon">
+                <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
+                <span v-else>{{ item.icon }}</span>
+              </div>
+              <span class="item-name">{{ item.name }}</span>
           </NuxtLink>
         </div>
       </div>
@@ -67,7 +70,10 @@
               :to="`/homepage?category=${encodeURIComponent(item.name)}`"
               class="category-item"
             >
-              <span class="item-icon">{{ item.icon }}</span>
+              <div class="item-icon">
+                <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
+                <span v-else>{{ item.icon }}</span>
+              </div>
               <span class="item-name">{{ item.name }}</span>
             </NuxtLink>
           </div>
@@ -87,11 +93,13 @@
 import { computed, ref, onMounted } from 'vue'
 import { useCategories } from '~/composables/useCategories'
 import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useImageGuard } from '~/composables/useImageGuard'
 
 type ViewMode = 'group' | 'az' | 'brand'
 
 const viewMode = ref<ViewMode>('group')
 const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
 
 const normalizeCategoryName = (value: string | null | undefined) => {
   return (value || '')
@@ -150,12 +158,13 @@ const categories = computed(() => {
 
 const categoriesByLetter = computed(() => {
   const allCats = flattenCategories(apiCategories.value)
-  const grouped = new Map<string, Array<{ id: number; name: string; icon: string }>>()
+  const grouped = new Map<string, Array<{ id: number; name: string; icon: string; image: string }>>()
   
   const processed = allCats.map(cat => ({
     id: cat.id,
     name: normalizeCategoryName(cat.name),
-    icon: iconByName(cat.name)
+    icon: iconByName(cat.name),
+    image: cat.image
   }))
 
   const sorted = processed.sort((a, b) => textKey(a.name).localeCompare(textKey(b.name)))
@@ -288,7 +297,19 @@ h1 {
 }
 
 .item-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+.item-icon-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .item-name {

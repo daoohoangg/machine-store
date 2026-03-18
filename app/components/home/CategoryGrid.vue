@@ -274,6 +274,10 @@ const toggleCategories = () => {
 }
 
 @media (max-width: 768px) {
+  .category-section {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
   .category-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -286,8 +290,15 @@ const toggleCategories = () => {
     border-right: none;
   }
 
+  .view-more-container {
+    padding-bottom: 5px !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+
   .view-more {
     font-size: 14px;
+    margin-bottom: 0;
   }
 }
 </style>

@@ -1,240 +1,154 @@
 <template>
-  <section class="home-promo-strip">
-    <div v-if="isLoading && quickDeals.length === 0" class="loading-placeholder">
-      <div v-for="i in 8" :key="i" class="skeleton-item">
-        <div class="skeleton-circle"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line short"></div>
+  <section class="home-feature-banner">
+    <div class="container">
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+          </div>
+          <div class="feature-text">
+            <strong>BẢO HÀNH TẠI NHÀ</strong>
+            <span>Yên tâm mua sắm</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fa-solid fa-truck-fast"></i>
+          </div>
+          <div class="feature-text">
+            <strong>VẬN CHUYỂN TOÀN QUỐC</strong>
+            <span>An toàn - Nhanh chóng</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fa-solid fa-award"></i>
+          </div>
+          <div class="feature-text">
+            <strong>HÀNG CHÍNH HÃNG</strong>
+            <span>Cam kết 100%</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div class="feature-text">
+            <strong>SẴN HÀNG - ĐỦ LỰA CHỌN</strong>
+            <span>Liên hệ tư vấn 24/24</span>
+          </div>
+        </div>
       </div>
-    </div>
-    <div v-else class="promo-grid">
-      <NuxtLink 
-        v-for="item in quickDeals" 
-        :key="item.categoryId" 
-        :to="`/homepage?categoryId=${item.categoryId}&categoryName=${encodeURIComponent(item.name)}`" 
-        class="promo-item"
-      >
-        <div class="image-circle" :style="{ backgroundColor: !item.imageUrl ? item.color : 'transparent' }">
-          <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" class="cat-thumb" />
-          <span v-else class="icon">{{ item.icon }}</span>
-        </div>
-        <div class="promo-info">
-          <span class="promo-label">{{ getLabel(item.name) }}</span>
-          <span class="promo-price">{{ item.price }}</span>
-        </div>
-      </NuxtLink>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-
-// Get products to find lowest prices
-const { products } = useHomeProducts()
-// Get categories
-const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
-
-onMounted(() => {
-  fetchCategories()
-})
-
-const formatPrice = (price: number) => {
-  if (!price || price <= 0) return 'Giá tốt'
-  return `${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`
-}
-
-const getLabel = (name: string) => {
-  const lower = name.toLowerCase()
-  if (lower.includes('tivi')) return `Mua ${name} chỉ từ`
-  if (lower.includes('tủ') || lower.includes('máy giặt')) return `${name} giá chỉ từ`
-  return `${name} giá chỉ từ`
-}
-
-const iconByName = (name: string) => {
-  const key = name.toLowerCase()
-  if (key.includes('tivi')) return '📺'
-  if (key.includes('tủ') || key.includes('tu')) return '🧊'
-  if (key.includes('giặt') || key.includes('giat')) return '🧺'
-  if (key.includes('lọc') || key.includes('loc')) return '🌀'
-  if (key.includes('nóng') || key.includes('nuoc')) return '🚰'
-  if (key.includes('bụi') || key.includes('bui')) return '🧹'
-  if (key.includes('cà phê') || key.includes('ca phe') || key.includes('coffee')) return '☕'
-  if (key.includes('điều hòa')) return '❄️'
-  return '🛍️'
-}
-
-const bgColorByName = (name: string) => {
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colors = ['#6B21A8', '#1E40AF', '#2563EB', '#0EA5E9', '#2DD4BF', '#F97316', '#FBBF24', '#B45309']
-  return colors[hash % colors.length]
-}
-
-const normalizeCategoryName = (value: string | null | undefined) => {
-  return (value || '')
-    .replace(/\(.*?\)/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-const quickDeals = computed(() => {
-  // Map categoryId to lowest price
-  const categoryPriceMap = new Map<number, number>()
-  
-  if (products.value && Array.isArray(products.value)) {
-    products.value.forEach(item => {
-      if (item.categoryId && item.price > 0) {
-        const cid = Number(item.categoryId)
-        const currentMin = categoryPriceMap.get(cid) || Infinity
-        if (item.price < currentMin) {
-          categoryPriceMap.set(cid, item.price)
-        }
-      }
-    })
-  }
-
-  const list: any[] = []
-  if (apiCategories.value && Array.isArray(apiCategories.value)) {
-    apiCategories.value.forEach((parent) => {
-      if (parent.children && parent.children.length > 0) {
-        parent.children.forEach((child) => {
-          const name = normalizeCategoryName(child.name)
-          const minPrice = categoryPriceMap.get(child.id)
-          
-          list.push({
-            categoryId: child.id,
-            icon: iconByName(child.name),
-            imageUrl: child.image,
-            name: name,
-            price: minPrice ? formatPrice(minPrice) : 'Giá cực tốt',
-            color: bgColorByName(child.name),
-            hasPrice: !!minPrice
-          })
-        })
-      }
-    })
-  }
-
-  // Sort: show categories that have found prices first
-  return list
-    .sort((a, b) => (b.hasPrice ? 1 : 0) - (a.hasPrice ? 1 : 0))
-    .slice(0, 8)
-})
+// This component now acts as a static feature banner
 </script>
 
 <style scoped>
-.home-promo-strip {
+.home-feature-banner {
   background: #fff;
-  padding: 16px 0;
-  border-top: 20px solid #efefef;
-  border-bottom: 1px solid #cfd5db;
-  border-left: 1px solid #cfd5db;
-  border-right: 1px solid #cfd5db;
-  margin-bottom: 12px;
+  padding: 15px 0;
+  margin-bottom: 20px;
 }
 
-.promo-grid, .loading-placeholder {
+.feature-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 10px;
-  padding: 0 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
-.promo-item, .skeleton-item {
+.feature-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 8px;
-  text-decoration: none;
+  padding: 10px 14px;
+  border: 1px solid #dcdcdc;
+  background: #fff;
+  gap: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.image-circle {
-  width: 70px;
-  height: 70px;
+.feature-item:hover {
+  border-color: #da251d;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
+  border: 1px solid #da251d;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s;
-  background: #f9f9f9;
+  color: #da251d;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
-.cat-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 8px;
-  background: #fff;
-}
-
-.icon {
-  font-size: 32px;
-}
-
-.promo-item:hover .image-circle {
-  transform: translateY(-4px);
-}
-
-.promo-info {
+.feature-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  width: 100%;
 }
 
-.promo-label {
+.feature-text strong {
+  font-size: 15px;
+  font-weight: 900;
+  color: #222;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+
+.feature-text span {
   font-size: 13px;
-  color: #555;
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 32px;
-}
-
-.promo-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-/* Skeleton styles */
-.skeleton-circle {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: #eee;
-}
-.skeleton-line {
-  height: 12px;
-  width: 80%;
-  background: #eee;
-  border-radius: 2px;
-  margin-top: 4px;
-}
-.skeleton-line.short {
-  width: 50%;
+  color: #666;
+  font-style: italic;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 @media (max-width: 1200px) {
-  .promo-grid, .loading-placeholder {
-    grid-template-columns: repeat(4, 1fr);
-    row-gap: 20px;
+  .feature-text strong {
+    font-size: 13px;
+  }
+  .feature-text span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .promo-grid, .loading-placeholder {
-    grid-template-columns: repeat(2, 1fr);
+  .home-feature-banner {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
-  
-  .image-circle, .skeleton-circle {
-    width: 60px;
-    height: 60px;
+}
+
+@media (max-width: 576px) {
+  .home-feature-banner {
+    padding-top: 0 !important; 
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .feature-item {
+    padding: 12px 16px;
   }
 }
 </style>

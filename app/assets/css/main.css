@@ -17,12 +17,14 @@
   box-sizing: border-box;
   font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
 }
-body {
+html, body {
   font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
   background-color: var(--white);
   color: var(--text-main);
   line-height: 1.5;
   font-size: 14px;
+  overflow-x: hidden;
+  width: 100%;
 }
 a {
   text-decoration: none;

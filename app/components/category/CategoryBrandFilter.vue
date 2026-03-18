@@ -7,7 +7,8 @@
       :class="{ active: selectedBrands.includes(brand.name) }"
       @click="toggleBrand(brand.name)"
     >
-      <span class="brand-text" :style="{ color: getBrandColor(brand.name) }">{{ brand.name }}</span>
+      <img v-if="getBrandImage(brand.name)" :src="getBrandImage(brand.name)" alt="" class="brand-icon" />
+      <span v-else class="brand-text" :style="{ color: getBrandColor(brand.name) }">{{ brand.name }}</span>
     </button>
     
     <button v-if="brands.length > 11" class="brand-btn view-more" @click="expandBrands = !expandBrands">
@@ -72,6 +73,19 @@ const displayBrands = computed(() => {
   return expandBrands.value ? brands.value : brands.value.slice(0, 11)
 })
 
+// Load all images from the logo directory dynamically
+const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
+
+const getBrandImage = (brand: string) => {
+  const normalized = brand.toLowerCase();
+  for (const path in brandImages) {
+    if (path.toLowerCase().includes(`/${normalized}.`)) {
+      return brandImages[path] as string;
+    }
+  }
+  return null;
+}
+
 const getBrandColor = (brand: string) => {
   const b = brand.toLowerCase()
   if (b.includes('bosch') || b.includes('sunhouse') || b.includes('sharp') || b.includes('stanley')) return '#e31b1b'
@@ -97,13 +111,15 @@ const getBrandColor = (brand: string) => {
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
-  height: 40px;
+  height: 48px; /* Slightly increased to fit logos well */
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 5px;
+  padding: 8px 12px;
+  overflow: hidden;
 }
 
 .brand-btn:hover {
@@ -122,6 +138,13 @@ const getBrandColor = (brand: string) => {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.5px;
+}
+
+.brand-icon {
+  width: auto;
+  height: 32px;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .brand-btn.view-more {
@@ -143,5 +166,6 @@ const getBrandColor = (brand: string) => {
 @media (max-width: 600px) {
   .brand-filter-grid { grid-template-columns: repeat(3, 1fr); }
   .brand-text { font-size: 11px; }
+  .brand-btn { height: 42px; }
 }
 </style>

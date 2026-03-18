@@ -5,9 +5,10 @@
       <button class="close-btn" type="button" aria-label="Đóng tìm kiếm" @click="emit('close')">✕</button>
     </div>
 
-    <!-- Default View -->
-    <template v-if="!searchQuery">
-      <!-- Recent Searches -->
+    <div class="dropdown-scroll-content">
+      <!-- Default View -->
+      <template v-if="!searchQuery">
+        <!-- Recent Searches -->
       <div v-if="recentSearches && recentSearches.length > 0" class="recent-searches-wrapper">
         <div class="recent-title">
           <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử tìm kiếm
@@ -108,7 +109,8 @@
           </NuxtLink>
         </div>
       </div>
-    </template>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -241,18 +243,35 @@ const matchedCategories = computed(() => {
 </script>
 
 <style scoped>
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .search-dropdown {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
   width: 100%;
   max-height: calc(100vh - 108px);
-  overflow-y: auto;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 1200;
   border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-scroll-content {
+  overflow-y: auto;
+  flex: 1;
 }
 
 .modal-head {
@@ -524,9 +543,20 @@ const matchedCategories = computed(() => {
 
 @media (max-width: 768px) {
   .search-dropdown {
-    max-height: calc(100vh - 88px);
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
+    height: auto;
+    max-height: 80vh !important;
+    border-radius: 12px !important;
+    z-index: 9999 !important;
+    border: none !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+    animation: none !important;
   }
-
+  
   .hot-grid {
     grid-template-columns: repeat(4, 1fr);
   }

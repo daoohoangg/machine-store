@@ -144,6 +144,11 @@ const handleLoadMore = async () => {
     gap: 8px;
   }
 
+  /* Show only exactly 4 items on mobile (2 cols, 2 rows) */
+  .product-grid > *:nth-child(n+5) {
+    display: none;
+  }
+
   .section-head h3 {
     font-size: 18px;
   }

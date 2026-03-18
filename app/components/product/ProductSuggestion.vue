@@ -105,6 +105,12 @@ const randomProducts = computed(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
+  
+  /* Show only exactly 6 items on mobile (2 cols, 3 rows) */
+  .product-grid > *:nth-child(n+7) {
+    display: none;
+  }
+
   .section-head h3 {
     font-size: 18px;
   }

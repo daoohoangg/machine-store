@@ -42,12 +42,15 @@
           <a href="#" class="compare-link"><i class="fa-solid fa-circle-plus"></i> So sánh</a>
         </div>
 
-        <p class="brand-row">
+        <div class="brand-row">
           <span>Thương hiệu:</span>
-          <NuxtLink to="/">{{ product.brand }}</NuxtLink>
+          <NuxtLink to="/">
+            <img v-if="getBrandImage(product.brand)" :src="getBrandImage(product.brand)" :alt="product.brand" class="brand-inline-img" />
+            <span class="brand-name-text">{{ product.brand || 'OEM' }}</span>
+          </NuxtLink>
           <span class="divider">|</span>
           <NuxtLink to="/">{{ product.category }}</NuxtLink>
-        </p>
+        </div>
 
         <div class="price-box-red">
           <div class="price-main">
@@ -301,6 +304,20 @@ const { categories, fetchCategories } = useCategories()
 const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
+
+// Load all images from the logo directory dynamically
+const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
+
+const getBrandImage = (brand?: string | null) => {
+  if (!brand || brand === 'OEM') return null;
+  const normalized = brand.toLowerCase();
+  for (const path in brandImages) {
+    if (path.toLowerCase().includes(`/${normalized}.`)) {
+      return brandImages[path] as string;
+    }
+  }
+  return null;
+}
 
 const activeImageIndex = ref(0)
 const quantity = ref(1)
@@ -703,8 +720,12 @@ watch(
   margin: 0 0 15px;
   font-size: 14px;
   color: #555;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.brand-row a { color: #007bff; text-decoration: none; }
+.brand-row a { color: #007bff; text-decoration: none; display: flex; align-items: center; }
+.brand-inline-img { height: 20px; object-fit: contain; }
 
 .price-box-red {
   display: flex;

@@ -216,8 +216,17 @@ const categoryProducts = computed(() => {
 }
 
 @media (max-width: 768px) {
+  .category-block {
+    margin-top: 8px; /* Reduce gap on mobile */
+  }
   .cb-subcats { grid-template-columns: repeat(3, 1fr); }
   .cb-products { grid-template-columns: repeat(2, 1fr); }
+  
+  /* Show only exactly 4 products on mobile (2 cols, 2 rows) */
+  .cb-products > *:nth-child(n+5) {
+    display: none;
+  }
+
   .cb-subcat-item:nth-child(4n) { border-right: 1px solid #f0f0f0; }
   .cb-subcat-item:nth-child(3n) { border-right: none; }
   .cb-title { font-size: 15px; }

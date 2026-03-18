@@ -17,7 +17,10 @@
 
       <div class="card-info">
         <h4 class="product-title">{{ product.title }}</h4>
-        <p class="brand-name">{{ productBrand }}</p>
+        <div class="brand-wrapper">
+          <img v-if="getBrandImage(productBrand)" :src="getBrandImage(productBrand)" :alt="productBrand" class="brand-name-img" />
+          <p class="brand-name">{{ productBrand }}</p>
+        </div>
 
         <div class="price-rating-row">
           <div class="price-col">
@@ -49,7 +52,10 @@
 
       <div class="card-info">
         <h4 class="product-title">{{ product.title }}</h4>
-        <p class="brand-name">{{ productBrand }}</p>
+        <div class="brand-wrapper">
+          <img v-if="getBrandImage(productBrand)" :src="getBrandImage(productBrand)" :alt="productBrand" class="brand-name-img" />
+          <p class="brand-name">{{ productBrand }}</p>
+        </div>
 
         <div class="price-rating-row">
           <div class="price-col">
@@ -104,31 +110,49 @@ const detailPath = computed(() => {
   return `/san-pham/${props.product.slug}`
 })
 
+const deterministicDiscount = computed(() => {
+  const idStr = String(props.product.id || props.product.title.length + '-' + props.product.title.charCodeAt(0))
+  const hash = idStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return (hash % 21) + 10 // Random between 10 and 30
+})
+
+const numericDiscount = computed(() => {
+  if (props.product.discount) {
+    const match = String(props.product.discount).match(/\d+/)
+    if (match) return Number(match[0])
+  }
+  return deterministicDiscount.value
+})
+
 const discountPercent = computed(() => {
-  const discount = props.product.discount || ''
-  const match = discount.match(/-?\d+\s*%/)
-  if (match) return match[0].replace(/\s+/g, '')
-  
-  if (props.product.oldPrice) {
-     return '-15%'
-  }
-  
-  if (props.product.price) {
-     return '-34%'
-  }
-  
-  return ''
+  return `-${numericDiscount.value}%`
 })
 
 const productBrand = computed(() => {
   return props.product.brand || 'OEM'
 })
 
+// Load all images from the logo directory dynamically
+const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
+
+const getBrandImage = (brand: string) => {
+  if (!brand || brand === 'OEM') return null;
+  const normalized = brand.toLowerCase();
+  for (const path in brandImages) {
+    if (path.toLowerCase().includes(`/${normalized}.`)) {
+      return brandImages[path] as string;
+    }
+  }
+  return null;
+}
+
 const displayOldPrice = computed(() => {
-  if (props.product.oldPrice) return props.product.oldPrice;
+  if (props.product.oldPrice && props.product.oldPrice > props.product.price) return props.product.oldPrice;
   const priceNum = typeof props.product.price === 'number' ? props.product.price : Number(String(props.product.price).replace(/[^\d]/g, ''))
   if (priceNum > 0) {
-    return Math.floor(priceNum * 1.34);
+    const factor = 1 - (numericDiscount.value / 100)
+    // Round to nearest 1000
+    return Math.round((priceNum / factor) / 1000) * 1000;
   }
   return null;
 })
@@ -234,10 +258,25 @@ const formatPriceObj = (value: number | string) => {
   overflow: hidden;
 }
 
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: auto 0 12px;
+}
+
 .brand-name {
   color: #0073e6;
   font-size: 13px;
-  margin: auto 0 12px;
+  margin: 0;
+}
+
+.brand-name-img {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
 }
 
 .price-rating-row {
@@ -296,6 +335,27 @@ const formatPriceObj = (value: number | string) => {
   }
   .thumb-wrap {
     height: 150px;
+  }
+}
+
+@media (max-width: 600px) {
+  .price-rating-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .current-price {
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  
+  .old-price {
+    white-space: nowrap;
+  }
+
+  .rating-col {
+    padding-top: 0;
   }
 }
 </style>

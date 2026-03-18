@@ -1,8 +1,13 @@
 <template>
-  <aside class="app-sidebar">
+  <aside class="app-sidebar" :class="{ 'is-mobile-open': isMobileMenuOpen }">
     <div class="sidebar-title">
-      <span class="menu-icon">☰</span>
-      <h3>Danh mục sản phẩm</h3>
+      <div class="title-left">
+        <span class="menu-icon">☰</span>
+        <h3>Danh mục sản phẩm</h3>
+      </div>
+      <button class="close-btn" @click="closeMobileMenu" aria-label="Đóng">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
 
     <div v-if="isLoading" class="loading-state">
@@ -15,8 +20,11 @@
         :key="item.id" 
         class="category-li"
       >
-        <NuxtLink :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`" class="category-item">
-          <span class="item-icon">{{ item.icon }}</span>
+        <NuxtLink :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`" class="category-item" @click="closeMobileMenu">
+          <div class="item-icon">
+            <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
+            <span v-else>{{ item.icon }}</span>
+          </div>
           <span class="item-name">{{ item.name }}</span>
           <span v-if="item.children && item.children.length > 0" class="arrow-icon">›</span>
         </NuxtLink>
@@ -27,7 +35,7 @@
             <div class="sub-menu-header">{{ item.name }}</div>
             <ul class="sub-category-list">
               <li v-for="child in item.children" :key="child.id">
-                <NuxtLink :to="`/homepage?categoryId=${child.id}&categoryName=${encodeURIComponent(child.name)}`" class="sub-category-item">
+                <NuxtLink :to="`/homepage?categoryId=${child.id}&categoryName=${encodeURIComponent(child.name)}`" class="sub-category-item" @click="closeMobileMenu">
                   {{ child.name }}
                 </NuxtLink>
               </li>
@@ -42,6 +50,7 @@
         v-if="hasMoreCategories"
         class="view-more"
         to="/so-do-website"
+        @click="closeMobileMenu"
       >
         Xem thêm chuyên mục
       </NuxtLink>
@@ -50,10 +59,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCategories } from '~/composables/useCategories'
+import { useImageGuard } from '~/composables/useImageGuard'
+import { useMobileMenu } from '~/composables/useMobileMenu'
 
 const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
+const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
+const route = useRoute()
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
@@ -105,6 +120,16 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 onMounted(() => {
   fetchCategories()
 })
+
+// Close menu whenever the route changes
+watch(() => route.path, () => {
+  closeMobileMenu()
+})
+
+// Also close menu on query change
+watch(() => route.query, () => {
+  closeMobileMenu()
+}, { deep: true })
 </script>
 
 <style scoped>
@@ -121,10 +146,26 @@ onMounted(() => {
 .sidebar-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   padding: 10px 12px;
   border-bottom: 1px solid #e2e2e2;
   color: #222;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
 }
 
 .sidebar-title h3 {
@@ -173,8 +214,18 @@ onMounted(() => {
 
 .item-icon {
   width: 24px;
-  text-align: center;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+.item-icon-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .item-name {
@@ -262,15 +313,28 @@ onMounted(() => {
 
 @media (max-width: 1024px) {
   .app-sidebar {
-    width: 100%;
-    align-self: stretch;
-    border-right: none;
-    border-bottom: 1px solid #d8d8d8;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 320px;
+    max-width: 85vw;
+    height: 100vh;
+    z-index: 2000;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .app-sidebar.is-mobile-open {
+    left: 0;
+  }
+
+  .close-btn {
+    display: block;
   }
 
   .category-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: block;
   }
 
   .category-item {

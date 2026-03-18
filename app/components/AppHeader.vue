@@ -1,15 +1,11 @@
 <template>
   <header class="app-header">
-    <div class="top-strip" :class="{ 'is-hidden': isScrolled }">
-      <div class="container top-strip-inner">
-        <p class="top-copy">CÔNG TY ĐIỆN MÁY TUẤN MINH | Chất lượng khẳng định thương hiệu</p>
-        <p class="top-price">Tuấn Minh - Điện Máy</p>
-      </div>
-    </div>
-
     <div class="main-strip">
         <div class="container header-inner">
         <div class="header-left" :class="{ 'with-main-offset': alignWithMain }">
+          <button class="mobile-menu-btn" @click="toggleMobileMenu" aria-label="Hiện danh mục">
+            <i class="fa-solid fa-bars"></i>
+          </button>
           <NuxtLink to="/" class="logo-link" aria-label="Trang chủ">
             <img class="logo-image" src="/favicon.jpg" alt="Logo" />
           </NuxtLink>
@@ -25,7 +21,10 @@
                 @focus="handleFocus"
               />
             </div>
-            <button type="submit" class="search-btn">Tìm kiếm</button>
+            <button type="submit" class="search-btn">
+              <span class="desktop-text">Tìm kiếm</span>
+              <i class="fa-solid fa-magnifying-glass mobile-icon"></i>
+            </button>
           </form>
           <SearchDropdown 
             :is-open="isSearchOpen" 
@@ -56,7 +55,7 @@
               </div>
             </div>
           </div>
-          <NuxtLink class="action-item" to="/auth/login">
+          <NuxtLink class="action-item login-item" to="/auth/login">
             <span class="action-icon"><i class="fa-solid fa-user"></i></span>
             <span class="action-label">Đăng nhập</span>
           </NuxtLink>
@@ -70,8 +69,10 @@
 
 <script setup>
 import { ref, watch, inject, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import AppCartModal from '~/components/AppCartModal.vue'
 import { useCart } from '~/composables/useCart'
+import { useMobileMenu } from '~/composables/useMobileMenu'
 
 defineProps({
   alignWithMain: {
@@ -81,11 +82,12 @@ defineProps({
 })
 
 const { totalItems } = useCart()
+const { toggleMobileMenu } = useMobileMenu()
+const router = useRouter()
 
 const emit = defineEmits(['search-toggle'])
 
 const isCartOpen = ref(false)
-const isScrolled = ref(false)
 
 const searchState = inject('searchState', null)
 const isSearchOpen = searchState ? searchState.isSearchOpen : ref(false)
@@ -120,10 +122,20 @@ const saveSearch = () => {
   try {
     localStorage.setItem('recent_searches', JSON.stringify(recentSearches.value))
   } catch(e) {}
+  
+  // Navigate to catalog page with search parameter
+  router.push({
+    path: '/homepage',
+    query: { searchName: query }
+  })
+  
+  // Close the search dropdown after submitting
+  isSearchOpen.value = false
 }
 
 const handleSelectRecent = (query) => {
   searchQuery.value = query
+  saveSearch()
 }
 
 watch(isSearchOpen, (newVal) => {
@@ -146,20 +158,13 @@ const handleCloseSearch = () => {
   searchQuery.value = ''
 }
 
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 0
-}
-
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  handleScroll()
   loadRecentSearches()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -170,45 +175,8 @@ onBeforeUnmount(() => {
   z-index: 1000;
 }
 
-.top-strip {
-  background: linear-gradient(90deg, #0052cc, #007aff, #0052cc);
-  color: #fff;
-  max-height: 50px;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  overflow: hidden;
-  opacity: 1;
-}
-
-.top-strip.is-hidden {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.top-strip-inner {
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-weight: 700;
-}
-
-.top-copy {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.top-price {
-  font-size: 16px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 999px;
-  padding: 6px 14px;
-}
-
 .main-strip {
-  background: #e31b1b;
+  background: linear-gradient(90deg, #0052cc, #007aff, #0052cc);
   color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
@@ -229,6 +197,17 @@ onBeforeUnmount(() => {
 .header-left.with-main-offset {
   width: var(--sidebar-w, 250px);
   min-width: var(--sidebar-w, 250px);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-right: 4px;
 }
 
 .logo-link {
@@ -288,6 +267,10 @@ onBeforeUnmount(() => {
   width: 112px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.mobile-icon {
+  display: none;
 }
 
 .header-actions {
@@ -400,10 +383,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1200px) {
-  .top-strip {
-    display: none;
-  }
-
   .header-inner {
     flex-wrap: nowrap;
     padding: 10px 0;
@@ -428,45 +407,89 @@ onBeforeUnmount(() => {
   .action-item {
     font-size: 14px;
   }
+
+  .mobile-menu-btn {
+    display: block;
+  }
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    z-index: 1100 !important;
+  }
+
+  /* To prevent content from jumping under fixed header */
+  :root {
+    --header-height: 48px;
+  }
+
   .header-inner {
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 0;
+    gap: 4px; /* Reduced gap to fit all items */
+    padding: 6px 4px; /* Add small padding so icons don't touch edge */
+    min-height: 48px; /* Override desktop min-height */
+  }
+
+  .hotline-wrapper {
+    display: none;
+  }
+  
+  .login-item {
+    display: inline-flex;
+  }
+
+  .header-left {
+    order: 1;
+    flex: 0 0 auto;
   }
 
   .header-search-container {
     order: 2;
-    flex: 1;
+    flex: 1 1 auto; /* Grow to fill space but allow shrinking */
     min-width: 0;
-    max-width: none;
+    max-width: 100%; 
+    margin: 0 10px; /* Add margin to shrink the search container slightly */
+  }
+
+  .header-actions {
+    order: 3;
+    flex: 0 0 auto; /* Never shrink or grow, keep exact width */
+    gap: 6px; /* Reduced gap */
   }
 
   .header-search {
-    height: 34px;
+    height: 30px; /* Shorter search box */
+    border-radius: 15px; /* Pill shape makes it look more compact */
   }
 
   .search-btn {
-    display: none; /* Hide 'Tìm kiếm' text button on mobile */
+    width: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
   }
 
-  /* Show a search icon instead or just let them tap enter */
-  .input-wrapper::after {
-    content: "🔍";
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+  .desktop-text {
+    display: none;
+  }
+
+  .mobile-icon {
+    display: block;
+    font-size: 14px;
     color: #666;
-    pointer-events: none;
   }
 
   .logo-image {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    border-width: 1px;
   }
 
   .action-item {
@@ -481,9 +504,15 @@ onBeforeUnmount(() => {
     font-size: 20px;
   }
 
+  .mobile-menu-btn {
+    font-size: 20px;
+    padding: 2px 4px;
+    margin-right: 2px;
+  }
+
   .input-wrapper input {
-    font-size: 13px;
-    padding-right: 30px;
+    font-size: 12px;
+    padding: 0 8px;
   }
 }
 </style>

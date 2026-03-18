@@ -349,4 +349,41 @@
   margin-bottom: 10px;
   line-height: 1.5;
 }
+
+@media (max-width: 992px) {
+  .links-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  .company-details-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .badges-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    text-align: left;
+  }
+  .badge-item {
+    justify-content: flex-start;
+  }
+  
+  .links-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .app-download-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .bct-logo {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
 </style>

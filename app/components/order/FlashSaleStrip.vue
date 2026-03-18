@@ -13,7 +13,7 @@
 
     <div class="flash-grid-wrapper">
       <div class="flash-grid" ref="scrollContainer">
-        <article v-for="item in items" :key="item.title" class="flash-card">
+        <NuxtLink v-for="item in items" :key="item.title" :to="`/san-pham/${item.slug}`" class="flash-card">
           <div v-if="item.discountPercent" class="discount-ribbon">{{ item.discountPercent }}</div>
 
           <div class="thumb">
@@ -43,7 +43,7 @@
               <span class="stock-val">Còn <strong>{{ item.stock }}</strong></span>
             </div>
           </div>
-        </article>
+        </NuxtLink>
       </div>
     </div>
   </section>
@@ -66,13 +66,38 @@ const discountValue = (discount: string | null, price: number, oldPrice: number 
   return number
 }
 
+const getDeterministicDiscount = (item: any) => {
+  const idStr = String(item.id || item.title.length + '-' + item.title.charCodeAt(0))
+  const hash = idStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return (hash % 21) + 10
+}
+
 const formatDiscount = (item: any) => {
   if (item.discount) {
      const match = item.discount.match(/-?\d+\s*%/)
      if (match) return match[0].replace(/\s+/g, '')
   }
-  if (item.oldPrice) return '-15%'
-  return '-12%'
+  
+  if (item.oldPrice && item.price) {
+    const p = typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^\d]/g, ''))
+    const o = typeof item.oldPrice === 'number' ? item.oldPrice : Number(String(item.oldPrice).replace(/[^\d]/g, ''))
+    if (o > p && p > 0) {
+      return `-${Math.round(((o - p) / o) * 100)}%`
+    }
+  }
+
+  return `-${getDeterministicDiscount(item)}%`
+}
+
+const getOldPriceVal = (item: any) => {
+  if (item.oldPrice && item.oldPrice > item.price) return item.oldPrice;
+  const priceNum = typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^\d]/g, ''))
+  if (priceNum > 0) {
+    const d = getDeterministicDiscount(item);
+    const factor = 1 - (d / 100)
+    return Math.round((priceNum / factor) / 1000) * 1000;
+  }
+  return null;
 }
 
 const items = computed(() => {
@@ -83,10 +108,11 @@ const items = computed(() => {
     .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
     .slice(0, 10)
     .map((item, idx) => ({
+      slug: item.slug,
       title: item.title,
       brand: item.brand || 'Sunhouse',
       price: item.price,
-      oldPrice: item.oldPrice,
+      oldPrice: getOldPriceVal(item),
       discountPercent: formatDiscount(item),
       endIn: `${Math.max(3, 20 - idx * 2)} ngày`,
       stock: Math.max(2, 18 - idx * 2),
@@ -200,6 +226,13 @@ const formatPrice = (value: number | null) => {
   position: relative;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.flash-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .discount-ribbon {
