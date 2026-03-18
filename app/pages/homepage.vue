@@ -3,8 +3,23 @@
     <div class="container">
       <div class="breadcrumb">
         <NuxtLink to="/">Trang chủ</NuxtLink> 
-        <span class="separator">›</span> 
-        <span class="current">{{ currentCategory || 'Danh mục sản phẩm' }}</span>
+        
+        <template v-if="breadcrumbPath.length > 0">
+          <span v-for="(bc, index) in breadcrumbPath" :key="bc.id" class="breadcrumb-item">
+            <span class="separator">›</span>
+            <NuxtLink 
+              v-if="index < breadcrumbPath.length - 1" 
+              :to="`/homepage?categoryId=${bc.id}&categoryName=${encodeURIComponent(bc.name)}`"
+            >
+              {{ bc.name === 'Máy Cưa Xăng' ? 'Máy Cưa' : bc.name }}
+            </NuxtLink>
+            <span v-else class="current">{{ bc.name === 'Máy Cưa Xăng' ? 'Máy Cưa' : bc.name }}</span>
+          </span>
+        </template>
+        <template v-else>
+          <span class="separator">›</span> 
+          <span class="current">{{ currentCategory === 'Máy Cưa Xăng' ? 'Máy Cưa' : (currentCategory || 'Danh mục sản phẩm') }}</span>
+        </template>
       </div>
       
       <div class="category-layout">
@@ -39,6 +54,7 @@
             
             <div class="top-filters">
               <CategoryBrandFilter 
+                v-model="selectedBrands"
                 :available-products="allCategoryProducts"
                 @brand-toggled="onTopBrandToggled"
               />
@@ -68,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 import { useCategories, type Category } from '~/composables/useCategories'
@@ -114,6 +130,29 @@ const subCategories = computed<Category[]>(() => {
   return selectedCat?.children || []
 })
 
+// Calculate the full breadcrumb path from root down to active category
+const breadcrumbPath = computed<Category[]>(() => {
+  if (!categories.value.length) return []
+  const cid = Number(categoryId.value)
+  if (!cid) return []
+  
+  let path: Category[] = []
+  const findPath = (list: Category[], currentPath: Category[]): boolean => {
+    for (const c of list) {
+      const newPath = [...currentPath, c]
+      if (c.id === cid) {
+        path = newPath
+        return true
+      }
+      if (c.children && findPath(c.children, newPath)) return true
+    }
+    return false
+  }
+  
+  findPath(categories.value, [])
+  return path
+})
+
 // Get all products that belong to this category OR any of its subcategories
 const allCategoryProducts = computed(() => {
   if (!products.value) return []
@@ -135,7 +174,17 @@ const allCategoryProducts = computed(() => {
 })
 
 // Filtering & Sorting State
-const selectedBrands = ref<string[]>([])
+const initialBrand = route.query.brand as string | undefined
+const selectedBrands = ref<string[]>(initialBrand ? [initialBrand] : [])
+
+watch(() => route.query.brand, (newBrand) => {
+  if (newBrand) {
+    selectedBrands.value = [newBrand as string]
+  } else if (!route.query.categoryId) {
+    // Optional: if navigation clears it
+    selectedBrands.value = []
+  }
+})
 const selectedPrices = ref<string[]>([])
 const currentSort = ref<string>('best_selling')
 

@@ -66,7 +66,7 @@ const randomProducts = computed(() => {
 
 .section-head h3 {
   margin: 0;
-  font-size: 36px;
+  font-size: 24px;
   color: #e31b1b;
   text-transform: uppercase;
   font-weight: 700;
@@ -87,7 +87,7 @@ const randomProducts = computed(() => {
 
 @media (max-width: 1200px) {
   .section-head h3 {
-    font-size: 26px;
+    font-size: 20px;
   }
   .product-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -106,7 +106,7 @@ const randomProducts = computed(() => {
     gap: 8px;
   }
   .section-head h3 {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 </style>

@@ -7,13 +7,14 @@
     </div>
 
     <div class="brands-grid">
-      <div 
+      <NuxtLink 
         v-for="(brand, index) in topBrands" 
         :key="index" 
+        :to="`/homepage?brand=${encodeURIComponent(brand)}`"
         class="brand-item"
       >
         <span class="brand-text" :style="{ color: getBrandColor(brand) }">{{ brand }}</span>
-      </div>
+      </NuxtLink>
     </div>
   </section>
 </template>
@@ -21,52 +22,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const { products } = useHomeProducts()
-
 const topBrands = computed(() => {
-  if (!products.value) return []
-  
-  // Extract unique brands from product titles 
-  // (Assuming first word or specific patterns could be brands if no explicit brand field exists)
-  // For better visual, we'll use a mix of extracted and common hardcoded brands if needed
-  
-  const extracted = new Set<string>()
-  products.value.forEach(p => {
-    if (p.title) {
-      const firstWord = p.title.split(' ')[0]
-      if (firstWord && firstWord.length > 2 && firstWord.length < 12) {
-        extracted.add(firstWord.toUpperCase())
-      }
-    }
-  })
-  
-  let brandsList = Array.from(extracted)
-  
-  // Fallback to some common brands if not enough extracted
-  const commonBrands = [
-    'SUNHOUSE', 'BOSCH', 'LG', 'SHARP', 'SAMSUNG', 
-    'PANASONIC', 'TOSHIBA', 'MAKITA', 'PHILIPS', 'FUNIKI',
-    'AQUA', 'HITACHI', 'CASPER', 'DAIKIN'
-  ]
-  
-  if (brandsList.length < 14) {
-    brandsList = [...new Set([...brandsList, ...commonBrands])]
-  }
-  
-  return brandsList.slice(0, 14)
+  return [
+    'BENLEY', 'CX', 'GX', 'HUPANDA', 'HUQAMA',
+    'HUQUAMA', 'HUSPANDA', 'HUSPRO', 'HUSQAMA', 'HUSTIHL', 'KAMASTSU'
+  ].slice(0, 12);
 })
 
 const getBrandColor = (brand: string) => {
   const b = brand.toLowerCase()
-  if (b.includes('bosch') || b.includes('sunhouse') || b.includes('sharp')) return '#e31b1b' // Red
-  if (b.includes('philips') || b.includes('panasonic') || b.includes('samsung')) return '#0033cc' // Blue
-  if (b.includes('makita')) return '#008b8b' // Teal
-  if (b.includes('lg')) return '#a50034' // LG red
-  
-  // Random color based on string hash for others
-  const hash = brand.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colors = ['#e31b1b', '#0033cc', '#333333', '#008b8b', '#ff6600', '#4a148c']
-  return colors[hash % colors.length]
+  if (b.includes('benley') || b.includes('gx') || b.includes('hupanda')) return '#008b8b' // Teal
+  if (b.includes('cx') || b.includes('huspro') || b.includes('husqama') || b.includes('hustihl') || b.includes('kamastsu')) return '#4a148c' // Purple-ish
+  if (brand === 'HUSQAMA') return '#da251d' // Red
+  if (brand === 'HUQAMA' || brand === 'HUQUAMA') return '#0033cc' // Blue
+  return '#333333' // Default
 }
 </script>
 
@@ -94,38 +63,49 @@ const getBrandColor = (brand: string) => {
 
 .brands-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 20px;
-  gap: 20px 10px;
+  gap: 12px;
 }
 
 .brand-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 60px;
-  padding: 10px;
+  height: 48px;
+  padding: 8px;
   text-align: center;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  text-decoration: none;
+  background: #fff;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.brand-item:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .brand-text {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  font-family: 'Arial Black', Impact, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-family: 'Arial', sans-serif;
   text-transform: uppercase;
 }
 
 @media (max-width: 1200px) {
-  .brands-grid { grid-template-columns: repeat(5, 1fr); }
-}
-
-@media (max-width: 900px) {
   .brands-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
   .brands-grid { grid-template-columns: repeat(3, 1fr); }
-  .brand-text { font-size: 16px; }
+}
+
+@media (max-width: 600px) {
+  .brands-grid { grid-template-columns: repeat(2, 1fr); gap: 8px;}
+  .brand-text { font-size: 13px; }
+  .brand-item { height: 42px; }
 }
 </style>

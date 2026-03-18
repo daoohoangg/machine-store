@@ -136,7 +136,7 @@
         </div>
         
         <div class="meta-footer">
-          <p>META.vn - Điện Máy Giá Cực Tốt, 19 Năm Uy Tín Bán Hàng Toàn Quốc</p>
+          <p>Tuấn Minh</p>
           <a href="#">Xem thêm chi tiết <i class="fa-solid fa-chevron-down"></i></a>
         </div>
       </div>

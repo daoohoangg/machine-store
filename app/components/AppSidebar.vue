@@ -37,13 +37,15 @@
       </li>
     </ul>
 
-    <NuxtLink
-      v-if="hasMoreCategories"
-      class="view-more"
-      to="/so-do-website"
-    >
-      Xem thêm chuyên mục
-    </NuxtLink>
+    <ClientOnly>
+      <NuxtLink
+        v-if="hasMoreCategories"
+        class="view-more"
+        to="/so-do-website"
+      >
+        Xem thêm chuyên mục
+      </NuxtLink>
+    </ClientOnly>
   </aside>
 </template>
 

@@ -17,15 +17,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
-  availableProducts: { type: Array, default: () => [] }
+  availableProducts: { type: Array, default: () => [] },
+  modelValue: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['brand-toggled'])
-const selectedBrands = ref<string[]>([])
+const emit = defineEmits(['update:modelValue', 'brand-toggled'])
+const selectedBrands = ref<string[]>([...props.modelValue as string[]])
 const expandBrands = ref(false)
+
+// Sync with parent when it changes externally (e.g. from route)
+watch(() => props.modelValue, (newVal) => {
+  selectedBrands.value = [...newVal as string[]]
+}, { deep: true, immediate: true })
 
 const toggleBrand = (name: string) => {
   const index = selectedBrands.value.indexOf(name)
@@ -34,6 +40,7 @@ const toggleBrand = (name: string) => {
   } else {
     selectedBrands.value.splice(index, 1)
   }
+  emit('update:modelValue', [...selectedBrands.value])
   emit('brand-toggled', [...selectedBrands.value])
 }
 
@@ -55,7 +62,10 @@ const brands = computed(() => {
     }
   })
   
-  return Array.from(brandSet).map(name => ({ name })).sort((a, b) => a.name.localeCompare(b.name))
+  return Array.from(brandSet)
+    .filter(name => /^[A-Z0-9\s\-\.]+$/i.test(name))
+    .map(name => ({ name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const displayBrands = computed(() => {

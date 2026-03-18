@@ -30,8 +30,9 @@ const isSearchOpen = ref(false)
 const isHomePage = computed(() => route.path === '/')
 
 const showSidebar = computed(() => {
-  // Hide sidebar on product detail page
+  // Hide sidebar on product detail page and category page
   if (route.path.startsWith('/san-pham/')) return false
+  if (route.path.startsWith('/homepage')) return false
   return true
 })
 

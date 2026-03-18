@@ -16,12 +16,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
-  const token = config.public.abahaToken
+
+  const forwardQuery: Record<string, any> = { ...query, token: config.public.abahaToken }
+  delete forwardQuery.path
 
   try {
     const response = await $fetch(`${config.public.abahaApiBaseUrl}${cleanPath}`, {
       method: 'POST',
-      query: { token },
+      query: forwardQuery,
       body,
       headers: {
         'Content-Type': 'application/json'

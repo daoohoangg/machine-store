@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + Buffer.from(accessToken + ':x').toString('base64')
+        'Authorization': 'Basic ' + btoa(accessToken + ':x')
       },
       body: {
         to: [phone],

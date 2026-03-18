@@ -90,8 +90,10 @@ const handleLoadMore = async () => {
 
 .section-head h3 {
   margin: 0;
-  font-size: 36px;
+  font-size: 24px;
   color: #222;
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .product-grid {
@@ -124,7 +126,7 @@ const handleLoadMore = async () => {
 
 @media (max-width: 1200px) {
   .section-head h3 {
-    font-size: 26px;
+    font-size: 20px;
   }
 
   .product-grid {
@@ -143,7 +145,7 @@ const handleLoadMore = async () => {
   }
 
   .section-head h3 {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 </style>

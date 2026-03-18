@@ -14,6 +14,8 @@
     <div class="flash-grid-wrapper">
       <div class="flash-grid" ref="scrollContainer">
         <article v-for="item in items" :key="item.title" class="flash-card">
+          <div v-if="item.discountPercent" class="discount-ribbon">{{ item.discountPercent }}</div>
+
           <div class="thumb">
             <img
               v-if="item.image"
@@ -25,13 +27,21 @@
             <div v-else class="thumb-placeholder"></div>
           </div>
 
-          <p class="title">{{ item.title }}</p>
-          <p class="brand">{{ item.brand || 'Tuấn Minh' }}</p>
+          <div class="card-info">
+            <p class="title">{{ item.title }}</p>
+            <p class="brand">{{ item.brand || 'Sunhouse' }}</p>
+          </div>
 
           <div class="price-box">
-            <strong>{{ formatPrice(item.price) }}đ</strong>
-            <small v-if="item.oldPrice">{{ formatPrice(item.oldPrice) }}đ</small>
-            <span class="countdown">Kết thúc sau {{ item.endIn }}</span>
+            <div class="price-col">
+              <strong>{{ formatPrice(item.price) }}đ</strong>
+              <small v-if="item.oldPrice">{{ formatPrice(item.oldPrice) }}đ</small>
+            </div>
+            <div class="countdown-col">
+              <span class="countdown-label">Kết thúc sau</span>
+              <span class="countdown-val">{{ item.endIn }}</span>
+              <span class="stock-val">Còn <strong>{{ item.stock }}</strong></span>
+            </div>
           </div>
         </article>
       </div>
@@ -48,7 +58,6 @@ const { products } = useHomeProducts()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const scrollContainer = ref<HTMLElement | null>(null)
 
-const hasDiscount = (discount: string | null) => Boolean(discount && discount.trim())
 const discountValue = (discount: string | null, price: number, oldPrice: number | null) => {
   if (oldPrice && oldPrice > price) return oldPrice - price
   if (!discount) return 0
@@ -57,26 +66,37 @@ const discountValue = (discount: string | null, price: number, oldPrice: number 
   return number
 }
 
+const formatDiscount = (item: any) => {
+  if (item.discount) {
+     const match = item.discount.match(/-?\d+\s*%/)
+     if (match) return match[0].replace(/\s+/g, '')
+  }
+  if (item.oldPrice) return '-15%'
+  return '-12%'
+}
+
 const items = computed(() => {
   if (!products.value.length) return []
 
   return products.value
-    .filter((item) => (hasDiscount(item.discount) || (item.oldPrice || 0) > item.price) && !isImageFailed(item.image))
+    .filter((item) => !isImageFailed(item.image))
     .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
     .slice(0, 10)
     .map((item, idx) => ({
       title: item.title,
-      brand: item.brand || 'Tuấn Minh',
+      brand: item.brand || 'Sunhouse',
       price: item.price,
       oldPrice: item.oldPrice,
+      discountPercent: formatDiscount(item),
       endIn: `${Math.max(3, 20 - idx * 2)} ngày`,
+      stock: Math.max(2, 18 - idx * 2),
       image: item.image
     }))
 })
 
 const scroll = (direction: 'left' | 'right') => {
   if (!scrollContainer.value) return
-  const scrollAmount = 600 // Scroll by approximately 3-4 cards
+  const scrollAmount = 600
   const currentScroll = scrollContainer.value.scrollLeft
   scrollContainer.value.scroll({
     left: direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount,
@@ -93,8 +113,8 @@ const formatPrice = (value: number | null) => {
 <style scoped>
 .flash-sale {
   margin-top: 12px;
-  border: 1px solid #4f8edb;
-  background: #4f8edb;
+  background: #4d90e0;
+  border-radius: 4px;
 }
 
 .flash-head {
@@ -108,12 +128,13 @@ const formatPrice = (value: number | null) => {
 .flash-head h3 {
   margin: 0;
   font-size: 24px;
+  color: #fff;
 }
 
 .flash-head a {
   color: #fff;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 15px;
 }
 
@@ -129,9 +150,9 @@ const formatPrice = (value: number | null) => {
 }
 
 .nav-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #fff;
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #333;
   border-radius: 50%;
   width: 28px;
   height: 28px;
@@ -146,8 +167,7 @@ const formatPrice = (value: number | null) => {
 }
 
 .nav-btn:hover {
-  background: #fff;
-  color: #4f8edb;
+  background: #f1f1f1;
 }
 
 .flash-grid-wrapper {
@@ -159,8 +179,8 @@ const formatPrice = (value: number | null) => {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  gap: 8px;
-  padding: 0 8px 8px;
+  gap: 12px;
+  padding: 0 4px 8px;
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
@@ -171,21 +191,45 @@ const formatPrice = (value: number | null) => {
 }
 
 .flash-card {
-  flex: 0 0 calc(16.666% - 6.66px); /* 6 items per view */
-  min-width: 160px;
+  flex: 0 0 calc(20% - 9.6px); /* 5 items per view */
+  min-width: 200px;
   background: #fff;
+  border: 2px solid #3b82f6; /* Blue border */
   border-radius: 4px;
   overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.discount-ribbon {
+  position: absolute;
+  top: 10px;
+  right: -24px;
+  background: #da251d;
+  color: #fff;
+  padding: 2px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  transform: rotate(45deg);
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  text-align: center;
+  width: 90px;
 }
 
 .thumb {
-  height: 178px;
+  height: 200px;
   background: #fff;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .thumb img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   display: block;
 }
@@ -196,98 +240,113 @@ const formatPrice = (value: number | null) => {
   background: linear-gradient(145deg, #f4f4f4, #cdcdcd);
 }
 
+.card-info {
+  padding: 0 10px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .title {
-  min-height: 38px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
   font-size: 14px;
-  color: #1f1f1f;
-  line-height: 1.35;
-  margin: 8px 8px 2px;
+  color: #da251d; /* Red title */
+  line-height: 1.4;
+  height: 39.2px; /* 2 lines of text */
+  margin: 0 0 6px;
+  font-weight: 400;
 }
 
 .brand {
-  color: #1e7dd7;
+  color: #0073e6;
   font-size: 13px;
-  margin: 0 8px 8px;
+  margin: auto 0 8px;
 }
 
 .price-box {
-  background: #df1d1d;
+  background: #da251d; /* Red box */
   color: #fff;
-  padding: 8px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 0 4px 4px; /* Small gap from border */
+  border-radius: 2px;
 }
 
-.price-box strong {
-  display: block;
-  font-size: 20px;
-  font-weight: 800;
+.price-col {
+  display: flex;
+  flex-direction: column;
 }
 
-.price-box small {
+.price-col strong {
   display: block;
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.price-col small {
+  display: block;
+  font-size: 11px;
   text-decoration: line-through;
   opacity: 0.9;
+  margin-top: 2px;
 }
 
-.countdown {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
+.countdown-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
+  line-height: 1.3;
+}
+
+.countdown-label {
+  font-size: 11px;
+}
+
+.countdown-val {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stock-val {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.stock-val strong {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 @media (max-width: 1200px) {
   .flash-card {
-    flex: 0 0 calc(33.333% - 5.33px); /* 3 items per view */
+    flex: 0 0 calc(25% - 9px); /* 4 items per view */
   }
 
-  .flash-head h3 {
-    font-size: 22px;
-  }
-
-  .flash-head a {
-    font-size: 16px;
-  }
-
-  .title {
-    font-size: 14px;
-    min-height: 48px;
-  }
-
-  .brand {
-    font-size: 13px;
-  }
-
-  .price-box strong {
-    font-size: 18px;
-  }
-
-  .price-box small {
-    font-size: 12px;
-  }
-
-  .countdown {
-    font-size: 12px;
+  .thumb {
+    height: 160px;
   }
 }
 
 @media (max-width: 768px) {
   .flash-card {
-    flex: 0 0 calc(80% - 4px); /* Show 1 full item and part of the next */
-    min-width: 240px;
+    flex: 0 0 calc(60% - 6px);
+    min-width: 180px;
   }
 
   .nav-buttons {
     display: none;
   }
 
-  .thumb {
-    height: 130px;
+  .price-col strong {
+    font-size: 14px;
   }
 }
 </style>
+
