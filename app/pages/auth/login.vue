@@ -9,7 +9,9 @@
           <span>MIỄN PHÍ<br/>VẬN CHUYỂN</span>
           <span>GIAO HÀNG<br/>TOÀN QUỐC</span>
         </div>
-        <div class="hero-appliances"></div>
+        <div class="hero-appliances">
+          <img src="~/assets/img/banner/2.jpg" alt="Banner Tuấn Minh" />
+        </div>
       </div>
 
       <div class="form-card">
@@ -139,12 +141,14 @@ const verifyOtp = async () => {
 .hero-appliances {
   margin: 20px auto 0;
   width: min(560px, 100%);
-  height: 300px;
   border-radius: 18px;
-  background:
-    radial-gradient(circle at 20% 20%, #ffe082 0 12%, transparent 13%),
-    radial-gradient(circle at 80% 30%, #80d8ff 0 15%, transparent 16%),
-    linear-gradient(150deg, #fff, #d8e6ff);
+  overflow: hidden;
+}
+
+.hero-appliances img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .form-card {
