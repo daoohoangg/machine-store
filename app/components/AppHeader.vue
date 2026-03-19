@@ -41,6 +41,24 @@
         </div>
 
         <div class="header-actions">
+          <a class="action-item hotline-item" :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')">
+            <span class="action-icon"><i class="fa-solid fa-phone-volume"></i></span>
+            <span class="action-label hl-label">
+              <span class="hl-text">Hotline</span>
+              <span class="hl-number">{{ settings.hotline }}</span>
+            </span>
+          </a>
+
+          <NuxtLink class="action-item" to="/chinh-sach">
+            <span class="action-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <span class="action-label">Chính sách</span>
+          </NuxtLink>
+
+          <NuxtLink class="action-item" to="/voucher">
+            <span class="action-icon"><i class="fa-solid fa-ticket"></i></span>
+            <span class="action-label">Voucher</span>
+          </NuxtLink>
+
           <button class="action-item" @click="isCartOpen = true">
             <span class="action-icon cart-icon-wrapper">
               <i class="fa-solid fa-cart-shopping"></i>
@@ -49,7 +67,19 @@
             <span class="action-label">Giỏ hàng</span>
           </button>
 
-          <NuxtLink class="action-item login-item" to="/auth/login">
+          <!-- Login or User dropdown -->
+          <div v-if="isAdmin" class="action-item user-dropdown-wrapper">
+            <NuxtLink to="/admin" class="user-trigger">
+              <span class="action-icon"><i class="fa-solid fa-user-shield"></i></span>
+              <span class="action-label">{{ adminName || 'Admin' }}</span>
+            </NuxtLink>
+            <div class="user-dropdown">
+              <NuxtLink to="/admin" class="dropdown-item"><i class="fa-solid fa-gear"></i> Trang quản trị</NuxtLink>
+              <button class="dropdown-item text-danger" @click="handleAdminLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+            </div>
+          </div>
+
+          <NuxtLink v-else class="action-item login-item" to="/auth/login">
             <span class="action-icon"><i class="fa-solid fa-user"></i></span>
             <span class="action-label">Đăng nhập</span>
           </NuxtLink>
@@ -64,6 +94,20 @@
 <script setup>
 import { ref, watch, inject, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useSiteSettings } from '~/composables/useSiteSettings'
+import { useAdminAuth } from '~/composables/useAdminAuth'
+
+const { settings } = useSiteSettings()
+const { isAdmin, adminName, logout, initAuth } = useAdminAuth()
+
+const handleAdminLogout = () => {
+  logout()
+  const router = useRouter()
+  if (router.currentRoute.value.path === '/admin') {
+    router.push('/')
+  }
+}
+
 import AppCartModal from '~/components/AppCartModal.vue'
 import { useCart } from '~/composables/useCart'
 import { useMobileMenu } from '~/composables/useMobileMenu'
@@ -153,6 +197,7 @@ const handleCloseSearch = () => {
 }
 
 onMounted(() => {
+  initAuth()
   document.addEventListener('click', handleClickOutside)
   loadRecentSearches()
 })
@@ -298,11 +343,132 @@ onBeforeUnmount(() => {
   gap: 6px;
   cursor: pointer;
   font-size: 14px;
+  text-decoration: none;
+}
+
+.hl-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.hl-text {
+  transition: opacity 0.3s;
+}
+.hl-number {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  opacity: 0;
+  visibility: hidden;
+  color: #fff;
+  background: #e31b1b;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+.hl-number::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #e31b1b transparent;
+}
+.hotline-item:hover .hl-number {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(12px);
 }
 
 .action-icon {
   font-size: 22px;
   line-height: 1;
+  width: 28px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.user-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+}
+
+.user-trigger {
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 8px 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s;
+  z-index: 100;
+  border: 1px solid #eee;
+}
+
+.user-dropdown-wrapper:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: block;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dropdown-item i {
+  width: 20px;
+  text-align: center;
+  margin-right: 8px;
+  color: #888;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+  color: #0066cc;
+}
+
+.dropdown-item.text-danger {
+  color: #e31b1b;
+}
+
+.dropdown-item.text-danger:hover {
+  background: #fff0f0;
 }
 
 .cart-icon-wrapper {
@@ -440,9 +606,14 @@ onBeforeUnmount(() => {
     display: none;
   }
 
-  .action-icon {
-    font-size: 20px;
+  .hide-on-mobile-action {
+    display: none !important;
   }
+
+  .action-icon {
+  font-size: 20px;
+  width: 24px;
+}
 
   .mobile-menu-btn {
     font-size: 20px;

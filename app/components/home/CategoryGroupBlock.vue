@@ -7,12 +7,6 @@
 
 
 
-    <!-- Outstanding products header -->
-    <div class="cb-product-header">
-      <h3 class="cb-subtitle">{{ category.name }} nổi bật</h3>
-      <NuxtLink :to="`/homepage?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`" class="cb-product-view-all">Xem tất cả sản phẩm</NuxtLink>
-    </div>
-
     <div class="cb-products" v-if="categoryProducts.length > 0">
       <ProductCard
         v-for="product in categoryProducts"
@@ -153,33 +147,7 @@ const categoryProducts = computed(() => {
   line-height: 1.3;
 }
 
-.cb-product-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-}
 
-.cb-subtitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  margin: 0;
-}
-
-.cb-product-view-all {
-  background: #ff9800;
-  color: #fff;
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-.cb-product-view-all:hover {
-  background: #f57c00;
-}
 
 .cb-products {
   display: grid;
@@ -217,6 +185,5 @@ const categoryProducts = computed(() => {
   .cb-subcat-item:nth-child(4n) { border-right: 1px solid #f0f0f0; }
   .cb-subcat-item:nth-child(3n) { border-right: none; }
   .cb-title { font-size: 15px; }
-  .cb-subtitle { font-size: 15px; }
 }
 </style>

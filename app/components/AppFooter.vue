@@ -1,3 +1,8 @@
+<script setup>
+import { useSiteSettings } from '~/composables/useSiteSettings'
+const { settings } = useSiteSettings()
+</script>
+
 <template>
   <footer class="app-footer">
     <div class="container">
@@ -25,8 +30,8 @@
           <h5>Tổng đài hỗ trợ</h5>
           <div class="contact-block">
             <p><strong>📞 Hotline</strong></p>
-            <p>Mua hàng: <a href="tel:0995556969" class="phone-link">0995 556 969</a></p>
-            <p>Kỹ thuật: <a href="tel:0995556969" class="phone-link">0995 556 969</a></p>
+            <p>Mua hàng: <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-link">{{ settings.hotline }}</a></p>
+            <p>Kỹ thuật: <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-link">{{ settings.hotline }}</a></p>
           </div>
           <div class="contact-block">
             <p><strong>🕒 Thời gian</strong></p>
@@ -42,16 +47,10 @@
         <div class="footer-col">
           <h5>Hỗ trợ khách hàng</h5>
           <ul>
-            <li><a href="#">Chính sách và Quy định chung</a></li>
-            <li><a href="#">Hướng dẫn thanh toán</a></li>
-            <li><a href="#">Trả góp qua thẻ</a></li>
-            <li><a href="#">Trả góp của công ty tài chính</a></li>
-            <li><a href="#">Mua trước trả sau</a></li>
-            <li><a href="#">Chính sách Đổi - Trả hàng hóa</a></li>
-            <li><a href="#">Chính sách Bảo hành</a></li>
-            <li><a href="#">Hóa đơn GTGT điện tử</a></li>
-            <li><a href="#">Chính sách bảo mật dữ liệu cá nhân</a></li>
-            <li><a href="#">Tư vấn sản phẩm</a></li>
+            <li><NuxtLink to="/chinh-sach?tab=thanh-toan">Chính Sách Thanh Toán</NuxtLink></li>
+            <li><NuxtLink to="/chinh-sach?tab=khach-hang">Chính Sách Khách Hàng</NuxtLink></li>
+            <li><NuxtLink to="/chinh-sach?tab=doi-tra">Chính Sách Đổi Trả</NuxtLink></li>
+            <li><NuxtLink to="/chinh-sach?tab=giao-hang">Chính Sách Giao Hàng</NuxtLink></li>
           </ul>
         </div>
 
@@ -82,10 +81,10 @@
         <div class="footer-col">
           <h5>Kết nối với chúng tôi</h5>
           <ul class="social-links">
-            <li><a href="#"><img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" /> Zalo</a></li>
-            <li><a href="#"><img src="https://meta.vn/images/icons/facebook-icon.svg" alt="Facebook" class="social-icon-img" /> Facebook</a></li>
-            <li><a href="#"><img src="https://meta.vn/images/icons/youtube-icon.svg" alt="Youtube" class="social-icon-img" /> Youtube</a></li>
-            <li><a href="#"><img src="https://meta.vn/Data/2025/Thang06/tiktok-meta.svg" alt="Tiktok" class="social-icon-img" /> Tiktok</a></li>
+            <li><a :href="settings.zalo"><img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" /> Zalo</a></li>
+            <li><a :href="settings.facebook"><img src="https://meta.vn/images/icons/facebook-icon.svg" alt="Facebook" class="social-icon-img" /> Facebook</a></li>
+            <li><a :href="settings.youtube"><img src="https://meta.vn/images/icons/youtube-icon.svg" alt="Youtube" class="social-icon-img" /> Youtube</a></li>
+            <li><a :href="settings.tiktok"><img src="https://meta.vn/Data/2025/Thang06/tiktok-meta.svg" alt="Tiktok" class="social-icon-img" /> Tiktok</a></li>
           </ul>
           <div class="language-dropdown">
             Ngôn ngữ
@@ -122,9 +121,9 @@
             <p>Giấy chứng nhận ĐKDN số <strong>0102196915</strong> do Sở KH&ĐT TP. Hà Nội cấp ngày 29/03/2007.</p>
           </div>
           <div class="company-address">
-            <p><strong>Địa chỉ:</strong> Thôn Phượng Trì, Xã Văn Giang, Tỉnh Hưng Yên.</p>
-            <p><strong>Điện thoại:</strong> 0995 556 969</p>
-            <p><strong>Email:</strong> lehoang145817629@gmail.com</p>
+            <p><strong>Địa chỉ:</strong> {{ settings.address }}</p>
+            <p><strong>Điện thoại:</strong> {{ settings.hotline }}</p>
+            <p><strong>Email:</strong> {{ settings.email }}</p>
           </div>
         </div>
       </div>
