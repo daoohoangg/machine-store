@@ -7,8 +7,7 @@
       :class="{ active: selectedBrands.includes(brand.name) }"
       @click="toggleBrand(brand.name)"
     >
-      <img v-if="getBrandImage(brand.name)" :src="getBrandImage(brand.name)" alt="" class="brand-icon" />
-      <span v-else class="brand-text" :style="{ color: getBrandColor(brand.name) }">{{ brand.name }}</span>
+      <img :src="getBrandImage(brand.name)" alt="" class="brand-icon" />
     </button>
     
     <button v-if="brands.length > 11" class="brand-btn view-more" @click="expandBrands = !expandBrands">
@@ -45,6 +44,19 @@ const toggleBrand = (name: string) => {
   emit('brand-toggled', [...selectedBrands.value])
 }
 
+// Load all images from the logo directory dynamically
+const brandImages = import.meta.glob('~/assets/img/brand/LOGO WEB/*.{png,jpg,jpeg,svg,webp}', { eager: true, import: 'default' })
+
+const getBrandImage = (brand: string) => {
+  const normalized = brand.toLowerCase();
+  for (const path in brandImages) {
+    if (path.toLowerCase().includes(`/${normalized}.`)) {
+      return brandImages[path] as string;
+    }
+  }
+  return null;
+}
+
 const brands = computed(() => {
   if (!props.availableProducts) return []
   const brandSet = new Set<string>()
@@ -65,6 +77,7 @@ const brands = computed(() => {
   
   return Array.from(brandSet)
     .filter(name => /^[A-Z0-9\s\-\.]+$/i.test(name))
+    .filter(name => getBrandImage(name))
     .map(name => ({ name }))
     .sort((a, b) => a.name.localeCompare(b.name))
 })
@@ -73,30 +86,6 @@ const displayBrands = computed(() => {
   return expandBrands.value ? brands.value : brands.value.slice(0, 11)
 })
 
-// Load all images from the logo directory dynamically
-const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
-
-const getBrandImage = (brand: string) => {
-  const normalized = brand.toLowerCase();
-  for (const path in brandImages) {
-    if (path.toLowerCase().includes(`/${normalized}.`)) {
-      return brandImages[path] as string;
-    }
-  }
-  return null;
-}
-
-const getBrandColor = (brand: string) => {
-  const b = brand.toLowerCase()
-  if (b.includes('bosch') || b.includes('sunhouse') || b.includes('sharp') || b.includes('stanley')) return '#e31b1b'
-  if (b.includes('philips') || b.includes('panasonic') || b.includes('samsung') || b.includes('aqua')) return '#0033cc'
-  if (b.includes('makita')) return '#008b8b'
-  if (b.includes('lg')) return '#a50034'
-  
-  const hash = brand.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colors = ['#e31b1b', '#0033cc', '#333333', '#008b8b', '#ff6600', '#4a148c']
-  return colors[hash % colors.length]
-}
 </script>
 
 <style scoped>

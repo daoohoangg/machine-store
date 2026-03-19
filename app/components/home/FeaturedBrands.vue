@@ -8,13 +8,12 @@
 
     <div class="brands-grid">
       <NuxtLink 
-        v-for="(brand, index) in topBrands" 
+        v-for="(brand, index) in activeBrands" 
         :key="index" 
         :to="`/homepage?brand=${encodeURIComponent(brand)}`"
         class="brand-item"
       >
-        <img v-if="getBrandImage(brand)" :src="getBrandImage(brand)" alt="" class="brand-icon" />
-        <span v-else class="brand-text" :style="{ color: getBrandColor(brand) }">{{ brand }}</span>
+        <img :src="getBrandImage(brand)" alt="" class="brand-icon" />
       </NuxtLink>
     </div>
   </section>
@@ -23,16 +22,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const topBrands = computed(() => {
-  return [
-    'BENLEY', 'CX', 'GX', 'HUPANDA', 'HUQAMA',
-    'HUSPANDA', 'HUSPRO', 'HUSQAMA', 'HUSTIHL', 'KAMASTSU',
-    'KAVANNI', 'KENSI', 'MAXLOCK', 'MITUSI', 'SITILEN', 'SITNL'
-  ];
-})
+const topBrands = [
+  'BENLEY', 'CX', 'GX', 'HUPANDA', 'HUQAMA',
+  'HUSPANDA', 'HUSPRO', 'HUSQAMA', 'HUSTIHL', 'KAMASTSU',
+  'KAVANNI', 'KENSI', 'MAXLOCK', 'MITUSI', 'SITILEN', 'SITNL'
+]
 
 // Load all images from the logo directory dynamically
-const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
+const brandImages = import.meta.glob('~/assets/img/brand/LOGO WEB/*.{png,jpg,jpeg,svg,webp}', { eager: true, import: 'default' })
 
 const getBrandImage = (brand: string) => {
   const normalized = brand.toLowerCase();
@@ -44,14 +41,9 @@ const getBrandImage = (brand: string) => {
   return null;
 }
 
-const getBrandColor = (brand: string) => {
-  const b = brand.toLowerCase()
-  if (b.includes('benley') || b.includes('gx') || b.includes('hupanda')) return '#008b8b' // Teal
-  if (b.includes('cx') || b.includes('huspro') || b.includes('husqama') || b.includes('hustihl') || b.includes('kamastsu')) return '#4a148c' // Purple-ish
-  if (brand === 'HUSQAMA') return '#da251d' // Red
-  if (brand === 'HUQAMA') return '#0033cc' // Blue
-  return '#333333' // Default
-}
+const activeBrands = computed(() => {
+  return topBrands.filter(brand => getBrandImage(brand));
+})
 </script>
 
 <style scoped>
