@@ -93,7 +93,7 @@ useSeoMeta({
   }
   
   .home-main {
-    padding-top: 48px !important; /* Matches mobile header height */
+    padding-top: 0 !important;
   }
   .home-page-wrapper {
     margin: 0 !important;

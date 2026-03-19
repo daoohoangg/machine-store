@@ -96,7 +96,7 @@ provide('searchState', {
 
 @media (max-width: 768px) {
   .container {
-    padding-top: 48px; /* Offset for the fixed header on non-home pages */
+    padding-top: 0;
   }
 }
 
