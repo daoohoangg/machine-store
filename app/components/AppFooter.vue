@@ -370,7 +370,7 @@ const { settings } = useSiteSettings()
   }
   
   .links-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
   }
   

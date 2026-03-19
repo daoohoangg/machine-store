@@ -41,7 +41,7 @@
         </div>
 
         <div class="header-actions">
-          <a class="action-item hotline-item" :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')">
+          <a class="action-item hotline-item hide-on-mobile-action" :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')">
             <span class="action-icon"><i class="fa-solid fa-phone-volume"></i></span>
             <span class="action-label hl-label">
               <span class="hl-text">Hotline</span>
