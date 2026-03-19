@@ -5,20 +5,7 @@
       <NuxtLink :to="`/homepage?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`" class="cb-view-all">Xem tất cả ></NuxtLink>
     </div>
 
-    <div class="cb-subcats" v-if="category.children && category.children.length > 0">
-      <NuxtLink 
-        v-for="sub in category.children" 
-        :key="sub.id"
-        :to="`/homepage?categoryId=${sub.id}&categoryName=${encodeURIComponent(sub.name)}`"
-        class="cb-subcat-item"
-      >
-        <div class="subcat-img-wrap">
-          <img v-if="sub.image" :src="sub.image" :alt="sub.name" />
-          <div v-else class="subcat-placeholder"></div>
-        </div>
-        <span class="subcat-name">{{ sub.name }}</span>
-      </NuxtLink>
-    </div>
+
 
     <!-- Outstanding products header -->
     <div class="cb-product-header">

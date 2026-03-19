@@ -1,5 +1,10 @@
 <template>
   <header class="app-header">
+    <div class="top-banner">
+      <NuxtLink to="/">
+        <img src="~/assets/img/banner/top-banner.jpg" alt="Khuyến mãi" class="top-banner-img" />
+      </NuxtLink>
+    </div>
     <div class="main-strip">
         <div class="container header-inner">
         <div class="header-left" :class="{ 'with-main-offset': alignWithMain }">
@@ -7,7 +12,7 @@
             <i class="fa-solid fa-bars"></i>
           </button>
           <NuxtLink to="/" class="logo-link" aria-label="Trang chủ">
-            <img class="logo-image" src="/favicon.jpg" alt="Logo" />
+            <img class="logo-image" src="/logo.png" alt="Logo" />
           </NuxtLink>
         </div>
 
@@ -43,18 +48,7 @@
             </span>
             <span class="action-label">Giỏ hàng</span>
           </button>
-          <div class="action-item-wrapper hotline-wrapper">
-            <button class="action-item">
-              <span class="action-icon"><i class="fa-solid fa-phone"></i></span>
-              <span class="action-label">Đường dây nóng</span>
-            </button>
-            <div class="hotline-dropdown">
-              <div class="hotline-dropdown-inner">
-                <p>Tổng đài hỗ trợ: <strong>19005068</strong></p>
-                <p>Hotline: <strong>0995 556 969</strong></p>
-              </div>
-            </div>
-          </div>
+
           <NuxtLink class="action-item login-item" to="/auth/login">
             <span class="action-icon"><i class="fa-solid fa-user"></i></span>
             <span class="action-label">Đăng nhập</span>
@@ -169,13 +163,26 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.top-banner {
+  display: block;
+  width: 100%;
+  background: rgb(49, 120, 208);
+}
+.top-banner-img {
+  width: 100%;
+  display: block;
+  height: 68px;
+  object-fit: contain;
+}
 .app-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  display: contents;
 }
 
 .main-strip {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   background: linear-gradient(90deg, #0052cc, #007aff, #0052cc);
   color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
@@ -218,9 +225,8 @@ onBeforeUnmount(() => {
 .logo-image {
   width: 52px;
   height: 52px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .header-search-container {
@@ -279,6 +285,7 @@ onBeforeUnmount(() => {
   gap: 12px;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .action-item {
@@ -319,68 +326,6 @@ onBeforeUnmount(() => {
   padding: 0 4px;
 }
 
-.action-item-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.hotline-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  padding-top: 12px; /* Invisible hover bridge */
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  z-index: 100;
-}
-
-.hotline-wrapper:hover .hotline-dropdown {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-.hotline-dropdown-inner {
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  padding: 12px 16px;
-  color: #333;
-  width: max-content;
-  position: relative;
-  border: 1px solid #eaeaea;
-}
-
-.hotline-dropdown-inner::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  border-top: 1px solid #eaeaea;
-  border-left: 1px solid #eaeaea;
-}
-
-.hotline-dropdown-inner p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 500;
-}
-
-.hotline-dropdown-inner p:not(:last-child) {
-  margin-bottom: 6px;
-}
-
-.hotline-dropdown-inner strong {
-  color: #e31b1b;
-  font-size: 16px;
-}
 
 @media (max-width: 1200px) {
   .header-inner {
@@ -415,16 +360,15 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .app-header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    z-index: 1100 !important;
+  }
+
+  .top-banner-img {
+    height: auto;
   }
 
   /* To prevent content from jumping under fixed header */
   :root {
-    --header-height: 48px;
+    --header-height: 96px;
   }
 
   .header-inner {
@@ -435,9 +379,6 @@ onBeforeUnmount(() => {
     min-height: 48px; /* Override desktop min-height */
   }
 
-  .hotline-wrapper {
-    display: none;
-  }
   
   .login-item {
     display: inline-flex;
@@ -489,7 +430,6 @@ onBeforeUnmount(() => {
   .logo-image {
     width: 32px;
     height: 32px;
-    border-width: 1px;
   }
 
   .action-item {

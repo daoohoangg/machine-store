@@ -26,7 +26,7 @@ import { computed } from 'vue'
 const topBrands = computed(() => {
   return [
     'BENLEY', 'CX', 'GX', 'HUPANDA', 'HUQAMA',
-    'HUQUAMA', 'HUSPANDA', 'HUSPRO', 'HUSQAMA', 'HUSTIHL', 'KAMASTSU',
+    'HUSPANDA', 'HUSPRO', 'HUSQAMA', 'HUSTIHL', 'KAMASTSU',
     'KAVANNI', 'KENSI', 'MAXLOCK', 'MITUSI', 'SITILEN', 'SITNL'
   ];
 })
@@ -49,7 +49,7 @@ const getBrandColor = (brand: string) => {
   if (b.includes('benley') || b.includes('gx') || b.includes('hupanda')) return '#008b8b' // Teal
   if (b.includes('cx') || b.includes('huspro') || b.includes('husqama') || b.includes('hustihl') || b.includes('kamastsu')) return '#4a148c' // Purple-ish
   if (brand === 'HUSQAMA') return '#da251d' // Red
-  if (brand === 'HUQAMA' || brand === 'HUQUAMA') return '#0033cc' // Blue
+  if (brand === 'HUQAMA') return '#0033cc' // Blue
   return '#333333' // Default
 }
 </script>
@@ -67,7 +67,7 @@ const getBrandColor = (brand: string) => {
 }
 
 .bh-title {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 700;
   text-transform: uppercase;
   margin: 0;
@@ -114,7 +114,7 @@ const getBrandColor = (brand: string) => {
 
 .brand-icon {
   width: auto;
-  height: 40px;
+  height: 24px;
   max-width: 100%;
   object-fit: contain;
 }
@@ -128,8 +128,10 @@ const getBrandColor = (brand: string) => {
 }
 
 @media (max-width: 600px) {
+  .bh-title { font-size: 18px; }
   .brands-grid { grid-template-columns: repeat(2, 1fr); gap: 8px;}
   .brand-text { font-size: 13px; }
   .brand-item { height: 48px; }
+  .brand-icon { height: 18px; }
 }
 </style>

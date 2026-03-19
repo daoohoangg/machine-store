@@ -254,29 +254,6 @@
           </div>
         </section>
       </div>
-
-      <aside class="side-column">
-        <section class="viewed-card">
-          <h3>Sản phẩm đã xem</h3>
-
-          <NuxtLink
-            v-for="item in viewedProducts"
-            :key="item.id"
-            :to="`/san-pham/${item.slug}`"
-            class="viewed-item"
-          >
-            <div class="thumb">
-              <img :src="item.image" :alt="item.title" />
-              <span v-if="item.discount" class="mini-discount">{{ item.discount }}</span>
-            </div>
-            <div class="meta">
-              <p class="title">{{ item.title }}</p>
-              <p class="price">{{ formatPrice(item.price) }} đ</p>
-              <p v-if="item.oldPrice" class="old">{{ formatPrice(item.oldPrice) }} đ</p>
-            </div>
-          </NuxtLink>
-        </section>
-      </aside>
     </div>
   </div>
 
@@ -631,10 +608,9 @@ watch(
 }
 
 .detail-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 285px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: start;
 }
 
 .main-column {

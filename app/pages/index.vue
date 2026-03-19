@@ -17,8 +17,8 @@
       <HomePromoRow class="hide-on-mobile" />
       <div class="container">
         <OrderFlashSaleStrip class="mt-section" />
+        <HomeCategoryRow class="mt-section" />
         <ProductSuggestion />
-        <ProductSection class="mt-section" :limit-to-one-row="true" />
         
         <!-- Top 3 Categories Blocks -->
         <CategoryGroupBlock 
@@ -37,7 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import ProductSection from '~/components/product/ProductSection.vue'
 import ProductSuggestion from '~/components/product/ProductSuggestion.vue'
 import CategoryGroupBlock from '~/components/home/CategoryGroupBlock.vue'
 import FeaturedBrands from '~/components/home/FeaturedBrands.vue'

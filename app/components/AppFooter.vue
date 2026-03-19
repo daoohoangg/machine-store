@@ -25,13 +25,12 @@
           <h5>Tổng đài hỗ trợ</h5>
           <div class="contact-block">
             <p><strong>📞 Hotline</strong></p>
-            <p>Mua hàng: <a href="tel:0902229663" class="phone-link">0902.229.663</a></p>
-            <p>Kỹ thuật: <a href="tel:0902229663" class="phone-link">0902.229.663</a></p>
+            <p>Mua hàng: <a href="tel:0995556969" class="phone-link">0995 556 969</a></p>
+            <p>Kỹ thuật: <a href="tel:0995556969" class="phone-link">0995 556 969</a></p>
           </div>
           <div class="contact-block">
             <p><strong>🕒 Thời gian</strong></p>
-            <p>8h - 19h (Thứ 2 - Thứ 6)</p>
-            <p>8h - 17h30 (Thứ 7, CN)</p>
+            <p>8h - 17h30 (Thứ 2 - Thứ 7)</p>
             <p class="zalo-chat">
               Chat Zalo 
               <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="zalo-icon-img" />
@@ -124,7 +123,7 @@
           </div>
           <div class="company-address">
             <p><strong>Địa chỉ:</strong> Thôn Phượng Trì, Xã Văn Giang, Tỉnh Hưng Yên.</p>
-            <p><strong>Điện thoại:</strong> 0902.229.663</p>
+            <p><strong>Điện thoại:</strong> 0995 556 969</p>
             <p><strong>Email:</strong> lehoang145817629@gmail.com</p>
           </div>
         </div>

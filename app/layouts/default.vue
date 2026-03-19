@@ -20,8 +20,8 @@
     <div class="mobile-menu-overlay" v-if="isMobileMenuOpen" @click="closeMobileMenu"></div>
 
     <!-- Floating Phone Icon -->
-    <a href="tel:0902229663" class="floating-phone" aria-label="Gọi ngay">
-      <span class="phone-text">0902.229.663</span>
+    <a href="tel:0995556969" class="floating-phone" aria-label="Gọi ngay">
+      <span class="phone-text">0995.556.969</span>
       <div class="phone-icon-wrapper">
         <div class="phone-ring"></div>
         <div class="phone-circle"></div>
