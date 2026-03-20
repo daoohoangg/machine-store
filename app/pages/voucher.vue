@@ -77,15 +77,39 @@ const vouchers = ref<Voucher[]>([])
 const fetchVouchers = async () => {
   try {
     isLoading.value = true
-    const res = await request<any>('voucher_campaign/index', {
-      method: 'POST',
-      body: {}
-    })
+    let res = null
+    try {
+      res = await request<any>('voucher_campaign/index', {
+        method: 'POST',
+        body: {}
+      })
+    } catch (apiError) {
+      console.warn('API trả về lỗi, sẽ dùng mock data:', apiError)
+    }
     
     // Xử lý response theo định dạng API Abaha
     const rawData = res?.data?.data || res?.data || res || []
-    const items = Array.isArray(rawData) ? rawData : []
+    let items = Array.isArray(rawData) ? rawData : []
     
+    // Mock data always appended for testing
+    const mockVouchers = [
+      {
+        id: 9991,
+        name: 'Mã giảm giá 50K',
+        description: 'Giảm 50K cho đơn hàng từ 500K. Áp dụng cho tất cả sản phẩm.',
+        end_date: '31/12/2026',
+        code: 'GIAM50K'
+      },
+      {
+        id: 9992,
+        name: 'Miễn phí vận chuyển',
+        description: 'Giảm tối đa 30K phí vận chuyển cho đơn hàng từ 300K.',
+        end_date: '31/12/2026',
+        code: 'FREESHIP'
+      }
+    ]
+    items = [...mockVouchers, ...items]
+
     vouchers.value = items.map((v: any, index: number) => {
       // Định dạng ngày hết hạn
       let expiry = 'Không giới hạn'

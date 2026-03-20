@@ -31,6 +31,9 @@
         <!-- Featured Brands -->
         <FeaturedBrands />
         
+        <!-- Tin tức hoạt động -->
+        <HomeNews />
+        
       </div>
     </div>
   </div>
@@ -40,6 +43,7 @@
 import ProductSuggestion from '~/components/product/ProductSuggestion.vue'
 import CategoryGroupBlock from '~/components/home/CategoryGroupBlock.vue'
 import FeaturedBrands from '~/components/home/FeaturedBrands.vue'
+import HomeNews from '~/components/home/HomeNews.vue'
 import { computed } from 'vue'
 
 const { categories } = useCategories()
