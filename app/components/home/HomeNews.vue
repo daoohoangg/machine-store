@@ -24,9 +24,9 @@
           :style="{ transform: `translateX(-${currentIndex * (100 / itemsPerPage)}%)` }"
         >
           <NuxtLink 
-            v-for="(item, index) in mockNews" 
+            v-for="(item, index) in newsList" 
             :key="index" 
-            :to="item.link"
+            :to="(item.link && item.link !== '#') ? item.link : ('/tin-tuc/' + item.slug)"
             class="news-item-wrapper"
             :style="{ width: `${100 / itemsPerPage}%` }"
           >
@@ -68,65 +68,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useNews } from '~/composables/useNews'
 
-const mockNews = [
-  {
-    image: 'https://picsum.photos/seed/machine1/600/400',
-    tag: 'MÁY NÔNG NGHIỆP',
-    title: 'Top 5 Máy Xới Đất Mini Đáng Mua Nhất Cho Vụ Mùa 2025',
-    description: 'Máy xới đất mini ngày càng được bà con nông dân ưa chuộng nhờ tính linh hoạt, dễ sử dụng và giá thành phải chăng. Dưới đây là 5 mẫu máy xới đất đáng cân nhắc nhất...',
-    link: '#'
-  },
-  {
-    image: 'https://picsum.photos/seed/machine2/600/400',
-    tag: 'MẸO CHỌN MÁY BƠM NƯỚC',
-    title: 'Kinh Nghiệm Chọn Mua Máy Bơm Nước Phục Vụ Sinh Hoạt Và Sản Xuất',
-    description: 'Việc lựa chọn máy bơm nước phù hợp không chỉ giúp cung cấp đủ lượng nước mà còn tiết kiệm điện năng đáng kể, đặc biệt là vào mùa khô hạn kéo dài...',
-    link: '#'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=600&q=80',
-    tag: 'REVIEW THIẾT BỊ',
-    title: 'Đánh Giá Máy Phát Điện Oshima: Có Bền Bỉ Và Nhạy Nổ Như Lời Đồn?',
-    description: 'Thương hiệu Oshima từ lâu đã nổi tiếng với các dòng máy công nghiệp và nông nghiệp. Cùng Tuấn Minh review chi tiết các dòng máy phát điện của hãng này...',
-    link: '#'
-  },
-  {
-    image: 'https://picsum.photos/seed/machine4/600/400',
-    tag: 'HƯỚNG DẪN BẢO DƯỠNG',
-    title: 'Hướng Dẫn Bảo Dưỡng Máy Cắt Cỏ Đúng Chuẩn Giúp Kéo Dài Tuổi Thọ',
-    description: 'Sau một thời gian dài sử dụng, máy cắt cỏ cần được vệ sinh và bảo dưỡng định kỳ để đảm bảo công suất hoạt động tốt nhất. Hãy làm theo các bước cơ bản sau...',
-    link: '#'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1544465544-1b71aee9dfa3?auto=format&fit=crop&w=600&q=80',
-    tag: 'TƯ VẤN MUA HÀNG',
-    title: 'Máy Bơm Chìm Và Máy Bơm Cạn: Lựa Chọn Nào Phù Hợp Cho Gia Đình?',
-    description: 'Tìm hiểu ưu và nhược điểm của dòng máy bơm chìm và bơm cạn để có được lựa chọn đúng đắn và tối ưu chi phí cho nhu cầu sử dụng nước.',
-    link: '#'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80',
-    tag: 'MÁY NÉN KHÍ',
-    title: 'Tại Sao Nên Chọn Máy Nén Khí Không Dầu Dùng Trong Nha Khoa, Y Tế?',
-    description: 'Khám phá lý do vì sao máy nén khí không dầu lại đóng vai trò tối quan trọng để đảm bảo tiêu chuẩn y khoa và sức khỏe người bệnh...',
-    link: '#'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=600&q=80',
-    tag: 'CHỐNG HÀNG GIẢ',
-    title: 'Cách Phân Biệt Máy Nông Nghiệp Chính Hãng Oshima Và Hàng Nhái',
-    description: 'Thị trường hiện nay xuất hiện nhiều máy nông nghiệp Oshima bị làm giả tinh vi. Dưới đây là cách kiểm tra tem mác và chi tiết máy để nhận biết hàng thật.',
-    link: '#'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
-    tag: 'MÁY CÔNG NGHIỆP',
-    title: 'Ứng Dụng Của Máy Nghiền Bột Trong Nông Nghiệp Hiện Đại',
-    description: 'Máy nghiền bột giúp việc chế biến thức ăn chăn nuôi hoặc xay xát nông sản trở nên nhanh chóng, hiệu quả. Tham khảo ngay các dòng máy bán chạy.',
-    link: '#'
-  }
-]
+const { newsList, loadNews } = useNews()
 
 const currentIndex = ref(0)
 const itemsPerPage = ref(4)
@@ -149,7 +93,7 @@ const updateItemsPerPage = () => {
 }
 
 const maxIndex = computed(() => {
-  return Math.max(0, mockNews.length - itemsPerPage.value)
+  return Math.max(0, newsList.value.length - itemsPerPage.value)
 })
 
 const nextSlide = () => {
@@ -171,6 +115,7 @@ const goToSlide = (index: number) => {
 }
 
 onMounted(() => {
+  loadNews()
   updateItemsPerPage()
   window.addEventListener('resize', updateItemsPerPage)
 })

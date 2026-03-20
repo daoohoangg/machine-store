@@ -379,13 +379,52 @@ watch(product, (newProd) => {
   }
 }, { immediate: true })
 
+const SITE_URL = 'https://huspanda.vn'
+
 useSeoMeta({
   title: () => product.value ? `${product.value.title} - Tuấn Minh` : 'Sản phẩm | Tuấn Minh',
   ogTitle: () => product.value ? `${product.value.title} - Tuấn Minh` : 'Sản phẩm',
-  description: () => product.value ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. ${product.value.category} chất lượng cao, bảo hành toàn quốc.` : '',
-  ogDescription: () => product.value ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. ${product.value.category} chất lượng cao, bảo hành toàn quốc.` : '',
-  ogImage: () => product.value?.image,
+  description: () => product.value
+    ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. Giá ${product.value.price?.toLocaleString('vi-VN') || ''}đ. Bảo hành toàn quốc, giao hàng nhanh.`
+    : '',
+  ogDescription: () => product.value
+    ? `Mua ${product.value.title} chính hãng tại Tuấn Minh. Bảo hành toàn quốc, giao hàng nhanh toàn quốc.`
+    : '',
+  ogImage: () => product.value?.image || `${SITE_URL}/logo.png`,
+  ogUrl: () => product.value ? `${SITE_URL}/san-pham/${product.value.slug || product.value.id}` : SITE_URL,
   twitterCard: 'summary_large_image',
+})
+
+const productLdJson = computed(() => {
+  if (!product.value) return ''
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.value.title,
+    image: [product.value.image],
+    description: `${product.value.title} chính hãng tại Tuấn Minh. Bảo hành toàn quốc.`,
+    brand: { '@type': 'Brand', name: product.value.brand || 'OEM' },
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/san-pham/${product.value.slug || product.value.id}`,
+      priceCurrency: 'VND',
+      price: product.value.price,
+      priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'Tuấn Minh' }
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: String(product.value.reviews || 60)
+    }
+  })
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: () => product.value ? `${SITE_URL}/san-pham/${product.value.slug || product.value.id}` : SITE_URL }],
+  script: [{ type: 'application/ld+json', innerHTML: productLdJson }]
 })
 
 const galleryImages = computed(() => {

@@ -31,7 +31,7 @@ const { settings } = useSiteSettings()
           <div class="contact-block">
             <p><strong>📞 Hotline</strong></p>
             <p>Mua hàng: <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-link">{{ settings.hotline }}</a></p>
-            <p>Kỹ thuật: <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-link">{{ settings.hotline }}</a></p>
+            <p>Kỹ thuật: <a href="tel:19005068" class="phone-link">1900 5068</a></p>
           </div>
           <div class="contact-block">
             <p><strong>🕒 Thời gian</strong></p>

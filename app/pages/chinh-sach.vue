@@ -45,8 +45,12 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSiteSettings } from '~/composables/useSiteSettings'
 
-useHead({
-  title: 'Chính sách | Tuấn Minh'
+useSeoMeta({
+  title: 'Chính sách | Tuấn Minh',
+  description: 'Chính sách mua hàng, thanh toán, đổi trả và giao hàng tại Tuấn Minh. Minh bạch, rõ ràng, bảo vệ quyền lợi khách hàng.',
+  ogTitle: 'Chính sách | Tuấn Minh',
+  ogDescription: 'Chính sách thanh toán, đổi trả, giao hàng tại Tuấn Minh.',
+  robots: 'noindex, follow',
 })
 
 const route = useRoute()

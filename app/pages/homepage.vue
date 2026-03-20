@@ -289,10 +289,23 @@ if (categories.value.length === 0) {
   fetchCategories()
 }
 
+const SITE_URL = 'https://huspanda.vn'
+
 useSeoMeta({
   title: () => `${currentCategory.value} | Tuấn Minh`,
-  description: () => `Danh sách các sản phẩm thuộc nhóm ${currentCategory.value} chính hãng tại Tuấn Minh.`,
+  description: () => `Mua ${currentCategory.value} chính hãng tại Tuấn Minh. Đa dạng mẫu mã, giá tốt, bảo hành uy tín, giao hàng toàn quốc.`,
+  ogTitle: () => `${currentCategory.value} | Tuấn Minh`,
+  ogDescription: () => `Mua ${currentCategory.value} chính hãng tại Tuấn Minh. Giao hàng toàn quốc, bảo hành uy tín.`,
+  ogImage: `${SITE_URL}/logo.png`,
+  ogUrl: () => categoryId.value ? `${SITE_URL}/homepage?categoryId=${categoryId.value}` : `${SITE_URL}/homepage`,
+  twitterCard: 'summary_large_image',
 })
+
+useHead({
+  link: [{ rel: 'canonical', href: () => categoryId.value ? `${SITE_URL}/homepage?categoryId=${categoryId.value}` : `${SITE_URL}/homepage` }]
+})
+
+
 </script>
 
 <style scoped>

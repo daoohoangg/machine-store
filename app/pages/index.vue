@@ -31,6 +31,9 @@
         <!-- Featured Brands -->
         <FeaturedBrands />
         
+        <!-- Voucher -->
+        <HomeVoucher class="mt-section" />
+        
         <!-- Tin tức hoạt động -->
         <HomeNews />
         
@@ -43,6 +46,7 @@
 import ProductSuggestion from '~/components/product/ProductSuggestion.vue'
 import CategoryGroupBlock from '~/components/home/CategoryGroupBlock.vue'
 import FeaturedBrands from '~/components/home/FeaturedBrands.vue'
+import HomeVoucher from '~/components/home/HomeVoucher.vue'
 import HomeNews from '~/components/home/HomeNews.vue'
 import { computed } from 'vue'
 
@@ -53,11 +57,44 @@ const top3Categories = computed(() => {
   return categories.value?.slice(0, 3) || []
 })
 
+const SITE_URL = 'https://huspanda.vn'
+
 useSeoMeta({
   title: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
-  description: 'Chuyên cung cấp các loại máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng Oshima, Kasei... Giao hàng toàn quốc, bảo hành uy tín.',
+  description: 'Tuấn Minh chuyên phân phối máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng Oshima, Kasei, Honda. Giao hàng toàn quốc, bảo hành uy tín, giá tốt nhất.',
   ogTitle: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
-  ogDescription: 'Chuyên cung cấp các loại máy nông nghiệp chính hãng. Giao hàng toàn quốc.',
+  ogDescription: 'Chuyên cung cấp máy nông nghiệp, máy xây dựng chính hãng. Giao hàng toàn quốc, bảo hành uy tín.',
+  ogUrl: SITE_URL,
+  ogImage: `${SITE_URL}/logo.png`,
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'Tuấn Minh - Máy Nông Nghiệp Chính Hãng',
+  twitterDescription: 'Hệ thống phân phối máy nông nghiệp, máy xây dựng chính hãng. Giao hàng toàn quốc.',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: SITE_URL }],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Tuấn Minh - Máy Nông Nghiệp',
+        url: SITE_URL,
+        logo: `${SITE_URL}/logo.png`,
+        description: 'Hệ thống phân phối máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng toàn quốc.',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: '+84-xxx-xxx-xxx',
+          contactType: 'customer service',
+          availableLanguage: 'Vietnamese'
+        },
+        sameAs: [
+          'https://www.facebook.com/tuanminh'
+        ]
+      })
+    }
+  ]
 })
 </script>
 

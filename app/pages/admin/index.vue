@@ -20,7 +20,10 @@
     <div v-else class="admin-dashboard">
       <div class="admin-header">
         <h1>Quản lý thông tin Website</h1>
-        <button class="btn-outline" @click="handleLogout">Đăng xuất</button>
+        <div class="header-actions">
+          <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý bài viết</NuxtLink>
+          <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
+        </div>
       </div>
       
       <div class="settings-form">

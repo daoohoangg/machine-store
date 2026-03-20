@@ -67,7 +67,7 @@ export const useSiteSettings = () => {
     hotline: '0995.556.969',
     address: 'Thôn Phượng Trì, Xã Văn Giang, Tỉnh Hưng Yên',
     email: 'lehoang145817629@gmail.com',
-    facebook: '#',
+    facebook: 'https://web.facebook.com/profile.php?id=61585011406117&locale=vi_VN&_rdc=1&_rdr#',
     zalo: '#',
     youtube: '#',
     tiktok: '#',
