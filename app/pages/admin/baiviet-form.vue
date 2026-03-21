@@ -48,12 +48,17 @@
           <label>Nội dung chi tiết (Rich Text)</label>
           <ClientOnly fallback-tag="div" fallback="Đang tải trình soạn thảo...">
             <QuillEditor 
+              v-if="dataReady"
+              :key="'editor-' + editId"
               theme="snow" 
               toolbar="full"
               v-model:content="formData.content" 
               contentType="html" 
               placeholder="Nhập nội dung đầy đủ của bài viết..." 
             />
+            <div v-else style="padding: 40px; text-align: center; color: #888; border: 1px solid #ddd; border-radius: 6px;">
+              <i class="fa-solid fa-spinner fa-spin"></i> Đang tải nội dung bài viết...
+            </div>
           </ClientOnly>
         </div>
 
@@ -67,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNews } from '~/composables/useNews'
 import { useAdminAuth } from '~/composables/useAdminAuth'
@@ -82,6 +87,7 @@ const { newsList, loadNews, addNews, updateNews } = useNews()
 const { isAdmin, initAuth } = useAdminAuth()
 
 const editId = ref(-1)
+const dataReady = ref(false)
 const isEdit = computed(() => editId.value >= 0)
 
 const formData = ref({
@@ -93,20 +99,41 @@ const formData = ref({
   link: '#'
 })
 
-onMounted(() => {
+const fillForm = () => {
+  const id = editId.value
+  if (id >= 0 && newsList.value[id]) {
+    formData.value = JSON.parse(JSON.stringify(newsList.value[id]))
+  }
+  dataReady.value = true
+}
+
+onMounted(async () => {
   initAuth()
   loadNews()
-  
+
   if (route.query.id !== undefined) {
     const id = parseInt(route.query.id)
     if (!isNaN(id)) {
       editId.value = id
-      setTimeout(() => {
-        if (newsList.value[id]) {
-          formData.value = JSON.parse(JSON.stringify(newsList.value[id]))
-        }
-      }, 50)
     }
+  }
+
+  // If list already loaded, fill fast
+  await nextTick()
+  if (newsList.value.length > 0) {
+    fillForm()
+  } else {
+    // Wait until newsList is populated
+    const stop = watch(newsList, (val) => {
+      if (val.length > 0) {
+        fillForm()
+        stop()
+      }
+    })
+    // Fallback: show editor empty after 1.5s if list never loads
+    setTimeout(() => {
+      if (!dataReady.value) dataReady.value = true
+    }, 1500)
   }
 })
 
