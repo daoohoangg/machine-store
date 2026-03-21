@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   site: {
     url: SITE_URL,
-    name: 'Tuấn Minh - Máy Nông Nghiệp',
+    name: 'Tuấn Minh - Điện Máy & Máy Nông Nghiệp Chính Hãng',
   },
   sitemap: {
     strictNuxtContentPaths: false,
@@ -33,7 +33,8 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       meta: [
         { name: 'robots', content: 'index, follow' },
-        { property: 'og:site_name', content: 'Tuấn Minh - Máy Nông Nghiệp' },
+        { name: 'keywords', content: 'diện máy tuấn minh, điện máy, máy nông nghiệp, máy bơm nước, máy phát điện, máy xới đất, máy nén khí, máy cắt cỏ, Oshima, Honda, máy chính hãng, giá tốt, bảo hành toàn quốc' },
+        { property: 'og:site_name', content: 'Tuấn Minh - Điện Máy Chính Hãng' },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: `${SITE_URL}/logo.png` },
         { name: 'twitter:card', content: 'summary_large_image' },

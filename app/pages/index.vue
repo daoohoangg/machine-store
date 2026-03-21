@@ -37,6 +37,22 @@
         <!-- Tin tức hoạt động -->
         <HomeNews />
         
+        <!-- SEO keyword content block -->
+        <div class="seo-intro" aria-label="Giới thiệu Điện Máy Tuấn Minh">
+          <h2>Điện Máy Tuấn Minh - Phân phối máy nông nghiệp & công nghiệp chính hãng</h2>
+          <p>
+            <strong>Tuấn Minh Điện Máy</strong> là hệ thống phân phối <strong>điện máy chính hãng</strong> hàng đầu tại Việt Nam, chuyên cung cấp
+            <strong>máy nông nghiệp</strong>, <strong>máy bơm nước</strong>, <strong>máy phát điện</strong>, <strong>máy nén khí</strong>, 
+            <strong>máy cắt cỏ</strong>, <strong>máy xới đất</strong> của các thương hiệu uy tín như Oshima, Honda, Kasei, Huspanda.
+            Với hơn 10 năm kinh nghiệm trong ngành <em>điện máy</em>, chúng tôi cam kết cung cấp sản phẩm chất lượng, 
+            giá tốt nhất thị trường, bảo hành toàn quốc và giao hàng nhanh chóng trên toàn quốc.
+          </p>
+          <p>
+            Mua <strong>điện máy Tuấn Minh</strong> — quý khách hàng được hưởng chế độ <strong>bảo hành chính hãng</strong>,
+            hỗ trợ kỹ thuật tận nơi và đội ngũ tư vấn chuyên nghiệp. Hotline mua hàng: <a href="tel:0995556969"><strong>0995.556.969</strong></a>.
+            Kỹ thuật: <a href="tel:19005068"><strong>1900 5068</strong></a>.
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -60,15 +76,15 @@ const top3Categories = computed(() => {
 const SITE_URL = 'https://huspanda.vn'
 
 useSeoMeta({
-  title: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
-  description: 'Tuấn Minh chuyên phân phối máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng Oshima, Kasei, Honda. Giao hàng toàn quốc, bảo hành uy tín, giá tốt nhất.',
-  ogTitle: 'Tuấn Minh - Hệ thống phân phối máy nông nghiệp chính hãng',
-  ogDescription: 'Chuyên cung cấp máy nông nghiệp, máy xây dựng chính hãng. Giao hàng toàn quốc, bảo hành uy tín.',
+  title: 'Tuấn Minh Điện Máy - Chuyên phân phối máy nông nghiệp, công nghiệp chính hãng',
+  description: 'Tuấn Minh Điện Máy - Hệ thống phân phối điện máy chính hãng tại Việt Nam. Chuyên các loại máy bơm nước, máy phát điện, máy nén khí, máy nông nghiệp Oshima, Honda, Kasei. Giao hàng toàn quốc, bảo hành uy tín, giá tốt nhất.',
+  ogTitle: 'Tuấn Minh Điện Máy - Phân phối máy nông nghiệp & máy công nghiệp chính hãng',
+  ogDescription: 'Chuyên cung cấp điện máy chính hãng: máy bơm nước, máy phát điện, máy nông nghiệp Oshima, Honda. Giá tốt, bảo hành toàn quốc.',
   ogUrl: SITE_URL,
   ogImage: `${SITE_URL}/logo.png`,
   twitterCard: 'summary_large_image',
-  twitterTitle: 'Tuấn Minh - Máy Nông Nghiệp Chính Hãng',
-  twitterDescription: 'Hệ thống phân phối máy nông nghiệp, máy xây dựng chính hãng. Giao hàng toàn quốc.',
+  twitterTitle: 'Tuấn Minh Điện Máy - Máy Nông Nghiệp Chính Hãng',
+  twitterDescription: 'Hệ thống phân phối điện máy, máy nông nghiệp, máy công nghiệp chính hãng. Giao hàng toàn quốc.',
 })
 
 useHead({
@@ -78,20 +94,43 @@ useHead({
       type: 'application/ld+json',
       innerHTML: JSON.stringify({
         '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'Tuấn Minh - Máy Nông Nghiệp',
+        '@type': 'LocalBusiness',
+        '@id': SITE_URL,
+        name: 'Tuấn Minh Điện Máy',
+        alternateName: 'Điện Máy Tuấn Minh',
         url: SITE_URL,
         logo: `${SITE_URL}/logo.png`,
-        description: 'Hệ thống phân phối máy nông nghiệp, máy xây dựng, máy công nghiệp chính hãng toàn quốc.',
-        contactPoint: {
-          '@type': 'ContactPoint',
-          telephone: '+84-xxx-xxx-xxx',
-          contactType: 'customer service',
-          availableLanguage: 'Vietnamese'
+        image: `${SITE_URL}/logo.png`,
+        description: 'Tuấn Minh Điện Máy - Chuyên phân phối điện máy, máy nông nghiệp, máy công nghiệp chính hãng Oshima, Honda, Kasei. Giao hàng toàn quốc.',
+        telephone: '+84-995-556-969',
+        priceRange: '$$',
+        servesCuisine: '',
+        hasMap: `${SITE_URL}`,
+        address: {
+          '@type': 'PostalAddress',
+          addressCountry: 'VN',
+          addressRegion: 'Thành phố Hồ Chí Minh'
         },
+        contactPoint: [
+          {
+            '@type': 'ContactPoint',
+            telephone: '+84-995-556-969',
+            contactType: 'sales',
+            availableLanguage: 'Vietnamese',
+            areaServed: 'VN'
+          },
+          {
+            '@type': 'ContactPoint',
+            telephone: '1900-5068',
+            contactType: 'customer support',
+            availableLanguage: 'Vietnamese',
+            areaServed: 'VN'
+          }
+        ],
         sameAs: [
           'https://www.facebook.com/tuanminh'
-        ]
+        ],
+        keywords: 'điện máy, điện máy tuấn minh, máy nông nghiệp, máy bơm nước, máy phát điện, Oshima, Honda, máy nén khí, máy cắt cỏ, máy xới đất'
       })
     }
   ]
@@ -120,6 +159,37 @@ useHead({
 
 .mt-section {
   margin-top: 20px;
+}
+
+.seo-intro {
+  margin-top: 20px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 20px 24px;
+  font-size: 14px;
+  color: #444;
+  line-height: 1.7;
+}
+
+.seo-intro h2 {
+  font-size: 17px;
+  color: #333;
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.seo-intro p {
+  margin: 0 0 8px;
+}
+
+.seo-intro a {
+  color: #c0392b;
+  text-decoration: none;
+}
+
+.seo-intro a:hover {
+  text-decoration: underline;
 }
 
 @media (min-width: 769px) {
