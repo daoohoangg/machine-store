@@ -20,14 +20,24 @@
     <div class="mobile-menu-overlay" v-if="isMobileMenuOpen" @click="closeMobileMenu"></div>
 
     <!-- Floating Phone Icon -->
-    <a href="tel:0995556969" class="floating-phone" aria-label="Gọi ngay">
-      <span class="phone-text">0995.556.969</span>
-      <div class="phone-icon-wrapper">
-        <div class="phone-ring"></div>
-        <div class="phone-circle"></div>
-        <i class="fa-solid fa-phone phone-icon"></i>
+    <div class="floating-phone-container">
+      <div v-show="isPhoneMenuOpen" class="phone-menu shadow-lg">
+        <a href="tel:0995556969" class="phone-menu-item">
+          <i class="fa-solid fa-cart-shopping"></i> Mua hàng: <strong>0995.556.969</strong>
+        </a>
+        <a href="tel:19005068" class="phone-menu-item">
+          <i class="fa-solid fa-headset"></i> Kỹ thuật: <strong>1900 5068</strong>
+        </a>
       </div>
-    </a>
+      <button @click="togglePhoneMenu" class="floating-phone" aria-label="Gọi ngay">
+        <span class="phone-text">HOTLINE</span>
+        <div class="phone-icon-wrapper">
+          <div class="phone-ring"></div>
+          <div class="phone-circle"></div>
+          <i class="fa-solid fa-phone phone-icon"></i>
+        </div>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -39,7 +49,12 @@ import { useMobileMenu } from '~/composables/useMobileMenu'
 const route = useRoute()
 const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
 const isSearchOpen = ref(false)
+const isPhoneMenuOpen = ref(false)
 const isHomePage = computed(() => route.path === '/')
+
+const togglePhoneMenu = () => {
+  isPhoneMenuOpen.value = !isPhoneMenuOpen.value
+}
 
 const showSidebar = computed(() => {
   // Hide sidebar on product detail page and category page
@@ -101,19 +116,70 @@ provide('searchState', {
 }
 
 /* Floating Phone Icon Styling */
-.floating-phone {
+.floating-phone-container {
   position: fixed;
   bottom: 30px;
   right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.floating-phone {
   height: 48px;
   background: #cc2121;
   border-radius: 24px;
-  z-index: 1000;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   text-decoration: none;
   padding: 0 4px 0 16px;
   box-shadow: 0 4px 12px rgba(204, 33, 33, 0.4);
+}
+
+.phone-menu {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slide-up 0.2s ease-out;
+  border: 1px solid #eee;
+  min-width: 200px;
+}
+
+.phone-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  font-size: 15px;
+}
+
+.phone-menu-item:hover {
+  background: #f5f5f5;
+  color: #cc2121;
+}
+
+.phone-menu-item i {
+  color: #cc2121;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .phone-icon-wrapper {
@@ -180,7 +246,7 @@ provide('searchState', {
 }
 
 @media (max-width: 768px) {
-  .floating-phone {
+  .floating-phone-container {
     bottom: 20px;
     right: 15px; 
     transform: scale(0.85); 

@@ -13,7 +13,7 @@
           <NuxtLink to="/admin" class="btn-outline back-btn"><i class="fa-solid fa-arrow-left"></i> Trở về</NuxtLink>
           <h1>Quản lý Bài viết / Tin tức</h1>
         </div>
-        <button class="btn-primary" @click="openAddForm"><i class="fa-solid fa-plus"></i> Thêm bài viết mới</button>
+        <NuxtLink to="/admin/baiviet-form" class="btn-primary" style="text-decoration:none; display:inline-block;"><i class="fa-solid fa-plus"></i> Thêm bài viết mới</NuxtLink>
       </div>
       
       <div class="news-list-section">
@@ -43,7 +43,7 @@
               </td>
               <td>
                 <div class="action-buttons">
-                  <button class="btn-icon btn-edit" @click="openEditForm(index, item)" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+                  <NuxtLink :to="'/admin/baiviet-form?id=' + index" class="btn-icon btn-edit" title="Sửa"><i class="fa-solid fa-pen"></i></NuxtLink>
                   <button class="btn-icon btn-delete" @click="confirmDelete(index)" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </td>
@@ -52,73 +52,21 @@
         </table>
       </div>
       
-      <!-- Modal form -->
-      <div v-if="isFormOpen" class="modal-overlay" @click.self="closeForm">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>{{ editIndex >= 0 ? 'Sửa bài viết' : 'Thêm bài viết mới' }}</h3>
-            <button class="close-btn" @click="closeForm"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Tiêu đề bài viết</label>
-              <input type="text" v-model="formData.title" placeholder="Nhập tiêu đề..." />
-            </div>
-            <div class="form-group">
-              <label>Thẻ Tag (Ví dụ: TIN TỨC, MÁY BƠM)</label>
-              <input type="text" v-model="formData.tag" placeholder="Nhập thẻ tag ngắn gọn..." />
-            </div>
-            <div class="form-group">
-              <label>Đường dẫn hình ảnh (URL)</label>
-              <input type="text" v-model="formData.image" placeholder="https://..." />
-              <div v-if="formData.image" class="img-preview">
-                <img :src="formData.image" alt="Preview" @error="handleImageError" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Mô tả ngắn gọn</label>
-              <textarea v-model="formData.description" rows="3" placeholder="Nhập tóm tắt nội dung..."></textarea>
-            </div>
-            <div class="form-group">
-              <label>Nội dung chi tiết (HTML)</label>
-              <textarea v-model="formData.content" rows="6" placeholder="Nhập nội dung đầy đủ của bài viết..."></textarea>
-            </div>
-            <div class="form-group">
-              <label>Đường dẫn bài viết (Tùy chọn Link ngoài)</label>
-              <input type="text" v-model="formData.link" placeholder="Mặc định: dẫn vào trang chi tiết" />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-outline" @click="closeForm">Hủy bỏ</button>
-            <button class="btn-primary" @click="saveForm">Lưu bài viết</button>
-          </div>
-        </div>
-      </div>
+
       
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useNews } from '~/composables/useNews'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 useHead({ title: 'Quản lý Bài viết - Admin' })
 
-const { newsList, loadNews, addNews, updateNews, deleteNews } = useNews()
+const { newsList, loadNews, deleteNews } = useNews()
 const { isAdmin, initAuth } = useAdminAuth()
-
-const isFormOpen = ref(false)
-const editIndex = ref(-1)
-const formData = ref({
-  title: '',
-  tag: '',
-  image: '',
-  description: '',
-  content: '',
-  link: '#'
-})
 
 onMounted(() => {
   initAuth()
@@ -130,42 +78,7 @@ const truncateDesc = (text) => {
   return text.length > 80 ? text.substring(0, 80) + '...' : text
 }
 
-const openAddForm = () => {
-  editIndex.value = -1
-  formData.value = {
-    title: '',
-    tag: '',
-    image: '',
-    description: '',
-    content: '',
-    link: '#'
-  }
-  isFormOpen.value = true
-}
 
-const openEditForm = (index, item) => {
-  editIndex.value = index
-  formData.value = { ...item }
-  isFormOpen.value = true
-}
-
-const closeForm = () => {
-  isFormOpen.value = false
-}
-
-const saveForm = () => {
-  if (!formData.value.title) {
-    alert('Vui lòng nhập phần tiêu đề!')
-    return
-  }
-  
-  if (editIndex.value >= 0) {
-    updateNews(editIndex.value, formData.value)
-  } else {
-    addNews(formData.value)
-  }
-  closeForm()
-}
 
 const confirmDelete = (index) => {
   if (confirm('Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.')) {
@@ -334,107 +247,7 @@ const handleImageError = (e) => {
   background: #f5cccc;
 }
 
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
 
-.modal-content {
-  background: #fff;
-  width: 100%;
-  max-width: 600px;
-  border-radius: 8px;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-}
-
-.modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #333;
-}
-
-.close-btn {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  color: #888;
-  cursor: pointer;
-}
-
-.close-btn:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.modal-footer {
-  padding: 15px 20px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
-  font-size: 14px;
-}
-
-.form-group input, 
-.form-group textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 15px;
-  font-family: inherit;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  border-color: #0066cc;
-  outline: none;
-}
-
-.img-preview {
-  margin-top: 10px;
-  max-width: 200px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid #eee;
-}
-
-.img-preview img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
 
 .btn-primary {
   padding: 10px 20px;
