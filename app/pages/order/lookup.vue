@@ -109,7 +109,7 @@ const lookupPhone = ref(currentOrder.value?.receiver.phone || '')
 
 const orderId = computed(() => currentOrder.value?.id || lookupId.value)
 const fallbackItems = [
-  { id: '1', title: 'Máy cắt cỏ 2 thì Oshima TJ53', quantity: 1, price: 3440000 },
+  { id: '1', title: 'Máy cắt cỏ 2 thì Honda UMK435T', quantity: 1, price: 3440000 },
   { id: '2', title: 'Áo thun', quantity: 1, price: 0 }
 ]
 

@@ -80,9 +80,9 @@ const truncateDesc = (text) => {
 
 
 
-const confirmDelete = (index) => {
+const confirmDelete = async (index) => {
   if (confirm('Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.')) {
-    deleteNews(index)
+    await deleteNews(index)
   }
 }
 

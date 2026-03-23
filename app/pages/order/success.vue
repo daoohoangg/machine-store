@@ -134,7 +134,7 @@ const fallbackDate = '10/03/2026'
 
 const orderId = computed(() => currentOrder.value?.id || '207585284')
 const fallbackItems = [
-  { id: '1', title: 'Máy cắt cỏ 2 thì Oshima TJ53', quantity: 1, price: 3440000 },
+  { id: '1', title: 'Máy cắt cỏ 2 thì Honda UMK435T', quantity: 1, price: 3440000 },
   { id: '2', title: 'Áo thun', quantity: 1, price: 0 }
 ]
 

@@ -137,16 +137,16 @@ onMounted(async () => {
   }
 })
 
-const saveForm = () => {
+const saveForm = async () => {
   if (!formData.value.title) {
     alert('Vui lòng nhập phần tiêu đề!')
     return
   }
   
   if (isEdit.value) {
-    updateNews(editId.value, formData.value)
+    await updateNews(editId.value, formData.value)
   } else {
-    addNews(formData.value)
+    await addNews(formData.value)
   }
   router.push('/admin/baiviet')
 }

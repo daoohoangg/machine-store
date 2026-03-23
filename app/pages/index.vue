@@ -43,7 +43,7 @@
           <p>
             <strong>Tuấn Minh Điện Máy</strong> là hệ thống phân phối <strong>điện máy chính hãng</strong> hàng đầu tại Việt Nam, chuyên cung cấp
             <strong>máy nông nghiệp</strong>, <strong>máy bơm nước</strong>, <strong>máy phát điện</strong>, <strong>máy nén khí</strong>, 
-            <strong>máy cắt cỏ</strong>, <strong>máy xới đất</strong> của các thương hiệu uy tín như Oshima, Honda, Kasei, Huspanda.
+            <strong>máy cắt cỏ</strong>, <strong>máy xới đất</strong> của các thương hiệu uy tín như Yamaha, Honda, Kasei, Huspanda.
             Với hơn 10 năm kinh nghiệm trong ngành <em>điện máy</em>, chúng tôi cam kết cung cấp sản phẩm chất lượng, 
             giá tốt nhất thị trường, bảo hành toàn quốc và giao hàng nhanh chóng trên toàn quốc.
           </p>
@@ -77,9 +77,9 @@ const SITE_URL = 'https://huspanda.vn'
 
 useSeoMeta({
   title: 'Tuấn Minh Điện Máy - Chuyên phân phối máy nông nghiệp, công nghiệp chính hãng',
-  description: 'Tuấn Minh Điện Máy - Hệ thống phân phối điện máy chính hãng tại Việt Nam. Chuyên các loại máy bơm nước, máy phát điện, máy nén khí, máy nông nghiệp Oshima, Honda, Kasei. Giao hàng toàn quốc, bảo hành uy tín, giá tốt nhất.',
+  description: 'Tuấn Minh Điện Máy - Hệ thống phân phối điện máy chính hãng tại Việt Nam. Chuyên các loại máy bơm nước, máy phát điện, máy nén khí, máy nông nghiệp Yamaha, Honda, Kasei. Giao hàng toàn quốc, bảo hành uy tín, giá tốt nhất.',
   ogTitle: 'Tuấn Minh Điện Máy - Phân phối máy nông nghiệp & máy công nghiệp chính hãng',
-  ogDescription: 'Chuyên cung cấp điện máy chính hãng: máy bơm nước, máy phát điện, máy nông nghiệp Oshima, Honda. Giá tốt, bảo hành toàn quốc.',
+  ogDescription: 'Chuyên cung cấp điện máy chính hãng: máy bơm nước, máy phát điện, máy nông nghiệp Yamaha, Honda. Giá tốt, bảo hành toàn quốc.',
   ogUrl: SITE_URL,
   ogImage: `${SITE_URL}/logo.png`,
   twitterCard: 'summary_large_image',
@@ -101,7 +101,7 @@ useHead({
         url: SITE_URL,
         logo: `${SITE_URL}/logo.png`,
         image: `${SITE_URL}/logo.png`,
-        description: 'Tuấn Minh Điện Máy - Chuyên phân phối điện máy, máy nông nghiệp, máy công nghiệp chính hãng Oshima, Honda, Kasei. Giao hàng toàn quốc.',
+        description: 'Tuấn Minh Điện Máy - Chuyên phân phối điện máy, máy nông nghiệp, máy công nghiệp chính hãng Yamaha, Honda, Kasei. Giao hàng toàn quốc.',
         telephone: '+84-995-556-969',
         priceRange: '$$',
         servesCuisine: '',
@@ -130,7 +130,7 @@ useHead({
         sameAs: [
           'https://www.facebook.com/tuanminh'
         ],
-        keywords: 'điện máy, điện máy tuấn minh, máy nông nghiệp, máy bơm nước, máy phát điện, Oshima, Honda, máy nén khí, máy cắt cỏ, máy xới đất'
+        keywords: 'điện máy, điện máy tuấn minh, máy nông nghiệp, máy bơm nước, máy phát điện, Yamaha, Honda, máy nén khí, máy cắt cỏ, máy xới đất'
       })
     }
   ]
