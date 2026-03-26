@@ -90,6 +90,7 @@ export interface FetchOptions {
   page?: number;
   limit?: number;
   group_id?: number | string | null;
+  ids?: string[];
 }
 
 export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<FetchOptions | number | string | null | undefined>) => {
@@ -106,15 +107,17 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
   
   // products will contain the data for the current active category
   const nuxtApp = useNuxtApp()
-  const { data: products, pending, error, refresh } = useAsyncData(fetchKey.value, async () => {
+  const { data: products, pending, error, refresh } = useAsyncData(() => fetchKey.value, async () => {
     const val = toValue(optionsOrCategoryIdMaybe)
     let filters: FetchOptions = {}
     
     if (typeof val === 'object' && val !== null) {
       filters = { ...val }
     } else {
-      filters.categoryId = val
+      filters.categoryId = val as any
     }
+    
+    console.log(`[useHomeProducts] Handler running for key: ${fetchKey.value}`)
     
     // Fix race condition: Ensure categories are loaded ONCE before triggering 10 parallel requests
     if (filters.categoryId) {
@@ -133,6 +136,12 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     const results = await Promise.all(promises)
     const allProducts = results.flat()
     const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values())
+    
+    // Client-side filter by IDs if provided
+    if (filters.ids && filters.ids.length > 0) {
+      const idSet = new Set(filters.ids.map(String))
+      return uniqueProducts.filter(p => idSet.has(String(p.id)))
+    }
     
     console.log(`[useHomeProducts] Fetched 10 pages. Total flat: ${allProducts.length}, Unique: ${uniqueProducts.length}`)
     
@@ -208,7 +217,12 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         body.group_id = filters.group_id
       }
 
-      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, group_id: ${filters.group_id}, page: ${parsedPage}, limit: ${parsedLimit}`)
+      if (filters.ids && filters.ids.length > 0) {
+        // Some APIs use product_ids or ids. Let's try to pass it to the body as well.
+        body.product_ids = filters.ids
+      }
+
+      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, group_id: ${filters.group_id}, search: ${filters.search}, page: ${parsedPage}, limit: ${parsedLimit}`)
       const response = await request<any>('product/index', {
         method: 'POST',
         body,

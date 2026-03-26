@@ -19,10 +19,35 @@
     
     <div v-else class="admin-dashboard">
       <div class="admin-header">
-        <h1>Quản lý thông tin Website</h1>
+        <h1>Quản lý Website</h1>
         <div class="header-actions">
-          <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý bài viết</NuxtLink>
+          <NuxtLink to="/admin/san-pham-group" class="btn-outline group-mgr-btn"><i class="fa-solid fa-layer-group"></i> Quản lý Nhóm SP</NuxtLink>
+          <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý Bài viết</NuxtLink>
           <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
+        </div>
+      </div>
+
+      <div class="dashboard-stats" v-if="isAdmin">
+        <div class="stat-card" @click="$router.push('/admin/san-pham-group')">
+          <div class="stat-icon flash"><i class="fa-solid fa-bolt"></i></div>
+          <div class="stat-info">
+            <div class="stat-value">{{ manualGroups['flash-sale']?.length || 0 }}</div>
+            <div class="stat-label">Sản phẩm Flash Sale</div>
+          </div>
+        </div>
+        <div class="stat-card" @click="$router.push('/admin/san-pham-group')">
+          <div class="stat-icon new"><i class="fa-solid fa-plus"></i></div>
+          <div class="stat-info">
+            <div class="stat-value">{{ manualGroups['new-products']?.length || 0 }}</div>
+            <div class="stat-label">Sản phẩm mới</div>
+          </div>
+        </div>
+        <div class="stat-card" @click="$router.push('/admin/baiviet')">
+          <div class="stat-icon news"><i class="fa-solid fa-newspaper"></i></div>
+          <div class="stat-info">
+            <div class="stat-value">{{ newsList.length }}</div>
+            <div class="stat-label">Bài viết tin tức</div>
+          </div>
         </div>
       </div>
       
@@ -101,11 +126,15 @@
 import { ref, onMounted } from 'vue'
 import { useSiteSettings } from '~/composables/useSiteSettings'
 import { useAdminAuth } from '~/composables/useAdminAuth'
+import { useManualGroups } from '~/composables/useManualGroups'
+import { useNews } from '~/composables/useNews'
 
 useHead({ title: 'Quản trị hệ thống' })
 
 const { settings, loadSettings } = useSiteSettings()
 const { isAdmin, login, logout: logoutAuth, initAuth } = useAdminAuth()
+const { manualGroups, fetchManualGroups } = useManualGroups()
+const { newsList, loadNews } = useNews()
 
 const phoneInput = ref('')
 const loginError = ref('')
@@ -124,6 +153,8 @@ const formSettings = ref({
 
 onMounted(() => {
   initAuth()
+  fetchManualGroups()
+  loadNews()
   
   // Sync initial form settings
   setTimeout(() => {
@@ -368,6 +399,66 @@ const saveSettings = () => {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
+  }
+}
+
+/* Dashboard Stats */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+}
+
+.stat-icon.flash { background: linear-gradient(135deg, #FFD93D, #FF8400); }
+.stat-icon.new { background: linear-gradient(135deg, #4D96FF, #0061FF); }
+.stat-icon.news { background: linear-gradient(135deg, #6BCB77, #1B9C85); }
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #777;
+  margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -16,18 +16,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import ProductCard from '~/components/product/ProductCard.vue'
-import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
 import { useGroups } from '~/composables/useGroups'
 import { useImageGuard } from '~/composables/useImageGuard'
+import { useManualGroups } from '~/composables/useManualGroups'
 
 const { groups, fetchGroups } = useGroups()
+const { manualGroups, fetchManualGroups } = useManualGroups()
+
+const manualProductIds = computed(() => manualGroups.value['new-products'] || [])
+const { products: manualProducts } = useHomeProducts(computed(() => ({ ids: manualProductIds.value, limit: 100 })))
 
 onMounted(() => {
   if (!groups.value.length) {
     fetchGroups()
   }
+  fetchManualGroups()
 })
 
 const newProductsGroupId = computed(() => {
@@ -47,15 +50,26 @@ const { products } = useHomeProducts(fetchOptions)
 const { isImageFailed } = useImageGuard()
 
 const newProducts = computed(() => {
-  if (!products.value?.length) return []
+  const allAvailable = [...manualProducts.value, ...products.value]
+  const unique = Array.from(new Map(allAvailable.map(p => [p.id, p])).values())
+
+  if (!unique.length) return []
   
-  const validProducts = products.value.filter(p => !isImageFailed(p.image))
+  const validProducts = unique.filter(p => !isImageFailed(p.image))
   
   const sorted = [...validProducts]
-  // Fallback sort if group ID is not yet available
-  if (!newProductsGroupId.value) {
-    sorted.sort((a, b) => Number(b.id) - Number(a.id))
-  }
+  
+  // Sort: Manual first (in order), then the rest by ID descending
+  sorted.sort((a, b) => {
+    const aManualIdx = manualProductIds.value.indexOf(String(a.id))
+    const bManualIdx = manualProductIds.value.indexOf(String(b.id))
+    
+    if (aManualIdx !== -1 && bManualIdx !== -1) return aManualIdx - bManualIdx
+    if (aManualIdx !== -1) return -1
+    if (bManualIdx !== -1) return 1
+    
+    return Number(b.id) - Number(a.id)
+  })
   
   return sorted.slice(0, 6) // Limit to one row of 6 products
 })

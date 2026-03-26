@@ -20,7 +20,7 @@
     <div class="mobile-menu-overlay" v-if="isMobileMenuOpen" @click="closeMobileMenu"></div>
 
     <!-- Floating Phone Icon -->
-    <div class="floating-phone-container">
+    <div class="floating-phone-container" v-if="!isAdminPage">
       <div v-show="isPhoneMenuOpen" class="phone-menu shadow-lg">
         <a href="tel:0995556969" class="phone-menu-item">
           <i class="fa-solid fa-cart-shopping"></i> Mua hàng: <strong>0995.556.969</strong>
@@ -51,6 +51,7 @@ const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
 const isSearchOpen = ref(false)
 const isPhoneMenuOpen = ref(false)
 const isHomePage = computed(() => route.path === '/')
+const isAdminPage = computed(() => route.path.startsWith('/admin'))
 
 const togglePhoneMenu = () => {
   isPhoneMenuOpen.value = !isPhoneMenuOpen.value

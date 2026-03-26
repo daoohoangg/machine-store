@@ -51,16 +51,21 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useGroups } from '~/composables/useGroups'
+import { useManualGroups } from '~/composables/useManualGroups'
 
 const { groups, fetchGroups } = useGroups()
+const { manualGroups, fetchManualGroups } = useManualGroups()
+
+const manualProductIds = computed(() => manualGroups.value['flash-sale'] || [])
+const { products: manualProducts } = useHomeProducts(computed(() => ({ ids: manualProductIds.value, limit: 100 })))
 
 onMounted(() => {
   if (!groups.value.length) {
     fetchGroups()
   }
+  fetchManualGroups()
 })
 
 const flashSaleGroupId = computed(() => {
@@ -124,11 +129,24 @@ const getOldPriceVal = (item: any) => {
 }
 
 const items = computed(() => {
-  if (!products.value.length) return []
+  const allAvailable = [...manualProducts.value, ...products.value]
+  const unique = Array.from(new Map(allAvailable.map(p => [p.id, p])).values())
 
-  return products.value
+  if (!unique.length) return []
+
+  return unique
     .filter((item) => !isImageFailed(item.image))
-    .sort((a, b) => discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice))
+    .sort((a, b) => {
+      // Prioritize manual products if they have priority in the list
+      const aManualIdx = manualProductIds.value.indexOf(String(a.id))
+      const bManualIdx = manualProductIds.value.indexOf(String(b.id))
+      
+      if (aManualIdx !== -1 && bManualIdx !== -1) return aManualIdx - bManualIdx
+      if (aManualIdx !== -1) return -1
+      if (bManualIdx !== -1) return 1
+      
+      return discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice)
+    })
     .slice(0, 10)
     .map((item, idx) => ({
       slug: item.slug,
