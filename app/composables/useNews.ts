@@ -1,6 +1,6 @@
 import { useState, useAsyncData, useNuxtApp } from '#imports'
 
-const defaultNews = [
+const defaultNews: any[] = [
   {
     image: 'https://picsum.photos/seed/machine1/600/400',
     tag: 'MÁY NÔNG NGHIỆP',
@@ -180,13 +180,13 @@ const generateSlug = (str: string) => {
 }
 
 const generateMockContent = (title: string, image: string, desc: string) => {
-  return \`
-    <p>Chào mừng bạn đến với bài viết <strong>\${title}</strong>.</p>
-    <p>\${desc}</p>
-    <img src="\${image}" alt="\${title}" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
+  return `
+    <p>Chào mừng bạn đến với bài viết <strong>${title}</strong>.</p>
+    <p>${desc}</p>
+    <img src="${image}" alt="${title}" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
     <h2>Phần 1: Giới thiệu chung</h2>
     <p>Đây là nội dung chi tiết được tự động tạo phục vụ cho ví dụ. Trong phần này, bạn sẽ tìm hiểu thêm về các ứng dụng và đặc điểm nổi bật của máy móc và dịch vụ mà Tuấn Minh cung cấp.</p>
-    <img src="https://picsum.photos/seed/\${Math.random().toString(36).substring(7)}/800/500" alt="Random image" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
+    <img src="https://picsum.photos/seed/${Math.random().toString(36).substring(7)}/800/500" alt="Random image" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
     <h2>Phần 2: Lợi ích mang lại</h2>
     <ul>
       <li>Hiệu suất cao, tiết kiệm thời gian.</li>
@@ -194,7 +194,7 @@ const generateMockContent = (title: string, image: string, desc: string) => {
       <li>Chi phí đầu tư hợp lý, mau thu hồi vốn.</li>
     </ul>
     <p>Với nhiều năm kinh nghiệm, chúng tôi luôn mang lại giá trị tốt nhất cho Quý khách hàng.</p>
-  \`
+  `
 }
 
 export const useNews = () => {
@@ -244,7 +244,7 @@ export const useNews = () => {
         })
       } catch (e: any) {
         console.error('Failed to save news', e)
-        alert('Có lỗi khi lưu bài viết! Giao diện đã được cập nhật nhưng lưu file thất bại.\\nVui lòng khởi động lại server Nuxt (npm run dev) nếu API /api/news bị lỗi 404.\\nLỗi: ' + e.message)
+        alert('Có lỗi khi lưu bài viết! Giao diện đã được cập nhật nhưng lưu file thất bại.\nVui lòng khởi động lại server Nuxt (npm run dev) nếu API /api/news bị lỗi 404.\nLỗi: ' + e.message)
       }
     }
   }

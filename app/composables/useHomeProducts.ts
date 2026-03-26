@@ -89,6 +89,7 @@ export interface FetchOptions {
   order?: string;
   page?: number;
   limit?: number;
+  group_id?: number | string | null;
 }
 
 export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<FetchOptions | number | string | null | undefined>) => {
@@ -203,7 +204,11 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         }
       }
 
-      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, page: ${parsedPage}, limit: ${parsedLimit}`)
+      if (filters.group_id) {
+        body.group_id = filters.group_id
+      }
+
+      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, group_id: ${filters.group_id}, page: ${parsedPage}, limit: ${parsedLimit}`)
       const response = await request<any>('product/index', {
         method: 'POST',
         body,

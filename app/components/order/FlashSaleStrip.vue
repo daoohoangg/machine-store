@@ -50,11 +50,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useHomeProducts } from '~/composables/useHomeProducts'
+import { computed, ref, onMounted } from 'vue'
+import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
 import { useImageGuard } from '~/composables/useImageGuard'
+import { useGroups } from '~/composables/useGroups'
 
-const { products } = useHomeProducts()
+const { groups, fetchGroups } = useGroups()
+
+onMounted(() => {
+  if (!groups.value.length) {
+    fetchGroups()
+  }
+})
+
+const flashSaleGroupId = computed(() => {
+  if (!groups.value) return null
+  const group = groups.value.find(g => g.slug === 'flas-sale' || g.name?.toUpperCase().includes('FLASH SALE') || g.name?.toUpperCase().includes('FLAS SALE'))
+  return group?.id || null
+})
+
+const fetchOptions = computed<FetchOptions>(() => {
+  if (flashSaleGroupId.value) {
+    return { group_id: flashSaleGroupId.value, limit: 100 }
+  }
+  // Fallback if not found yet
+  return { search: 'Flash Sale', limit: 100 }
+})
+
+const { products } = useHomeProducts(fetchOptions)
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const scrollContainer = ref<HTMLElement | null>(null)
 

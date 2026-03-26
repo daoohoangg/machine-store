@@ -16,12 +16,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import ProductCard from '~/components/product/ProductCard.vue'
-import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
+import { useGroups } from '~/composables/useGroups'
 import { useImageGuard } from '~/composables/useImageGuard'
 
-const { products } = useHomeProducts()
+const { groups, fetchGroups } = useGroups()
+
+onMounted(() => {
+  if (!groups.value.length) {
+    fetchGroups()
+  }
+})
+
+const newProductsGroupId = computed(() => {
+  if (!groups.value) return null
+  const group = groups.value.find(g => g.slug === 'san-pham-moi' || g.name?.toUpperCase().includes('SẢN PHẨM MỚI'))
+  return group?.id || null
+})
+
+const fetchOptions = computed<FetchOptions>(() => {
+  if (newProductsGroupId.value) {
+    return { group_id: newProductsGroupId.value, limit: 100 }
+  }
+  return { limit: 100 } // fallback
+})
+
+const { products } = useHomeProducts(fetchOptions)
 const { isImageFailed } = useImageGuard()
 
 const newProducts = computed(() => {
@@ -29,10 +51,11 @@ const newProducts = computed(() => {
   
   const validProducts = products.value.filter(p => !isImageFailed(p.image))
   
-  // Sort by id descending assuming higher id = newer product in db
-  const sorted = [...validProducts].sort((a, b) => {
-    return Number(b.id) - Number(a.id)
-  })
+  const sorted = [...validProducts]
+  // Fallback sort if group ID is not yet available
+  if (!newProductsGroupId.value) {
+    sorted.sort((a, b) => Number(b.id) - Number(a.id))
+  }
   
   return sorted.slice(0, 6) // Limit to one row of 6 products
 })
