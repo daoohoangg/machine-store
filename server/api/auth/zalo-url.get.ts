@@ -17,19 +17,29 @@ export default defineEventHandler(async (event) => {
   }
 
   // PKCE Implementation
-  const codeVerifier = randomBytes(32).toString('base64url').substring(0, 43)
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let codeVerifier = ''
+  for (let i = 0; i < 43; i++) {
+    codeVerifier += charset.charAt(Math.floor(Math.random() * charset.length))
+  }
+
   const codeChallenge = createHash('sha256')
     .update(codeVerifier)
     .digest('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
     .replace(/=/g, '')
 
   const state = Math.random().toString(36).substring(7)
-  
+  console.log('[Zalo Auth Debug] Generating URL with:', { 
+    appId: !!appId, 
+    redirectUri, 
+    state, 
+    codeChallenge: !!codeChallenge,
+    verifierPrefix: codeVerifier.substring(0, 5) + '...'
+  })
+
   // Store state and code_verifier in cookies
-  setCookie(event, 'zalo_state', state, { maxAge: 600, httpOnly: true })
-  setCookie(event, 'zalo_code_verifier', codeVerifier, { maxAge: 600, httpOnly: true })
+  setCookie(event, 'zalo_state', state, { maxAge: 600, httpOnly: true, path: '/', sameSite: 'lax' })
+  setCookie(event, 'zalo_code_verifier', codeVerifier, { maxAge: 600, httpOnly: true, path: '/', sameSite: 'lax' })
 
   const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&code_challenge=${codeChallenge}`
   

@@ -8,8 +8,21 @@ export default defineEventHandler(async (event) => {
   const savedState = getCookie(event, 'zalo_state')
   const codeVerifier = getCookie(event, 'zalo_code_verifier')
 
+  console.log('[Zalo Auth Debug] Callback started', { 
+    code: !!code, 
+    queryState: state, 
+    savedState, 
+    hasVerifier: !!codeVerifier,
+    verifierPrefix: codeVerifier ? codeVerifier.substring(0, 5) + '...' : 'none'
+  })
+
   if (!code || state !== savedState || !codeVerifier) {
-    return sendHtmlResponse(event, 'zalo-login-error')
+    console.error('[Zalo Auth Debug] Validation failed', { 
+      codeExists: !!code, 
+      stateMatch: state === savedState, 
+      hasVerifier: !!codeVerifier 
+    })
+    return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi xác thực (Cookie hoặc State không khớp)')
   }
 
   try {
@@ -32,19 +45,34 @@ export default defineEventHandler(async (event) => {
         code,
         app_id: appId as string,
         grant_type: 'authorization_code',
-        code_verifier: codeVerifier as string
+        code_verifier: codeVerifier as string,
+        redirect_uri: config.zaloRedirectUri || `${getRequestURL(event).origin}/api/auth/zalo-callback`
       })
     })
 
     const accessToken = tokenRes.access_token
-    if (!accessToken) throw new Error('Failed to get access token')
+    if (!accessToken) {
+      console.error('[Zalo Auth Debug] Token exchange response ERROR:', tokenRes)
+      throw new Error(`Zalo API error: ${tokenRes.error_name || 'unknown'} (${tokenRes.error_description || ''})`)
+    }
 
     // 2. Get User Profile
+    console.log('[Zalo Auth Debug] Fetching profile with token...')
     const profileRes: any = await $fetch(`https://graph.zalo.me/v2.0/me?fields=id,name,picture`, {
       headers: {
         'access_token': accessToken
       }
+    }).catch(err => {
+      console.error('[Zalo Auth Debug] Profile fetch Exception:', err)
+      return { error: err.message }
     })
+
+    console.log('[Zalo Auth Debug] Profile response:', profileRes)
+
+    if (!profileRes?.id) {
+       console.error('[Zalo Auth Debug] Profile retrieval failed:', profileRes)
+       throw new Error('Failed to get user profile')
+    }
 
     const { id: zaloId, name, picture } = profileRes
     const avatarUrl = picture?.data?.url
@@ -83,7 +111,7 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-function sendHtmlResponse(event: any, message: string) {
+function sendHtmlResponse(event: any, message: string, detail: string = '') {
   return `
     <html>
       <head>
@@ -92,9 +120,13 @@ function sendHtmlResponse(event: any, message: string) {
       <body>
         <script>
           window.opener.postMessage('${message}', '*');
+          if ('${detail}') {
+             console.error('Zalo Auth Details:', '${detail}');
+          }
           window.close();
         </script>
         <p>Đang xử lý đăng nhập...</p>
+        <p style="color: red; font-size: 10px;">${detail}</p>
       </body>
     </html>
   `
