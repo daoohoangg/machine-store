@@ -1,98 +1,125 @@
 import { defineEventHandler, readBody, getMethod } from 'h3'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { useSqlite } from '../utils/sqlite'
+import { useSupabase } from '../utils/supabase'
 
 // The JSON file for migration
 const jsonPath = path.resolve(process.cwd(), 'app/data/manual-groups.json')
 
 export default defineEventHandler(async (event) => {
-  const method = getMethod(event)
-  const db = useSqlite()
-  
-  if (method === 'GET') {
-    try {
-      // Check if table is empty
-      const count: any = db.prepare('SELECT COUNT(*) as count FROM manual_groups').get()
-      
-      if (count.count === 0 && fs.existsSync(jsonPath)) {
-        console.log('Migrating manual-groups.json to SQLite...')
-        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'))
+  try {
+    const method = getMethod(event)
+    console.log(`[ManualGroups] Handling ${method} request via Supabase`)
+
+    const supabase = useSupabase()
+    
+    if (method === 'GET') {
+      try {
+        // Check if table is empty to trigger migration
+        const { count, error: countError } = await supabase
+          .from('manual_groups')
+          .select('*', { count: 'exact', head: true })
         
-        const insert = db.prepare(`
-          INSERT INTO manual_groups (group_key, product_id, product_data)
-          VALUES (@group_key, @product_id, @product_data)
-        `)
-        
-        db.transaction(() => {
+        if (!countError && count === 0 && fs.existsSync(jsonPath)) {
+          console.log('[Supabase] Migrating manual-groups.json to Supabase...')
+          const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'))
+          
+          const itemsToInsert: any[] = []
           for (const groupKey in data) {
             const products = data[groupKey]
             if (Array.isArray(products)) {
               for (const product of products) {
-                insert.run({
+                itemsToInsert.push({
                   group_key: groupKey,
                   product_id: String(product.id),
-                  product_data: JSON.stringify(product)
+                  product_data: product
                 })
               }
             }
           }
-        })()
-      }
 
-      const rows = db.prepare('SELECT * FROM manual_groups').all()
-      const result: any = { "flash-sale": [], "new-products": [] }
-      
-      for (const row of rows as any[]) {
-        if (!result[row.group_key]) result[row.group_key] = []
-        result[row.group_key].push(JSON.parse(row.product_data))
-      }
-      
-      return result
-    } catch (e) {
-      console.error('SQLite Manual Groups GET error:', e)
-      return { "flash-sale": [], "new-products": [] }
-    }
-  }
+          if (itemsToInsert.length > 0) {
+            const { error: insertError } = await supabase
+              .from('manual_groups')
+              .insert(itemsToInsert)
 
-  if (method === 'POST' || method === 'PUT') {
-    try {
-      const body = await readBody(event)
-      
-      if (!body || typeof body !== 'object') {
-        throw new Error('Invalid request body')
-      }
+            if (insertError) {
+              console.error('[Supabase] Manual Groups Migration error:', insertError)
+            } else {
+              console.log('[Supabase] Manual Groups Migration successful')
+            }
+          }
+        }
 
-      db.transaction((data) => {
-        // Clear table and re-insert
-        db.prepare('DELETE FROM manual_groups').run()
-        const insert = db.prepare(`
-          INSERT INTO manual_groups (group_key, product_id, product_data)
-          VALUES (@group_key, @product_id, @product_data)
-        `)
+        const { data: rows, error } = await supabase
+          .from('manual_groups')
+          .select('*')
         
-        for (const groupKey in data) {
-          const products = data[groupKey]
+        if (error) throw error
+
+        const result: any = { "flash-sale": [], "new-products": [] }
+        if (rows) {
+          for (const row of rows) {
+            if (!result[row.group_key]) result[row.group_key] = []
+            result[row.group_key].push(row.product_data)
+          }
+        }
+        
+        return result
+      } catch (e: any) {
+        console.error('Supabase Manual Groups GET error:', e)
+        return { error: e.message, status: 'error' }
+      }
+    }
+
+    if (method === 'POST' || method === 'PUT') {
+      try {
+        const body = await readBody(event)
+        
+        if (!body || typeof body !== 'object') {
+          throw new Error('Invalid request body')
+        }
+
+        // 1. Delete all existing manual groups
+        const { error: deleteError } = await supabase
+          .from('manual_groups')
+          .delete()
+          .neq('id', -1)
+
+        if (deleteError) throw deleteError
+
+        // 2. Prepare items for insertion
+        const itemsToInsert: any[] = []
+        for (const groupKey in body) {
+          const products = body[groupKey]
           if (Array.isArray(products)) {
             for (const product of products) {
               if (!product || !product.id) continue;
-              
-              insert.run({
+              itemsToInsert.push({
                 group_key: groupKey,
                 product_id: String(product.id),
-                product_data: JSON.stringify(product)
+                product_data: product
               })
             }
           }
         }
-      })(body)
-      
-      return { success: true }
-    } catch (e: any) {
-      console.error('SQLite Manual Groups POST/PUT error:', e)
-      // Throwing createError ensures H3 handles it as a proper error response if needed
-      // but here we might want to return a JSON object for the frontend to handle
-      return { success: false, error: e.message }
+
+        if (itemsToInsert.length > 0) {
+          const { error: insertError } = await supabase
+            .from('manual_groups')
+            .insert(itemsToInsert)
+
+          if (insertError) throw insertError
+        }
+        
+        return { success: true }
+      } catch (e: any) {
+        console.error('Supabase Manual Groups POST/PUT error:', e)
+        return { success: false, error: e.message }
+      }
     }
+  } catch (globalError: any) {
+    console.error('[Supabase ManualGroups GLOBAL ERROR]:', globalError)
+    return { success: false, error: 'Supabase Initialization Error: ' + globalError.message }
   }
 })

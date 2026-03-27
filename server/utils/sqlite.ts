@@ -8,14 +8,22 @@ export const useSqlite = () => {
   if (_db) return _db
 
   const dbPath = path.resolve(process.cwd(), 'database.sqlite')
+  console.log('[SQLite] Initializing database at:', dbPath)
   
-  // Ensure the directory exists (though it's in root here)
-  const dir = path.dirname(dbPath)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
+  try {
+    // Ensure the directory exists
+    const dir = path.dirname(dbPath)
+    if (!fs.existsSync(dir)) {
+      console.log('[SQLite] Creating directory:', dir)
+      fs.mkdirSync(dir, { recursive: true })
+    }
 
-  _db = new Database(dbPath)
+    _db = new Database(dbPath)
+    console.log('[SQLite] Database connected successfully')
+  } catch (err: any) {
+    console.error('[SQLite] Connection error:', err)
+    throw new Error(`SQLite connection failed at ${dbPath}: ${err.message}`)
+  }
   
   // Initialize tables
   _db.exec(`
