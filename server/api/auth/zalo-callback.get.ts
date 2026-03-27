@@ -6,14 +6,16 @@ export default defineEventHandler(async (event) => {
   const code = query.code as string
   const state = query.state as string
   const savedState = getCookie(event, 'zalo_state')
+  const codeVerifier = getCookie(event, 'zalo_code_verifier')
 
-  if (!code || state !== savedState) {
+  if (!code || state !== savedState || !codeVerifier) {
     return sendHtmlResponse(event, 'zalo-login-error')
   }
 
   try {
-    const appId = process.env.ZALO_APP_ID
-    const appSecret = process.env.ZALO_APP_SECRET
+    const config = useRuntimeConfig(event)
+    const appId = config.zaloAppId
+    const appSecret = config.zaloAppSecret
 
     if (!appId || !appSecret) {
       throw new Error('Zalo App ID or App Secret not configured')
@@ -29,7 +31,8 @@ export default defineEventHandler(async (event) => {
       body: new URLSearchParams({
         code,
         app_id: appId as string,
-        grant_type: 'authorization_code'
+        grant_type: 'authorization_code',
+        code_verifier: codeVerifier as string
       })
     })
 
