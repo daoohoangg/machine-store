@@ -25,6 +25,7 @@
         v-for="p in products" 
         :key="p.id" 
         :product="p" 
+        :is-flash-sale="slug === 'flash-sale'"
       />
     </div>
   </div>

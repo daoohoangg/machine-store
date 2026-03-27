@@ -1,6 +1,6 @@
 <template>
   <article class="product-card">
-    <div v-if="discountPercent" class="discount-ribbon">{{ discountPercent }}</div>
+    <div v-if="isFlashSale && discountPercent" class="discount-ribbon">{{ discountPercent }}</div>
 
     <NuxtLink v-if="detailPath" :to="detailPath" class="card-link" :aria-label="product.title">
       <div class="thumb-wrap">
@@ -25,7 +25,7 @@
         <div class="price-rating-row">
           <div class="price-col">
             <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="old-price" v-if="isFlashSale && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -60,7 +60,7 @@
         <div class="price-rating-row">
           <div class="price-col">
             <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="old-price" v-if="isFlashSale && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -78,7 +78,7 @@
 import { computed } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   product: {
     id?: string | number
     slug?: string
@@ -93,7 +93,10 @@ const props = defineProps<{
     brand?: string
     reviews?: number
   }
-}>()
+  isFlashSale?: boolean
+}>(), {
+  isFlashSale: false
+})
 
 const emit = defineEmits(['image-error'])
 const { markImageAsFailed } = useImageGuard()
