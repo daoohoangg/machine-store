@@ -29,6 +29,8 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig(event)
     const appId = config.zaloAppId
     const appSecret = config.zaloAppSecret
+    
+    console.log('[Zalo Auth Debug] Config:', { appId: !!appId, appSecret: !!appSecret ? appSecret.substring(0, 4) + '...' : 'none' })
 
     if (!appId || !appSecret) {
       throw new Error('Zalo App ID or App Secret not configured')
@@ -122,11 +124,16 @@ function sendHtmlResponse(event: any, message: string, detail: string = '') {
           window.opener.postMessage('${message}', '*');
           if ('${detail}') {
              console.error('Zalo Auth Details:', '${detail}');
+          } else if ('${message}' === 'zalo-login-success') {
+             window.close();
           }
-          window.close();
         </script>
         <p>Đang xử lý đăng nhập...</p>
-        <p style="color: red; font-size: 10px;">${detail}</p>
+        ${detail ? `
+        <div style="color: red; font-size: 14px; padding: 20px; border: 1px solid red; background: #fff1f1; margin-top: 20px;">
+          <b>LỖI ĐĂNG NHẬP:</b><br/> ${detail}
+        </div>
+        ` : ''}
       </body>
     </html>
   `
