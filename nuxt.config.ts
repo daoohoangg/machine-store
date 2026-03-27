@@ -51,6 +51,7 @@ export default defineNuxtConfig({
     tokenApi: process.env.TOKEN_API,
     geminiApiKey: process.env.GEMINI_API_KEY,
     speedSmsToken: process.env.SPEEDSMS_ACCESS_TOKEN,
+    mongodbUri: process.env.MONGODB_URI,
     public: {
       siteUrl: SITE_URL,
       apiBaseUrl: process.env.API_BASE_URL || 'https://babystore18787.abaha.vn/',

@@ -1,6 +1,75 @@
 {
   "flash-sale": [
     {
+      "id": "1816526",
+      "slug": "dau-nen-cao-aphuspanda-hxd",
+      "title": "Đầu nén cao ápHuspanda HXD120",
+      "price": 2865000,
+      "oldPrice": null,
+      "discount": null,
+      "image": "https://cdn.abphotos.link/photos/resized/320x/2026/03/17/1773714354_X2POWvp8ciUzRBnj_1773716392-phpgc1iwp.png",
+      "images": [
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714354_X2POWvp8ciUzRBnj_1773716392-phpgc1iwp.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714356_4EJirLb8gWYqC0oP_1773716137-phpslbpmu.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714357_diE1lhag5LI9V48O_1773714394-phpomgh8f.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714358_fHcO0EpluC8b4GVI_1773718725-phpscptu2.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714357_v17JY5wF0gTGls3q_1773714896-phpbbosjp.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714360_iT86Wp5lz7am1FuE_1773719176-phpnj5lol.png"
+      ],
+      "brand": "Huspanda",
+      "category": "Sản phẩm",
+      "categoryId": 389070,
+      "rating": 5,
+      "reviews": 0,
+      "isNew": false,
+      "sold": 0,
+      "specs": [
+        "Mô tơ : 100% dây đồng",
+        "Công suất : 2.2 KW - 220V Lưu lượng nước : 12 lít/phút Áp lực : 120 Bar"
+      ],
+      "fullSpecs": [
+        "Mô tơ : 100% dây đồng.",
+        "Công suất : 2.2 KW - 220V",
+        "Lưu lượng nước : 12 lít/phút",
+        "Áp lực : 120 Bar"
+      ]
+    },
+    {
+      "id": "1816530",
+      "slug": "dau-nen-cao-aphuspanda-hxd260s",
+      "title": "Đầu nén cao ápHuspanda HXD260S",
+      "price": 7065000,
+      "oldPrice": null,
+      "discount": null,
+      "image": "https://cdn.abphotos.link/photos/resized/320x/2026/03/17/1773714573_QwW5M3VnUehtIcq0_1773717596-phpcg4mmi.png",
+      "images": [
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714573_QwW5M3VnUehtIcq0_1773717596-phpcg4mmi.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714574_c46WEhQJRUPxv1OC_1773722393-phpeullei.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714575_P6ILeiC8B5wcsTJU_1773723493-phpraw8ef.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714576_cvOBN89Pw4rkdia7_1773722844-phppchg0o.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714576_IkW0awcvViPX4FOh_1773721948-phpvv06bk.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714577_BSYgDKEGn6fUudH8_1773716813-phpkjl1ns.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773714578_VNTaKIxYuSqtnZ9L_1773722503-phpskkt5h.png"
+      ],
+      "brand": "Huspanda",
+      "category": "Sản phẩm",
+      "categoryId": 389070,
+      "rating": 5,
+      "reviews": 0,
+      "isNew": false,
+      "sold": 0,
+      "specs": [
+        "Mô tơ : 100% dây đồng",
+        "Công suất : 5.0KW - 380V Lưu lượng nước : 18 lít/phút Áp lực : 260 Bar"
+      ],
+      "fullSpecs": [
+        "Mô tơ : 100% dây đồng.",
+        "Công suất : 5.0KW - 380V",
+        "Lưu lượng nước : 18 lít/phút",
+        "Áp lực : 260 Bar"
+      ]
+    },
+    {
       "id": "1818286",
       "slug": "cua-huspanda-hps365c-khong-lam-xich",
       "title": "Cưa Huspanda HPS365C (Không lam xích)",
