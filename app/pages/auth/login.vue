@@ -34,6 +34,13 @@
           </button>
           <p class="right-link"><a href="#" @click.prevent="step = 1; errorMsg = ''">Sửa số điện thoại</a></p>
         </div>
+
+        <div class="divider"><span>HOẶC</span></div>
+
+        <button class="social-btn zalo-btn" @click="loginWithZalo">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
+          Đăng nhập bằng Zalo
+        </button>
       </div>
     </div>
   </section>
@@ -55,6 +62,36 @@ const phone = ref('')
 const otp = ref('')
 const isLoading = ref(false)
 const errorMsg = ref('')
+
+// Zalo Auth
+const loginWithZalo = () => {
+  const width = 500
+  const height = 600
+  const left = (window.innerWidth - width) / 2
+  const top = (window.innerHeight - height) / 2
+  
+  // We'll use a server endpoint to get the Zalo Auth URL to keep App ID on server
+  const authUrl = `/api/auth/zalo-url`
+  
+  const popup = window.open(
+    authUrl,
+    'ZaloLogin',
+    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=no,resizable=yes`
+  )
+
+  // Listen for message from popup
+  const messageHandler = (event) => {
+    if (event.data === 'zalo-login-success') {
+      window.removeEventListener('message', messageHandler)
+      router.push('/')
+    } else if (event.data === 'zalo-login-error') {
+       window.removeEventListener('message', messageHandler)
+       errorMsg.value = 'Đăng nhập Zalo thất bại'
+    }
+  }
+  
+  window.addEventListener('message', messageHandler)
+}
 
 const sendOtp = async () => {
   if (!phone.value) return
@@ -265,9 +302,35 @@ input {
   border: 1px solid #bbb;
   border-radius: 6px;
   background: #fff;
-  height: 46px;
+  height: 48px;
   margin-bottom: 8px;
-  font-size: 29px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.social-btn:hover {
+  background: #f9f9f9;
+}
+
+.zalo-btn {
+  background: #0068ff;
+  color: #fff;
+  border: none;
+}
+
+.zalo-btn:hover {
+  background: #005ae0;
+}
+
+.zalo-btn img {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
 }
 
 @media (max-width: 1200px) {
