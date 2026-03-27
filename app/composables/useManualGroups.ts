@@ -1,8 +1,10 @@
 import { useState } from '#imports'
 
+import type { HomeProduct } from './useHomeProducts'
+
 export interface ManualGroups {
-  'flash-sale': string[]
-  'new-products': string[]
+  'flash-sale': HomeProduct[]
+  'new-products': HomeProduct[]
 }
 
 export const useManualGroups = () => {
@@ -18,9 +20,12 @@ export const useManualGroups = () => {
     try {
       const data = await $fetch<ManualGroups>('/api/manual-groups')
       if (data) {
+        // Robust mapping to ensure we always have objects. 
+        // If the file still has string IDs, they will be handled as empty objects or filtered out 
+        // until the admin page saves the full objects.
         manualGroups.value = {
-          'flash-sale': data['flash-sale'] || [],
-          'new-products': data['new-products'] || []
+          'flash-sale': (data['flash-sale'] || []).filter(p => typeof p === 'object' && p !== null) as HomeProduct[],
+          'new-products': (data['new-products'] || []).filter(p => typeof p === 'object' && p !== null) as HomeProduct[]
         }
       }
     } catch (err) {
@@ -47,14 +52,18 @@ export const useManualGroups = () => {
     }
   }
 
-  const addToGroup = (groupName: keyof ManualGroups, productId: string) => {
-    if (!manualGroups.value[groupName].includes(productId)) {
-      manualGroups.value[groupName].unshift(productId)
+  const addToGroup = (groupName: keyof ManualGroups, product: HomeProduct) => {
+    if (!manualGroups.value[groupName].some(p => String(p.id) === String(product.id))) {
+      manualGroups.value[groupName].unshift(product)
     }
   }
 
   const removeFromGroup = (groupName: keyof ManualGroups, productId: string) => {
-    manualGroups.value[groupName] = manualGroups.value[groupName].filter(id => id !== productId)
+    manualGroups.value[groupName] = manualGroups.value[groupName].filter(p => String(p.id) !== String(productId))
+  }
+
+  const clearGroup = (groupName: keyof ManualGroups) => {
+    manualGroups.value[groupName] = []
   }
 
   return {
@@ -64,6 +73,7 @@ export const useManualGroups = () => {
     fetchManualGroups,
     saveManualGroups,
     addToGroup,
-    removeFromGroup
+    removeFromGroup,
+    clearGroup
   }
 }

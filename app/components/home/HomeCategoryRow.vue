@@ -2,7 +2,7 @@
   <section class="category-row-section" v-if="newProducts.length > 0">
     <div class="section-head">
       <h3>Sản phẩm mới</h3>
-      <NuxtLink to="/homepage" class="view-all">Xem tất cả ></NuxtLink>
+      <NuxtLink to="/nhom-san-pham/new-products" class="view-all">Xem tất cả ></NuxtLink>
     </div>
 
     <div class="product-grid">
@@ -23,8 +23,9 @@ import { useManualGroups } from '~/composables/useManualGroups'
 const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
 
-const manualProductIds = computed(() => manualGroups.value['new-products'] || [])
-const { products: manualProducts } = useHomeProducts(computed(() => ({ ids: manualProductIds.value, limit: 100 })))
+const manualProducts = computed(() => {
+  return manualGroups.value['new-products'] || []
+})
 
 onMounted(() => {
   if (!groups.value.length) {
@@ -50,7 +51,7 @@ const { products } = useHomeProducts(fetchOptions)
 const { isImageFailed } = useImageGuard()
 
 const newProducts = computed(() => {
-  const allAvailable = [...manualProducts.value, ...products.value]
+  const allAvailable = manualProducts.value.length > 0 ? [...manualProducts.value] : [...products.value]
   const unique = Array.from(new Map(allAvailable.map(p => [p.id, p])).values())
 
   if (!unique.length) return []
@@ -61,8 +62,9 @@ const newProducts = computed(() => {
   
   // Sort: Manual first (in order), then the rest by ID descending
   sorted.sort((a, b) => {
-    const aManualIdx = manualProductIds.value.indexOf(String(a.id))
-    const bManualIdx = manualProductIds.value.indexOf(String(b.id))
+    const manualIds = manualGroups.value['new-products'].map(p => String(p.id))
+    const aManualIdx = manualIds.indexOf(String(a.id))
+    const bManualIdx = manualIds.indexOf(String(b.id))
     
     if (aManualIdx !== -1 && bManualIdx !== -1) return aManualIdx - bManualIdx
     if (aManualIdx !== -1) return -1

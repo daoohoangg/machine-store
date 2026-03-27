@@ -1,4 +1,118 @@
 {
-  "flash-sale": [],
-  "new-products": []
+  "flash-sale": [
+    {
+      "id": "1818286",
+      "slug": "cua-huspanda-hps365c-khong-lam-xich",
+      "title": "Cưa Huspanda HPS365C (Không lam xích)",
+      "price": 4620000,
+      "oldPrice": null,
+      "discount": null,
+      "image": "https://cdn.abphotos.link/photos/resized/320x/2026/02/25/1771988695_JwLU89Sj2oecRrbO_1771993560-php9rs0ui.png",
+      "images": [
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988695_JwLU89Sj2oecRrbO_1771993560-php9rs0ui.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988696_7T28jMgIGrnAtNkW_1771991267-phpqc3z4n.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988697_lPZNczWXD67vknrC_1771993605-phppazv9k.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988698_dPEFIyMjb0gQqKH7_1771993440-phphzvgr0.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988699_oC6jWcSnOB73Qg2v_1771993001-phpz7ggei.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988700_YHAv42zISOTgLMFh_1771994462-phpxyzdlu.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988702_D3zJlOpSWvV8ZNIr_1771990648-phptt4evo.png"
+      ],
+      "brand": "HUSPANDA",
+      "category": "Sản phẩm",
+      "categoryId": 388591,
+      "rating": 5,
+      "reviews": 0,
+      "isNew": false,
+      "sold": 0,
+      "specs": [
+        "Dung tích xilanh : 65cc",
+        "Công suất : 3,2kw Sử dụng Lam tối đa : 90cm",
+        "Bảo hành : 6 tháng"
+      ],
+      "fullSpecs": [
+        "Dung tích xilanh : 65cc.",
+        "Công suất : 3,2kw",
+        "Sử dụng Lam tối đa : 90cm.",
+        "Bảo hành : 6 tháng"
+      ]
+    }
+  ],
+  "new-products": [
+    {
+      "id": "1816944",
+      "slug": "may-xoi-dat-2-cau-sau-huspanda-hcs186dedc-dau-186f",
+      "title": "Máy xới đất 2 cầu sau Huspanda HCS186DE(Đ/c dầu 186F)",
+      "price": 30495000,
+      "oldPrice": null,
+      "discount": null,
+      "image": "https://cdn.abphotos.link/photos/resized/320x/2026/03/17/1773731966_FoAex6NzS849iLaY_1773732770-phpl4qqdx.png",
+      "images": [
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731966_FoAex6NzS849iLaY_1773732770-phpl4qqdx.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731975_0SZ6TKCdhjm4WoGA_1773735450-phprgwveh.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731976_ZXh7CuHgzWKG6obm_1773741573-phpuqcnmb.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731977_LPH9BAE5iI6NRgGz_1773739737-phpphqdkx.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731977_jliCPoavxcQpHmD0_1773740659-phpgrym94.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731978_kc1gDCN48AbVJFeo_1773737124-phpr2qikn.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731979_4H1ArmPaD59ospcl_1773738080-php8qvlwq.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731981_bLZ0uQymkYS9e5PM_1773739741-phpvlvgnj.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731982_AqTcGJu8OCHNnVIM_1773737990-phpqtaisc.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/03/17/1773731984_9bLVjhqZ2HKB7yUd_1773733904-phpxhfm5l.png"
+      ],
+      "brand": "Huspanda",
+      "category": "Sản phẩm",
+      "categoryId": 388187,
+      "rating": 5,
+      "reviews": 0,
+      "isNew": false,
+      "sold": 0,
+      "specs": [
+        "Động cơ dầu 186F: 10.0 - 10.5HP Model: HCS186DE Kiểu máy: Trục liền, 2 cầu Khởi động điện: Đề nổ Bộ càng lái: Chuyển hướng 180° Hộp số: 2 tiến, 1 dừng, 1 lùi Bộ phụ kiện xới: Bộ lốp cao su, Bộ bánh bám, Bộ lưỡi xới rộng 80cm, Bộ lưỡi tạp rãnh, Bánh xe định hướng Công năng: Cày, bừa, xới, tạo rãnh..."
+      ],
+      "fullSpecs": [
+        "Động cơ dầu 186F: 10.0 - 10.5HP",
+        "Model: HCS186DE",
+        "Kiểu máy: Trục liền, 2 cầu",
+        "Khởi động điện: Đề nổ Bộ càng lái: Chuyển hướng 180°",
+        "Hộp số: 2 tiến, 1 dừng, 1 lùi",
+        "Bộ phụ kiện xới: Bộ lốp cao su, Bộ bánh bám, Bộ lưỡi xới rộng 80cm, Bộ lưỡi tạp rãnh, Bánh xe định hướng",
+        "Công năng: Cày, bừa, xới, tạo rãnh..."
+      ]
+    },
+    {
+      "id": "1818286",
+      "slug": "cua-huspanda-hps365c-khong-lam-xich",
+      "title": "Cưa Huspanda HPS365C (Không lam xích)",
+      "price": 4620000,
+      "oldPrice": null,
+      "discount": null,
+      "image": "https://cdn.abphotos.link/photos/resized/320x/2026/02/25/1771988695_JwLU89Sj2oecRrbO_1771993560-php9rs0ui.png",
+      "images": [
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988695_JwLU89Sj2oecRrbO_1771993560-php9rs0ui.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988696_7T28jMgIGrnAtNkW_1771991267-phpqc3z4n.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988697_lPZNczWXD67vknrC_1771993605-phppazv9k.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988698_dPEFIyMjb0gQqKH7_1771993440-phphzvgr0.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988699_oC6jWcSnOB73Qg2v_1771993001-phpz7ggei.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988700_YHAv42zISOTgLMFh_1771994462-phpxyzdlu.png",
+        "https://cdn.abphotos.link/photos/resized/640x/2026/02/25/1771988702_D3zJlOpSWvV8ZNIr_1771990648-phptt4evo.png"
+      ],
+      "brand": "HUSPANDA",
+      "category": "Sản phẩm",
+      "categoryId": 388591,
+      "rating": 5,
+      "reviews": 0,
+      "isNew": false,
+      "sold": 0,
+      "specs": [
+        "Dung tích xilanh : 65cc",
+        "Công suất : 3,2kw Sử dụng Lam tối đa : 90cm",
+        "Bảo hành : 6 tháng"
+      ],
+      "fullSpecs": [
+        "Dung tích xilanh : 65cc.",
+        "Công suất : 3,2kw",
+        "Sử dụng Lam tối đa : 90cm.",
+        "Bảo hành : 6 tháng"
+      ]
+    }
+  ]
 }

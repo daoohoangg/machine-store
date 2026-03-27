@@ -32,7 +32,19 @@
       
       <div class="management-layout">
         <div class="current-list-section">
-          <h3>Sản phẩm trong nhóm ({{ currentGroupProducts.length }})</h3>
+          <div class="section-title-row">
+            <h3>Sản phẩm trong nhóm ({{ currentGroupProducts.length }})</h3>
+            <div class="clear-all-controls">
+              <button v-if="currentGroupProducts.length > 0 && !showConfirmClear" class="btn-clear-all" @click="showConfirmClear = true">
+                <i class="fa-solid fa-broom"></i> Xóa tất cả
+              </button>
+              <div v-if="showConfirmClear" class="confirm-box">
+                <span>Xác nhận xóa hết?</span>
+                <button class="btn-confirm" @click="handleClearAll">Đúng</button>
+                <button class="btn-cancel" @click="showConfirmClear = false">Hủy</button>
+              </div>
+            </div>
+          </div>
           <div v-if="loadingManual" class="loading">Đang tải...</div>
           <div v-else-if="currentGroupProducts.length === 0" class="empty-state">
             Chưa có sản phẩm nào trong nhóm này.
@@ -98,7 +110,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useManualGroups } from '~/composables/useManualGroups'
@@ -107,7 +119,7 @@ import { useHomeProducts } from '~/composables/useHomeProducts'
 useHead({ title: 'Quản lý Nhóm Sản phẩm - Admin' })
 
 const { isAdmin, initAuth } = useAdminAuth()
-const { manualGroups, fetchManualGroups, saveManualGroups, addToGroup, removeFromGroup } = useManualGroups()
+const { manualGroups, fetchManualGroups, saveManualGroups, addToGroup, removeFromGroup, clearGroup } = useManualGroups()
 
 const groupOptions = [
   { id: 'flash-sale', name: 'Flash Sale (⚡)' },
@@ -120,20 +132,21 @@ const isSearching = ref(false)
 const isSaving = ref(false)
 const showSuccess = ref(false)
 const loadingManual = ref(true)
+const showConfirmClear = ref(false)
 
 // For searching products
-const searchOptions = computed(() => ({
-  search: searchQuery.value,
-  limit: 20
-}))
-const { products: searchProducts, pending: searchPending } = useHomeProducts(searchOptions)
+const searchOptions = computed(() => {
+  const options = { limit: 100 } // Fetch more for selection
+  if (searchQuery.value) {
+    (options as any).search = searchQuery.value
+  }
+  return options
+})
+const { products: searchResultsRaw, pending: searchPending } = useHomeProducts(searchOptions)
 
-// For loading details of products in the current group
-const groupFetchOptions = computed(() => ({
-  ids: manualGroups.value[activeGroup.value] || [],
-  limit: 100
-}))
-const { products: groupProducts, refresh: refreshGroupProducts } = useHomeProducts(groupFetchOptions)
+const currentGroupProducts = computed(() => {
+  return manualGroups.value[activeGroup.value] || []
+})
 
 onMounted(async () => {
   initAuth()
@@ -142,13 +155,12 @@ onMounted(async () => {
 })
 
 const searchResults = computed(() => {
-  if (!searchQuery.value) return []
-  return searchProducts.value || []
+  return searchResultsRaw.value || []
 })
 
-const currentGroupProducts = computed(() => {
-  return groupProducts.value || []
-})
+const currentGroupProductsLocal = ref([]) // Not needed anymore as we use computed directly from manualGroups
+// However, to keep it simple, let's keep the computed name 'currentGroupProducts' 
+// and just map it to the store.
 
 const formatPrice = (p) => p?.toLocaleString('vi-VN') || '0'
 
@@ -164,17 +176,20 @@ const isInActiveGroup = (id) => {
 }
 
 const addToActiveGroup = (product) => {
-  addToGroup(activeGroup.value, String(product.id))
-  // Instant feedback: add to the local display list if not already there (at the top)
-  if (!groupProducts.value.find(p => p.id === product.id)) {
-    groupProducts.value.unshift(product)
-  }
+  addToGroup(activeGroup.value, product)
 }
 
 const removeFromActiveGroup = (id) => {
   removeFromGroup(activeGroup.value, String(id))
-  // Refresh local display
-  groupProducts.value = groupProducts.value.filter(p => p.id !== id)
+}
+
+const handleClearAll = async () => {
+  if (confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm trong nhóm này?')) {
+    clearGroup(activeGroup.value)
+    showConfirmClear.value = false
+    // User asked to remember to save to manual-groups file
+    await handleSave()
+  }
 }
 
 const handleSave = async () => {
@@ -191,8 +206,9 @@ const handleSave = async () => {
 }
 
 // Watch activeGroup to potentially refresh product details
+// refreshGroupProducts() is no longer needed as currentGroupProducts is reactive to manualGroups
 watch(activeGroup, () => {
-  refreshGroupProducts()
+  // refreshGroupProducts()
 })
 </script>
 
@@ -255,10 +271,67 @@ watch(activeGroup, () => {
 
 h3 {
   font-size: 18px;
-  margin-bottom: 15px;
+  margin-bottom: 0;
   color: #444;
   border-left: 4px solid #e31b1b;
   padding-left: 10px;
+}
+
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-clear-all {
+  background: #fff;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-clear-all:hover {
+  background: #dc3545;
+  color: #fff;
+}
+
+.confirm-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff5f5;
+  padding: 4px 8px;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.btn-confirm {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-cancel {
+  background: #edf2f7;
+  color: #4a5568;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .current-list-section, .search-section {

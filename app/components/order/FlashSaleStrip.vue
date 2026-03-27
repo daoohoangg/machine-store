@@ -7,7 +7,7 @@
           <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">‹</button>
           <button class="nav-btn next" @click="scroll('right')" aria-label="Next">›</button>
         </div>
-        <a href="#">Xem tất cả ›</a>
+        <NuxtLink to="/nhom-san-pham/flash-sale">Xem tất cả ›</NuxtLink>
       </div>
     </div>
 
@@ -58,8 +58,9 @@ import { useManualGroups } from '~/composables/useManualGroups'
 const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
 
-const manualProductIds = computed(() => manualGroups.value['flash-sale'] || [])
-const { products: manualProducts } = useHomeProducts(computed(() => ({ ids: manualProductIds.value, limit: 100 })))
+const manualProducts = computed(() => {
+  return manualGroups.value['flash-sale'] || []
+})
 
 onMounted(() => {
   if (!groups.value.length) {
@@ -129,7 +130,7 @@ const getOldPriceVal = (item: any) => {
 }
 
 const items = computed(() => {
-  const allAvailable = [...manualProducts.value, ...products.value]
+  const allAvailable = manualProducts.value.length > 0 ? [...manualProducts.value] : [...products.value]
   const unique = Array.from(new Map(allAvailable.map(p => [p.id, p])).values())
 
   if (!unique.length) return []
@@ -138,8 +139,9 @@ const items = computed(() => {
     .filter((item) => !isImageFailed(item.image))
     .sort((a, b) => {
       // Prioritize manual products if they have priority in the list
-      const aManualIdx = manualProductIds.value.indexOf(String(a.id))
-      const bManualIdx = manualProductIds.value.indexOf(String(b.id))
+      const manualIds = manualGroups.value['flash-sale'].map(p => String(p.id))
+      const aManualIdx = manualIds.indexOf(String(a.id))
+      const bManualIdx = manualIds.indexOf(String(b.id))
       
       if (aManualIdx !== -1 && bManualIdx !== -1) return aManualIdx - bManualIdx
       if (aManualIdx !== -1) return -1
