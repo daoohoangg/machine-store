@@ -39,10 +39,13 @@ export const useManualGroups = () => {
   const saveManualGroups = async () => {
     isLoading.value = true
     try {
-      await $fetch('/api/manual-groups', {
+      const resp = await $fetch<any>('/api/manual-groups', {
         method: 'POST',
         body: manualGroups.value
       })
+      if (resp && resp.success === false) {
+        throw new Error(resp.error || 'Lỗi server khi lưu nhóm')
+      }
     } catch (err) {
       error.value = err
       console.error('Failed to save manual groups:', err)

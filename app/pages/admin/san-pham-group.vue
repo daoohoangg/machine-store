@@ -172,7 +172,7 @@ const onSearchInput = () => {
 }
 
 const isInActiveGroup = (id) => {
-  return manualGroups.value[activeGroup.value].includes(String(id))
+  return manualGroups.value[activeGroup.value].some(p => String(p.id) === String(id))
 }
 
 const addToActiveGroup = (product) => {

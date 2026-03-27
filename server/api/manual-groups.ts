@@ -57,9 +57,13 @@ export default defineEventHandler(async (event) => {
 
   if (method === 'POST' || method === 'PUT') {
     try {
-      const body = await readBody(event) // This is an object with group keys
+      const body = await readBody(event)
       
-      db.transaction(() => {
+      if (!body || typeof body !== 'object') {
+        throw new Error('Invalid request body')
+      }
+
+      db.transaction((data) => {
         // Clear table and re-insert
         db.prepare('DELETE FROM manual_groups').run()
         const insert = db.prepare(`
@@ -67,10 +71,12 @@ export default defineEventHandler(async (event) => {
           VALUES (@group_key, @product_id, @product_data)
         `)
         
-        for (const groupKey in body) {
-          const products = body[groupKey]
+        for (const groupKey in data) {
+          const products = data[groupKey]
           if (Array.isArray(products)) {
             for (const product of products) {
+              if (!product || !product.id) continue;
+              
               insert.run({
                 group_key: groupKey,
                 product_id: String(product.id),
@@ -79,11 +85,13 @@ export default defineEventHandler(async (event) => {
             }
           }
         }
-      })()
+      })(body)
       
       return { success: true }
     } catch (e: any) {
       console.error('SQLite Manual Groups POST/PUT error:', e)
+      // Throwing createError ensures H3 handles it as a proper error response if needed
+      // but here we might want to return a JSON object for the frontend to handle
       return { success: false, error: e.message }
     }
   }
