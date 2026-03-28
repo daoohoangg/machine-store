@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const savedState = getCookie(event, 'zalo_state')
   const codeVerifier = getCookie(event, 'zalo_code_verifier')
   
-  let redirectUri = config.zaloRedirectUri
+  let redirectUri = config.public.zaloRedirectUri
   if (isDev) {
     redirectUri = `${origin}/api/auth/zalo-callback`
   } else if (!redirectUri) {
@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     savedState, 
     matching: state === savedState,
     hasVerifier: !!codeVerifier,
+    verifierLength: codeVerifier?.length,
     origin,
     isDev,
     redirectUri
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 1. Exchange code for access token
-    const tokenRes: any = await $fetch('https://oauth.zaloapp.com/v4/access_token', {
+    let tokenRes: any = await $fetch('https://oauth.zaloapp.com/v4/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -65,14 +66,23 @@ export default defineEventHandler(async (event) => {
         app_id: appId as string,
         grant_type: 'authorization_code',
         code_verifier: codeVerifier as string,
-        redirect_uri: redirectUri
+        redirect_uri: redirectUri as string
       })
     })
 
-    const accessToken = tokenRes.access_token
+    // Robust parsing if response is a string
+    if (typeof tokenRes === 'string') {
+      try {
+        tokenRes = JSON.parse(tokenRes)
+      } catch (e) {
+        console.error('[Zalo Auth Debug] Failed to parse token response as JSON:', tokenRes)
+      }
+    }
+
+    const accessToken = tokenRes?.access_token
     if (!accessToken) {
       console.error('[Zalo Auth Debug] Token exchange response ERROR:', tokenRes)
-      throw new Error(`Zalo API error: ${tokenRes.error_name || 'unknown'} (${tokenRes.error_description || ''})`)
+      throw new Error(`Zalo API error: ${tokenRes?.error_name || 'unknown'} (${tokenRes?.error_description || ''})`)
     }
 
     // 2. Get User Profile

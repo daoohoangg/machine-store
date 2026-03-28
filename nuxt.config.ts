@@ -57,6 +57,8 @@ export default defineNuxtConfig({
     zaloRedirectUri: process.env.ZALO_REDIRECT_URI,
     public: {
       siteUrl: SITE_URL,
+      zaloAppId: process.env.ZALO_APP_ID,
+      zaloRedirectUri: process.env.ZALO_REDIRECT_URI,
       apiBaseUrl: process.env.API_BASE_URL || 'https://babystore18787.abaha.vn/',
       productsApiPath: process.env.PRODUCTS_API_PATH || '/api/products',
       abahaToken: process.env.ABAHA_TOKEN,

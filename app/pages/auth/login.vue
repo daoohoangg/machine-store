@@ -63,18 +63,49 @@ const otp = ref('')
 const isLoading = ref(false)
 const errorMsg = ref('')
 
-// Zalo Auth
-const loginWithZalo = () => {
+// Zalo Auth PKCE Helpers
+const generateRandomString = (length) => {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length))
+  }
+  return result
+}
+
+const generateCodeChallenge = async (codeVerifier) => {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(codeVerifier)
+  const digest = await window.crypto.subtle.digest('SHA-256', data)
+  const base64Digest = btoa(String.fromCharCode(...new Uint8Array(digest)))
+  return base64Digest.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
+
+const loginWithZalo = async () => {
+  const config = useRuntimeConfig().public
+  const appId = config.zaloAppId
+  const redirectUri = config.zaloRedirectUri || `${window.location.origin}/api/auth/zalo-callback`
+  
+  // PKCE
+  const codeVerifier = generateRandomString(43)
+  const codeChallenge = await generateCodeChallenge(codeVerifier)
+  const state = generateRandomString(10)
+  
+  // Store verifier and state in cookies for backend to use
+  const verifierCookie = useCookie('zalo_code_verifier', { maxAge: 600, sameSite: 'lax' })
+  const stateCookie = useCookie('zalo_state', { maxAge: 600, sameSite: 'lax' })
+  verifierCookie.value = codeVerifier
+  stateCookie.value = state
+
+  const zaloAuthUrl = `https://oauth.zaloapp.com/v4/permission?app_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&code_challenge=${codeChallenge}`
+  
   const width = 500
   const height = 600
   const left = (window.innerWidth - width) / 2
   const top = (window.innerHeight - height) / 2
   
-  // We'll use a server endpoint to get the Zalo Auth URL to keep App ID on server
-  const authUrl = `/api/auth/zalo-url`
-  
   const popup = window.open(
-    authUrl,
+    zaloAuthUrl,
     'ZaloLogin',
     `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=no,resizable=yes`
   )
