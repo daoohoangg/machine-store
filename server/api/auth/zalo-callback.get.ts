@@ -5,28 +5,45 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const code = query.code as string
   const state = query.state as string
+  const origin = getRequestURL(event).origin
+  const config = useRuntimeConfig(event)
+  const isDev = process.env.NODE_ENV === 'development'
+  const siteUrl = config.public.siteUrl || origin
+  
   const savedState = getCookie(event, 'zalo_state')
   const codeVerifier = getCookie(event, 'zalo_code_verifier')
+  
+  let redirectUri = config.zaloRedirectUri
+  if (isDev) {
+    redirectUri = `${origin}/api/auth/zalo-callback`
+  } else if (!redirectUri) {
+    redirectUri = `${siteUrl}/api/auth/zalo-callback`
+  }
 
   console.log('[Zalo Auth Debug] Callback started', { 
     code: !!code, 
     queryState: state, 
     savedState, 
+    matching: state === savedState,
     hasVerifier: !!codeVerifier,
-    verifierPrefix: codeVerifier ? codeVerifier.substring(0, 5) + '...' : 'none'
+    origin,
+    isDev,
+    redirectUri
   })
 
-  if (!code || state !== savedState || !codeVerifier) {
-    console.error('[Zalo Auth Debug] Validation failed', { 
-      codeExists: !!code, 
-      stateMatch: state === savedState, 
-      hasVerifier: !!codeVerifier 
-    })
-    return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi xác thực (Cookie hoặc State không khớp)')
+  // Detailed validation for better error messages
+  if (!code) {
+    return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi: Không tìm thấy authorization code từ Zalo')
+  }
+  if (!state || state !== savedState) {
+    console.warn('[Zalo Auth Debug] State mismatch or missing', { queryState: state, savedState })
+    return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi: State không khớp (có thể do hết hạn phiên làm việc hoặc mismatch domain)')
+  }
+  if (!codeVerifier) {
+    return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi: Thiếu code_verifier (Cookie đã bị xóa hoặc không được gửi)')
   }
 
   try {
-    const config = useRuntimeConfig(event)
     const appId = config.zaloAppId
     const appSecret = config.zaloAppSecret
     
@@ -48,7 +65,7 @@ export default defineEventHandler(async (event) => {
         app_id: appId as string,
         grant_type: 'authorization_code',
         code_verifier: codeVerifier as string,
-        redirect_uri: config.zaloRedirectUri || `${getRequestURL(event).origin}/api/auth/zalo-callback`
+        redirect_uri: redirectUri
       })
     })
 
@@ -102,7 +119,9 @@ export default defineEventHandler(async (event) => {
     setCookie(event, 'auth_token', 'zalo_' + zaloId, {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: '/'
+      path: '/',
+      sameSite: 'lax',
+      secure: !isDev || origin.startsWith('https')
     })
 
     return sendHtmlResponse(event, 'zalo-login-success')
