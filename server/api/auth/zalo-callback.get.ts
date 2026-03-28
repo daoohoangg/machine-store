@@ -139,7 +139,7 @@ function sendHtmlResponse(event: any, message: string, detail: string = '') {
           }
         </script>
         <p>Đang xử lý đăng nhập...</p>
-        ${detail ? `
+        ${(message === 'zalo-login-error' && detail) ? `
         <div style="color: red; font-size: 14px; padding: 20px; border: 1px solid red; background: #fff1f1; margin-top: 20px;">
           <b>LỖI ĐĂNG NHẬP:</b><br/> ${detail}
         </div>
