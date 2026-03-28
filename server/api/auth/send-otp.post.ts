@@ -3,6 +3,8 @@ export default defineEventHandler(async (event) => {
   let { phone } = body
   phone = phone?.toString().trim()
 
+  console.log('[OTP Debug] Sending OTP for phone:', phone);
+
   if (!phone) {
     throw createError({
       statusCode: 400,
@@ -10,8 +12,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Basic Vietnam phone validation (starts with 0 or 84, followed by 9 digits)
-  if (!/^0\d{9}$|^84\d{9}$/.test(phone)) {
+  // Basic Vietnam phone validation (starts with 0, 84, or +84)
+  if (!/^(\+?84|0)\d{9,10}$/.test(phone)) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Số điện thoại không hợp lệ (Việt Nam)'
@@ -27,7 +29,12 @@ export default defineEventHandler(async (event) => {
 
   // Send OTP via Abaha
   try {
-    const response: any = await $fetch('https://babystore18787.abaha.vn/auth/send_otp', {
+    const url = new URL('https://babystore18787.abaha.vn/auth/send_otp')
+    if (abahaToken) {
+      url.searchParams.append('token', abahaToken)
+    }
+
+    const response: any = await $fetch(url.toString(), {
       method: 'POST',
       body: {
         phone_number: phone,
@@ -38,7 +45,7 @@ export default defineEventHandler(async (event) => {
 
     console.log('Abaha Send OTP response:', response);
 
-    // Abaha usually returns { data: { token: '...' }, ... } or similar
+    // Abaha usually returns { data: { token: '...' }, ... }
     const token = response?.data?.token || response?.token;
 
     if (token) {
@@ -54,16 +61,17 @@ export default defineEventHandler(async (event) => {
         message: 'OTP sent successfully'
       }
     } else {
+      console.error('Abaha Error (No token):', response);
       throw createError({
         statusCode: 400,
         statusMessage: response?.message || 'Failed to send OTP (No token received)'
       })
     }
   } catch (err: any) {
-    console.error('Error sending OTP via Abaha:', err);
+    console.error('Error sending OTP via Abaha:', err.data || err);
     throw createError({
       statusCode: err.statusCode || 500,
-      statusMessage: err.data?.message || 'Failed to send OTP'
+      statusMessage: err.data?.message || err.message || 'Failed to send OTP'
     })
   }
 })
