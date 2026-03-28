@@ -37,9 +37,9 @@
 
         <div class="divider"><span>HOẶC</span></div>
 
-        <button class="social-btn zalo-btn" @click="loginWithZalo">
+        <button class="social-btn zalo-btn" :disabled="isLoadingZalo" @click="loginWithZalo">
           <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg" alt="Zalo" />
-          Đăng nhập bằng Zalo
+          {{ isLoadingZalo ? 'ĐANG XỬ LÝ...' : 'Đăng nhập bằng Zalo' }}
         </button>
       </div>
     </div>
@@ -61,6 +61,7 @@ const step = ref(1)
 const phone = ref('')
 const otp = ref('')
 const isLoading = ref(false)
+const isLoadingZalo = ref(false)
 const errorMsg = ref('')
 
 // Zalo Auth PKCE Helpers
@@ -82,6 +83,10 @@ const generateCodeChallenge = async (codeVerifier) => {
 }
 
 const loginWithZalo = async () => {
+  if (isLoadingZalo.value) return
+  isLoadingZalo.value = true
+  errorMsg.value = ''
+
   const config = useRuntimeConfig().public
   const appId = config.zaloAppId
   const redirectUri = config.zaloRedirectUri || `${window.location.origin}/api/auth/zalo-callback`
@@ -116,9 +121,11 @@ const loginWithZalo = async () => {
     
     if (type === 'zalo-login-success' || event.data === 'zalo-login-success') {
       window.removeEventListener('message', messageHandler)
+      isLoadingZalo.value = false
       router.push('/')
     } else if (type === 'zalo-login-error' || event.data === 'zalo-login-error') {
        window.removeEventListener('message', messageHandler)
+       isLoadingZalo.value = false
        errorMsg.value = `Đăng nhập Zalo thất bại: ${detail || 'Có lỗi xảy ra'}`
     }
   }

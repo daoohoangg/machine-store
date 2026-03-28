@@ -1,6 +1,11 @@
 import { defineEventHandler, getQuery, setCookie, getCookie } from 'h3'
 import { useSupabase } from '../../utils/supabase'
 
+// Memory cache for used codes to prevent double-processing (within a short window)
+const usedCodes = new Set<string>()
+// Clean up old codes periodically
+setInterval(() => usedCodes.clear(), 1000 * 60 * 5) // every 5 mins
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const code = query.code as string
@@ -32,10 +37,18 @@ export default defineEventHandler(async (event) => {
     redirectUri
   })
 
-  // Detailed validation for better error messages
   if (!code) {
     return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi: Không tìm thấy authorization code từ Zalo')
   }
+
+  // Prevent double processing of the same code
+  if (usedCodes.has(code)) {
+    console.warn('[Zalo Auth Debug] Code already used, ignoring duplicate request:', code.substring(0, 10) + '...')
+    // If it's a duplicate, we can either return success (assuming the first request is still processing)
+    // or just return empty to stop further execution.
+    return sendHtmlResponse(event, 'zalo-login-info', 'Yêu cầu đang được xử lý...')
+  }
+  usedCodes.add(code)
   if (!state || state !== savedState) {
     console.warn('[Zalo Auth Debug] State mismatch or missing', { queryState: state, savedState })
     return sendHtmlResponse(event, 'zalo-login-error', 'Lỗi: State không khớp (có thể do hết hạn phiên làm việc hoặc mismatch domain)')
@@ -47,12 +60,28 @@ export default defineEventHandler(async (event) => {
   try {
     const appId = config.zaloAppId
     const appSecret = config.zaloAppSecret
-    
-    console.log('[Zalo Auth Debug] Config:', { appId: !!appId, appSecret: !!appSecret ? appSecret.substring(0, 4) + '...' : 'none' })
 
     if (!appId || !appSecret) {
       throw new Error('Zalo App ID or App Secret not configured')
     }
+
+    console.log('[Zalo Auth Debug] Code verifier from cookie:', !!codeVerifier, codeVerifier?.length)
+    console.log('[Zalo Auth Debug] App Secret (prefix):', !!appSecret ? appSecret.substring(0, 4) + '...' : 'none')
+
+    const exchangeBody = {
+      code,
+      app_id: appId as string,
+      grant_type: 'authorization_code',
+      code_verifier: codeVerifier as string,
+      redirect_uri: redirectUri as string
+    };
+    
+    console.log('[Zalo Auth Debug] Exchange params:', {
+       ...exchangeBody,
+       code: !!code,
+       code_verifier: !!codeVerifier,
+       app_id: appId
+    })
 
     // 1. Exchange code for access token
     let tokenRes: any = await $fetch('https://oauth.zaloapp.com/v4/access_token', {
@@ -61,12 +90,7 @@ export default defineEventHandler(async (event) => {
         'Content-Type': 'application/x-www-form-urlencoded',
         'secret_key': appSecret
       } as Record<string, string>,
-      body: new URLSearchParams({
-        code,
-        app_id: appId as string,
-        grant_type: 'authorization_code',
-        code_verifier: codeVerifier as string
-      })
+      body: new URLSearchParams(exchangeBody)
     })
 
     // Robust parsing if response is a string
