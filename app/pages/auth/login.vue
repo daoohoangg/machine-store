@@ -112,12 +112,14 @@ const loginWithZalo = async () => {
 
   // Listen for message from popup
   const messageHandler = (event) => {
-    if (event.data === 'zalo-login-success') {
+    const { type, detail } = event.data || {}
+    
+    if (type === 'zalo-login-success' || event.data === 'zalo-login-success') {
       window.removeEventListener('message', messageHandler)
       router.push('/')
-    } else if (event.data === 'zalo-login-error') {
+    } else if (type === 'zalo-login-error' || event.data === 'zalo-login-error') {
        window.removeEventListener('message', messageHandler)
-       errorMsg.value = 'Đăng nhập Zalo thất bại'
+       errorMsg.value = `Đăng nhập Zalo thất bại: ${detail || 'Có lỗi xảy ra'}`
     }
   }
   

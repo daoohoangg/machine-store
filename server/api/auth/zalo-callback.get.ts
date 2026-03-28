@@ -65,8 +65,7 @@ export default defineEventHandler(async (event) => {
         code,
         app_id: appId as string,
         grant_type: 'authorization_code',
-        code_verifier: codeVerifier as string,
-        redirect_uri: redirectUri as string
+        code_verifier: codeVerifier as string
       })
     })
 
@@ -136,9 +135,9 @@ export default defineEventHandler(async (event) => {
 
     return sendHtmlResponse(event, 'zalo-login-success')
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Zalo Auth Error:', error)
-    return sendHtmlResponse(event, 'zalo-login-error')
+    return sendHtmlResponse(event, 'zalo-login-error', error.message || String(error))
   }
 })
 
@@ -151,11 +150,14 @@ function sendHtmlResponse(event: any, message: string, detail: string = '') {
       </head>
       <body>
         <script>
-          window.opener.postMessage('${message}', '*');
-          if ('${detail}') {
-             console.error('Zalo Auth Details:', '${detail}');
-          } else if ('${message}' === 'zalo-login-success') {
-             window.close();
+          const message = {
+            type: '${message}',
+            detail: '${detail.replace(/'/g, "\\'")}'
+          };
+          window.opener.postMessage(message, '*');
+          
+          if ('${message}' === 'zalo-login-success') {
+             setTimeout(() => window.close(), 1000);
           }
         </script>
         <p>Đang xử lý đăng nhập...</p>
