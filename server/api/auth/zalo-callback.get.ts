@@ -122,7 +122,8 @@ export default defineEventHandler(async (event) => {
 
     if (!profileRes?.id) {
        console.error('[Zalo Auth Debug] Profile retrieval failed:', profileRes)
-       throw new Error('Failed to get user profile')
+       const errorDetail = profileRes?.error ? ` (Error ${profileRes.error}: ${profileRes.message})` : ` Full response: ${JSON.stringify(profileRes)}`
+       throw new Error(`Failed to get user profile${errorDetail}`)
     }
 
     const { id: zaloId, name, picture } = profileRes
