@@ -1,6 +1,7 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { phone } = body
+  let { phone } = body
+  phone = phone?.toString().trim()
 
   if (!phone) {
     throw createError({
@@ -9,54 +10,60 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString()
-
-  const config = useRuntimeConfig()
-  const accessToken = config.speedSmsToken
-
-  if (!accessToken) {
-    console.error('SpeedSMS access token is missing')
+  // Basic Vietnam phone validation (starts with 0 or 84, followed by 9 digits)
+  if (!/^0\d{9}$|^84\d{9}$/.test(phone)) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error (SpeedSMS credentials missing)'
+      statusCode: 400,
+      statusMessage: 'Số điện thoại không hợp lệ (Việt Nam)'
     })
   }
 
-  // Store OTP temporarily (e.g., valid for 5 minutes)
-  const storage = useStorage('otp')
-  await storage.setItem(phone, {
-    otp,
-    expiresAt: Date.now() + 5 * 60 * 1000
-  })
+  const config = useRuntimeConfig()
+  const abahaToken = config.public.abahaToken
 
-  // Send SMS via SpeedSMS
+  if (!abahaToken) {
+    console.warn('Abaha token is missing in runtimeConfig.public')
+  }
+
+  // Send OTP via Abaha
   try {
-    const response = await $fetch('https://api.speedsms.vn/index.php/sms/send', {
+    const response: any = await $fetch('https://babystore18787.abaha.vn/auth/send_otp', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(accessToken + ':x')
-      },
       body: {
-        to: [phone],
-        content: `Ma xac thuc cua ban la: ${otp}`,
-        sms_type: 2,
-        sender: '' // Some versions of speedsms require sender field even if empty, or perhaps type 4 is default brandname "Verify"? We will use sender: "Verify" and type: 4 as it is very common for default OTPs. Wait!
+        phone_number: phone,
+        region: 'VN',
+        otp_driver_category: 'zalootp'
       }
     });
 
-    console.log('SpeedSMS response:', response);
+    console.log('Abaha Send OTP response:', response);
 
-    return {
-      success: true,
-      message: 'OTP sent successfully'
+    // Abaha usually returns { data: { token: '...' }, ... } or similar
+    const token = response?.data?.token || response?.token;
+
+    if (token) {
+      // Store OTP token temporarily (e.g., valid for 5 minutes)
+      const storage = useStorage('otp')
+      await storage.setItem(phone, {
+        token,
+        expiresAt: Date.now() + 5 * 60 * 1000
+      })
+
+      return {
+        success: true,
+        message: 'OTP sent successfully'
+      }
+    } else {
+      throw createError({
+        statusCode: 400,
+        statusMessage: response?.message || 'Failed to send OTP (No token received)'
+      })
     }
-  } catch (err) {
-    console.error('Error sending OTP via SpeedSMS:', err);
+  } catch (err: any) {
+    console.error('Error sending OTP via Abaha:', err);
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to send OTP'
+      statusCode: err.statusCode || 500,
+      statusMessage: err.data?.message || 'Failed to send OTP'
     })
   }
 })
