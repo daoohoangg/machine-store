@@ -123,6 +123,8 @@ const loginWithZalo = async () => {
     if (type === 'zalo-login-success' || event.data === 'zalo-login-success') {
       window.removeEventListener('message', messageHandler)
       isLoadingZalo.value = false
+      if (popup) popup.close()
+      login(detail || 'Zalo User')
       router.push('/')
       return
     } 
@@ -130,6 +132,7 @@ const loginWithZalo = async () => {
     if (type === 'zalo-login-error' || event.data === 'zalo-login-error') {
        window.removeEventListener('message', messageHandler)
        isLoadingZalo.value = false
+       if (popup) popup.close()
        errorMsg.value = `Đăng nhập Zalo thất bại: ${detail || 'Có lỗi xảy ra'}`
        return
     }
@@ -156,10 +159,12 @@ const loginWithZalo = async () => {
           body: profileData
         })
 
-        if (finalizeRes?.success) {
+        if (finalizeRes?.success || finalizeRes?.zaloId) {
           window.removeEventListener('message', messageHandler)
+          if (popup) popup.close()
           isLoadingZalo.value = false
-          // Success! Redirect to home
+          // Use name from profile or fallback
+          login(profileData?.name || 'Zalo User')
           router.push('/')
         } else {
           throw new Error('Không thể hoàn tất đăng nhập trên hệ thống')
@@ -212,6 +217,7 @@ const verifyOtp = async () => {
       body: { phone: phone.value, otp: otp.value }
     })
     if (res?.success) {
+      login(res.name || res.phone || phone.value)
       router.push('/')
     }
   } catch (err) {

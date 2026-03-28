@@ -1,3 +1,5 @@
+import { useSupabase } from '../../utils/supabase'
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   let { phone, otp } = body
@@ -45,14 +47,6 @@ export default defineEventHandler(async (event) => {
     url.searchParams.append('region', 'VN')
     url.searchParams.append('otp_driver_category', 'zalootp')
     url.searchParams.append('otp', otp)
-    
-    // Add app token if exists (although OTP token is provided as 'token')
-    if (abahaToken) {
-      // Abaha sometimes uses 'app_token' or similar if 'token' is already used for something else
-      // But in their category APIs, 'token' is the app token.
-      // In the user's verify URL, 'token' was the OTP token. 
-      // We will try adding it as 'abaha_token' if needed, or check if it works without it.
-    }
 
     const response: any = await $fetch(url.toString(), {
       method: 'GET'
@@ -64,17 +58,41 @@ export default defineEventHandler(async (event) => {
     if (response?.status === 200 || response?.success) {
       // Valid OTP, clear it
       await storage.removeItem(phone)
+      
+      const supabase = useSupabase()
+      
+      // 1. Check if user exists or Create/Update user in Supabase
+      // We use phone as the unique identifier for OTP login
+      const { data: account, error: upsertError } = await supabase
+        .from('accounts')
+        .upsert({
+          phone: phone,
+          last_login: new Date().toISOString()
+        }, { onConflict: 'phone' })
+        .select()
+        .single()
+      
+      if (upsertError) {
+        console.error('[Supabase Error] Failed to upsert user after OTP:', upsertError)
+      }
 
-      // Set auth cookie
+      const displayName = account?.full_name || account?.phone || phone;
+
+      // 2. Set auth cookie
+      const isDev = process.env.NODE_ENV === 'development'
       setCookie(event, 'auth_token', 'user_' + phone, {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 7, // 1 week
-        path: '/'
+        path: '/',
+        sameSite: 'lax',
+        secure: !isDev
       })
 
       return {
         success: true,
-        message: 'Login successful'
+        message: 'Login successful',
+        phone,
+        name: displayName
       }
     } else {
       throw createError({

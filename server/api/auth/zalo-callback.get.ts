@@ -134,8 +134,8 @@ function sendHtmlResponse(event: any, message: string, detail: string = '') {
           };
           window.opener.postMessage(message, '*');
           
-          if ('${message}' === 'zalo-login-success') {
-             setTimeout(() => window.close(), 1000);
+          if ('${message}' === 'zalo-token-received' || '${message}' === 'zalo-login-success') {
+             setTimeout(() => window.close(), 600);
           }
         </script>
         <p>Đang xử lý đăng nhập...</p>
