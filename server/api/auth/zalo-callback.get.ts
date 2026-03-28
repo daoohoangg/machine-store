@@ -107,9 +107,10 @@ export default defineEventHandler(async (event) => {
       throw new Error(`Zalo API error: ${tokenRes?.error_name || 'unknown'} (${tokenRes?.error_description || ''})`)
     }
 
-    // 2. Get User Profile
-    console.log('[Zalo Auth Debug] Fetching profile with token...', accessToken.substring(0, 10) + '...')
-    const profileRes: any = await $fetch(`https://graph.zalo.me/v2.0/me?fields=id,name,picture&access_token=${accessToken}`, {
+    // 2. Get User Profile via Proxy (Vietnam IP)
+    console.log('[Zalo Auth Debug] Fetching profile with token via proxy...', accessToken.substring(0, 10) + '...')
+    // Using the Vietnamese proxy server at 103.28.38.131
+    const profileRes: any = await $fetch(`http://103.28.38.131/v2.0/me?fields=id,name,picture&access_token=${accessToken}`, {
       headers: {
         'access_token': accessToken
       }
