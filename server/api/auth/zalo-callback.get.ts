@@ -107,58 +107,11 @@ export default defineEventHandler(async (event) => {
       throw new Error(`Zalo API error: ${tokenRes?.error_name || 'unknown'} (${tokenRes?.error_description || ''})`)
     }
 
-    // 2. Get User Profile via Proxy (Vietnam IP)
-    console.log('[Zalo Auth Debug] Fetching profile with token via proxy...', accessToken.substring(0, 10) + '...')
-    // Using the Vietnamese proxy server at 103.28.38.131
-    const profileRes: any = await $fetch(`http://103.28.38.131/v2.0/me?fields=id,name,picture&access_token=${accessToken}`, {
-      headers: {
-        'access_token': accessToken
-      }
-    }).catch(err => {
-      console.error('[Zalo Auth Debug] Profile fetch Exception:', err)
-      return { error: err.message }
-    })
-
-    console.log('[Zalo Auth Debug] Profile response:', profileRes)
-
-    if (!profileRes?.id) {
-       console.error('[Zalo Auth Debug] Profile retrieval failed:', profileRes)
-       const errorDetail = profileRes?.error ? ` (Error ${profileRes.error}: ${profileRes.message})` : ` Full response: ${JSON.stringify(profileRes)}`
-       throw new Error(`Failed to get user profile${errorDetail}`)
-    }
-
-    const { id: zaloId, name, picture } = profileRes
-    const avatarUrl = picture?.data?.url
-
-    // 3. Upsert into Supabase
-    const supabase = useSupabase()
-    const { data: account, error: upsertError } = await supabase
-      .from('accounts')
-      .upsert({
-        zalo_id: zaloId,
-        full_name: name,
-        avatar_url: avatarUrl,
-        last_login: new Date().toISOString()
-      }, { onConflict: 'zalo_id' })
-      .select()
-      .single()
-
-    if (upsertError) {
-      console.error('Supabase upsert error:', upsertError)
-      // If table doesn't exist yet, we might get an error. 
-      // User is supposed to run the SQL.
-    }
-
-    // 4. Set auth cookie (consistent with existing phone login)
-    setCookie(event, 'auth_token', 'zalo_' + zaloId, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: '/',
-      sameSite: 'lax',
-      secure: !isDev || origin.startsWith('https')
-    })
-
-    return sendHtmlResponse(event, 'zalo-login-success')
+    // 2. Return Access Token to Frontend
+    // We send the token back so the frontend (with a Vietnamese IP) can fetch the profile.
+    console.log('[Zalo Auth Debug] Token obtained, sending back to frontend...')
+    
+    return sendHtmlResponse(event, 'zalo-token-received', accessToken)
 
   } catch (error: any) {
     console.error('Zalo Auth Error:', error)

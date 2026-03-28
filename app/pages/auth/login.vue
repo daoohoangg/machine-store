@@ -116,17 +116,60 @@ const loginWithZalo = async () => {
   )
 
   // Listen for message from popup
-  const messageHandler = (event) => {
+  const messageHandler = async (event) => {
     const { type, detail } = event.data || {}
     
+    // Original success/error handling
     if (type === 'zalo-login-success' || event.data === 'zalo-login-success') {
       window.removeEventListener('message', messageHandler)
       isLoadingZalo.value = false
       router.push('/')
-    } else if (type === 'zalo-login-error' || event.data === 'zalo-login-error') {
+      return
+    } 
+    
+    if (type === 'zalo-login-error' || event.data === 'zalo-login-error') {
        window.removeEventListener('message', messageHandler)
        isLoadingZalo.value = false
        errorMsg.value = `Đăng nhập Zalo thất bại: ${detail || 'Có lỗi xảy ra'}`
+       return
+    }
+
+    // New: Handle token received from backend
+    if (type === 'zalo-token-received') {
+      const accessToken = detail
+      console.log('[Zalo Auth Debug] Token received on frontend, fetching profile...')
+      
+      try {
+        // 1. Fetch profile directly from browser (using User's VN IP)
+        const profileRes = await fetch(`https://graph.zalo.me/v2.0/me?fields=id,name,picture&access_token=${accessToken}`)
+        const profileData = await profileRes.json()
+        
+        console.log('[Zalo Auth Debug] Profile fetched on frontend:', profileData)
+        
+        if (!profileData?.id) {
+          throw new Error(profileData?.message || 'Không thể lấy thông tin cá nhân từ Zalo')
+        }
+
+        // 2. Send profile to backend to finalize session
+        const finalizeRes = await $fetch('/api/auth/zalo-finalize', {
+          method: 'POST',
+          body: profileData
+        })
+
+        if (finalizeRes?.success) {
+          window.removeEventListener('message', messageHandler)
+          isLoadingZalo.value = false
+          // Success! Redirect to home
+          router.push('/')
+        } else {
+          throw new Error('Không thể hoàn tất đăng nhập trên hệ thống')
+        }
+
+      } catch (err) {
+        console.error('[Zalo Auth Debug] Frontend flow error:', err)
+        errorMsg.value = `Lỗi xử lý Zalo: ${err.message || 'Có lỗi xảy ra'}`
+        isLoadingZalo.value = false
+      }
     }
   }
   
