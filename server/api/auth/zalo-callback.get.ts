@@ -72,8 +72,7 @@ export default defineEventHandler(async (event) => {
       code,
       app_id: appId as string,
       grant_type: 'authorization_code',
-      code_verifier: codeVerifier as string,
-      redirect_uri: redirectUri as string
+      code_verifier: codeVerifier as string
     };
     
     console.log('[Zalo Auth Debug] Exchange params:', {
@@ -109,8 +108,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. Get User Profile
-    console.log('[Zalo Auth Debug] Fetching profile with token...')
-    const profileRes: any = await $fetch(`https://graph.zalo.me/v2.0/me?fields=id,name,picture`, {
+    console.log('[Zalo Auth Debug] Fetching profile with token...', accessToken.substring(0, 10) + '...')
+    const profileRes: any = await $fetch(`https://graph.zalo.me/v2.0/me?fields=id,name,picture&access_token=${accessToken}`, {
       headers: {
         'access_token': accessToken
       }
