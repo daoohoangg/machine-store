@@ -1,3 +1,5 @@
+import { sendZNS } from '../../utils/zalo'
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   let { phone } = body
@@ -20,58 +22,30 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const config = useRuntimeConfig()
-  const abahaToken = config.public.abahaToken
+  // 1. Generate random 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
-  if (!abahaToken) {
-    console.warn('Abaha token is missing in runtimeConfig.public')
-  }
-
-  // Send OTP via Abaha
+  // 2. Send OTP via Zalo ZNS
   try {
-    const url = new URL('https://babystore18787.abaha.vn/auth/send_otp')
-    if (abahaToken) {
-      url.searchParams.append('token', abahaToken)
-    }
+    const response = await sendZNS(phone, otp)
+    console.log('[Zalo ZNS] Send response:', response)
 
-    const response: any = await $fetch(url.toString(), {
-      method: 'POST',
-      body: {
-        phone_number: phone,
-        region: 'VN',
-        otp_driver_category: 'zalootp'
-      }
-    });
+    // 3. Store OTP in storage (valid for 5 minutes)
+    const storage = useStorage('otp')
+    await storage.setItem(phone, {
+      otp: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    })
 
-    console.log('Abaha Send OTP response:', response);
-
-    // Abaha usually returns { data: { token: '...' }, ... }
-    const token = response?.data?.token || response?.token;
-
-    if (token) {
-      // Store OTP token temporarily (e.g., valid for 5 minutes)
-      const storage = useStorage('otp')
-      await storage.setItem(phone, {
-        token,
-        expiresAt: Date.now() + 5 * 60 * 1000
-      })
-
-      return {
-        success: true,
-        message: 'OTP sent successfully'
-      }
-    } else {
-      console.error('Abaha Error (No token):', response);
-      throw createError({
-        statusCode: 400,
-        statusMessage: response?.message || 'Failed to send OTP (No token received)'
-      })
+    return {
+      success: true,
+      message: 'OTP đã được gửi qua Zalo'
     }
   } catch (err: any) {
-    console.error('Error sending OTP via Abaha:', err.data || err);
+    console.error('[Zalo Send Error] Error details:', err.message || err);
     throw createError({
-      statusCode: err.statusCode || 500,
-      statusMessage: err.data?.message || err.message || 'Failed to send OTP'
+      statusCode: 500,
+      statusMessage: `Lỗi Zalo: ${err.message || 'Không rõ lỗi'}. Thử lại sau.`
     })
   }
 })
