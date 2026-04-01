@@ -21,7 +21,13 @@
 
         <div v-if="step === 1">
           <input v-model="phone" type="text" placeholder="Nhập số điện thoại" @keyup.enter="sendOtp" />
-          <button class="main-btn" :disabled="isLoading || !phone" @click="sendOtp">
+          
+          <div class="captcha-box">
+            <span class="captcha-label">Mã xác thực: {{ captchaNum1 }} + {{ captchaNum2 }} = </span>
+            <input v-model="captchaAnswer" type="number" placeholder="Nhập kết quả" @keyup.enter="sendOtp" class="captcha-input"/>
+          </div>
+
+          <button class="main-btn" :disabled="isLoading || !phone || !captchaAnswer" @click="sendOtp">
             {{ isLoading ? 'ĐANG GỬI...' : 'GỬI MÃ OTP' }}
           </button>
         </div>
@@ -47,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
@@ -63,6 +69,21 @@ const otp = ref('')
 const isLoading = ref(false)
 const isLoadingZalo = ref(false)
 const errorMsg = ref('')
+
+// Captcha state
+const captchaNum1 = ref(0)
+const captchaNum2 = ref(0)
+const captchaAnswer = ref('')
+
+const generateCaptcha = () => {
+  captchaNum1.value = Math.floor(Math.random() * 10) + 1
+  captchaNum2.value = Math.floor(Math.random() * 10) + 1
+  captchaAnswer.value = ''
+}
+
+onMounted(() => {
+  generateCaptcha()
+})
 
 // Zalo Auth PKCE Helpers
 const generateRandomString = (length) => {
@@ -181,12 +202,30 @@ const loginWithZalo = async () => {
   window.addEventListener('message', messageHandler)
 }
 
+const isValidVietnamesePhone = (p) => {
+  return /^(0|84|\+84)[3|5|7|8|9][0-9]{8}$/.test(p)
+}
+
 const sendOtp = async () => {
-  if (!phone.value) return
+  if (!phone.value || !captchaAnswer.value) return
   isLoading.value = true
   errorMsg.value = ''
 
-  if (phone.value === '0123') {
+  if (parseInt(captchaAnswer.value) !== captchaNum1.value + captchaNum2.value) {
+    errorMsg.value = 'Kết quả phép tính không đúng. Vui lòng thử lại.'
+    generateCaptcha()
+    isLoading.value = false
+    return
+  }
+
+  const formattedPhone = phone.value.trim()
+  if (formattedPhone !== '0123' && !isValidVietnamesePhone(formattedPhone)) {
+    errorMsg.value = 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam (vd: 0912345678).'
+    isLoading.value = false
+    return
+  }
+
+  if (formattedPhone === '0123') {
     login('Admin 0123')
     router.push('/admin')
     isLoading.value = false
@@ -306,6 +345,29 @@ input {
   padding: 0 12px;
   margin-bottom: 10px;
   font-size: 29px;
+}
+
+.captcha-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+  padding: 0 12px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+.captcha-label {
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.captcha-input {
+  border: none !important;
+  margin-bottom: 0 !important;
+  height: 46px !important;
+  padding: 0 !important;
+  flex: 1;
 }
 
 .password-row {

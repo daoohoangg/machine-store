@@ -6,8 +6,18 @@ export const useAdminAuth = () => {
 
   const initAuth = () => {
     if (import.meta.client) {
+      const expiresAt = localStorage.getItem('admin_auth_expires_at')
+      if (expiresAt && Date.now() > parseInt(expiresAt)) {
+        logout()
+        return
+      }
+
       isAdmin.value = localStorage.getItem('admin_auth') === 'true'
       adminName.value = localStorage.getItem('admin_name') || 'Admin'
+      
+      if (isAdmin.value) {
+        localStorage.setItem('admin_auth_expires_at', (Date.now() + 15 * 24 * 60 * 60 * 1000).toString())
+      }
     }
   }
 
@@ -27,6 +37,7 @@ export const useAdminAuth = () => {
         if (import.meta.client) {
           localStorage.setItem('admin_auth', 'true')
           localStorage.setItem('admin_name', payload.admin?.name || 'Admin')
+          localStorage.setItem('admin_auth_expires_at', (Date.now() + 15 * 24 * 60 * 60 * 1000).toString())
         }
         return { success: true }
       }
@@ -42,6 +53,7 @@ export const useAdminAuth = () => {
     if (import.meta.client) {
       localStorage.removeItem('admin_auth')
       localStorage.removeItem('admin_name')
+      localStorage.removeItem('admin_auth_expires_at')
     }
   }
 

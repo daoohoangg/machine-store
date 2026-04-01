@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
       const isDev = process.env.NODE_ENV === 'development'
       setCookie(event, 'auth_token', 'user_' + phone, {
         httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 60 * 24 * 15, // 15 days
         path: '/',
         sameSite: 'lax',
         secure: !isDev

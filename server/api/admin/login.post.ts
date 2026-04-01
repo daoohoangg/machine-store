@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     const adminToken = Buffer.from(`admin_${phone}_${Date.now()}`).toString('base64')
     setCookie(event, 'admin_token', adminToken, {
       httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 15, // 15 days
       path: '/'
     })
 

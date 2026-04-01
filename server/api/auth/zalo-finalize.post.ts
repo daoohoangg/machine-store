@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     // 2. Set auth cookie (consistent with existing phone login)
     setCookie(event, 'auth_token', 'zalo_' + zaloId, {
       httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 15, // 15 days
       path: '/',
       sameSite: 'lax',
       secure: !isDev || origin.startsWith('https')

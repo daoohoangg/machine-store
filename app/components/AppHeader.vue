@@ -71,7 +71,7 @@
           <div v-if="isAdmin" class="action-item user-dropdown-wrapper">
             <NuxtLink to="/admin" class="user-trigger">
               <span class="action-icon"><i class="fa-solid fa-user-shield"></i></span>
-              <span class="action-label">{{ adminName || 'Admin' }}</span>
+              <span class="action-label">{{ displayAdminName }}</span>
             </NuxtLink>
             <div class="user-dropdown">
               <NuxtLink to="/admin" class="dropdown-item"><i class="fa-solid fa-gear"></i> Trang quản trị</NuxtLink>
@@ -92,13 +92,27 @@
 </template>
 
 <script setup>
-import { ref, watch, inject, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, inject, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteSettings } from '~/composables/useSiteSettings'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const { settings } = useSiteSettings()
 const { isAdmin, adminName, logout, initAuth } = useAdminAuth()
+
+const displayAdminName = computed(() => {
+  const name = adminName.value
+  if (!name) return 'Admin'
+  
+  // Format to 3 first digits ... 3 last digits if it's a Vietnamese phone format
+  if (/^(0|84|\+84)[0-9]{8,9}$/.test(name)) {
+    if (name.startsWith('+84')) {
+      return name.substring(0, 6) + '...' + name.substring(name.length - 3)
+    }
+    return name.substring(0, 3) + '...' + name.substring(name.length - 3)
+  }
+  return name
+})
 
 const handleAdminLogout = () => {
   logout()
