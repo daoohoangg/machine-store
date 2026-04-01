@@ -65,7 +65,7 @@ export const refreshZaloToken = async () => {
       const newConfig: ZaloOaConfig = {
         access_token: response.access_token,
         refresh_token: response.refresh_token || config.refresh_token,
-        expires_at: Date.now() + (response.expires_in || 3600) * 1000
+        expires_at: Date.now() + (parseInt(response.expires_in) || 90000) * 1000
       }
       saveZaloConfig(newConfig)
       console.log('[Zalo Utils] Token refreshed successfully')
@@ -106,7 +106,7 @@ export const sendZNS = async (phone: string, otp: string, templateId: string = '
   console.log(`[Zalo Utils] Sending ZNS to ${formattedPhone} with OTP ${otp}`)
 
   try {
-    const response: any = await $fetch('https://openapi.zalo.me/v3.0/oa/message/zns', {
+    const response: any = await $fetch('https://business.openapi.zalo.me/message/template', {
       method: 'POST',
       headers: {
         'access_token': accessToken,
@@ -116,10 +116,9 @@ export const sendZNS = async (phone: string, otp: string, templateId: string = '
         phone: formattedPhone,
         template_id: templateId,
         template_data: {
-          otp: otp,
-          content: `Mã OTP của bạn là ${otp}. Vui lòng không chia sẻ mã này cho bất kỳ ai.`
-        },
-        tracking_id: `otp_${Date.now()}`
+          otp: String(otp),
+          time: "5"
+        }
       }
     })
 
