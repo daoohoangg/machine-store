@@ -9,34 +9,52 @@ interface ZaloOaConfig {
 
 const CONFIG_PATH = path.resolve('e:/freelance/machine-store/server/data/zalo_oa_config.json')
 
-export const getZaloConfig = (): ZaloOaConfig | null => {
+import { useSupabase } from './supabase'
+
+export const getZaloConfig = async (): Promise<ZaloOaConfig | null> => {
   try {
-    console.log('[Zalo Utils] Checking config at:', CONFIG_PATH)
-    if (!fs.existsSync(CONFIG_PATH)) {
-      console.error('[Zalo Utils] Config file NOT FOUND at:', CONFIG_PATH)
+    const supabase = useSupabase()
+    const { data, error } = await supabase
+      .from('configs')
+      .select('value')
+      .eq('key', 'zalo_oa')
+      .single()
+
+    if (error || !data) {
+      console.error('[Zalo Utils] Zalo config not found in DB:', error?.message)
       return null
     }
-    const content = fs.readFileSync(CONFIG_PATH, 'utf-8')
-    console.log('[Zalo Utils] Config loaded successfully')
-    return JSON.parse(content)
+
+    console.log('[Zalo Utils] Config loaded from DB successfully')
+    return typeof data.value === 'string' ? JSON.parse(data.value) : data.value
   } catch (error) {
-    console.error('[Zalo Utils] Error reading config:', error)
+    console.error('[Zalo Utils] Error reading config from DB:', error)
     return null
   }
 }
 
-export const saveZaloConfig = (config: ZaloOaConfig) => {
+export const saveZaloConfig = async (config: ZaloOaConfig) => {
   try {
-    const dir = path.dirname(CONFIG_PATH)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2))
+    const supabase = useSupabase()
+    const { error } = await supabase
+      .from('configs')
+      .upsert({
+        key: 'zalo_oa',
+        value: config
+      })
+
+    if (error) {
+      console.error('[Zalo Utils] Error saving config to DB:', error.message)
+    } else {
+      console.log('[Zalo Utils] Config successfully saved to DB')
+    }
   } catch (error) {
-    console.error('[Zalo Utils] Error saving config:', error)
+    console.error('[Zalo Utils] Exception saving config to DB:', error)
   }
 }
 
 export const refreshZaloToken = async () => {
-  const config = getZaloConfig()
+  const config = await getZaloConfig()
   if (!config || !config.refresh_token) {
     throw new Error('Missing Zalo refresh token in config')
   }
@@ -71,7 +89,7 @@ export const refreshZaloToken = async () => {
         refresh_token: response.refresh_token || config.refresh_token,
         expires_at: Date.now() + (parseInt(response.expires_in) || 90000) * 1000
       }
-      saveZaloConfig(newConfig)
+      await saveZaloConfig(newConfig)
       console.log('[Zalo Utils] Token refreshed successfully')
       return newConfig.access_token
     } else {
@@ -85,8 +103,8 @@ export const refreshZaloToken = async () => {
 }
 
 export const getValidAccessToken = async () => {
-  const config = getZaloConfig()
-  if (!config) throw new Error('Zalo OA config not found')
+  const config = await getZaloConfig()
+  if (!config) throw new Error('Zalo OA config not found in DB')
 
   // Refresh if expired or expiring in 5 minutes, or if expires_at is not available/invalid
   if (!config.expires_at || isNaN(Number(config.expires_at)) || Date.now() + 5 * 60 * 1000 > Number(config.expires_at)) {
