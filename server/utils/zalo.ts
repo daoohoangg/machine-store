@@ -70,7 +70,7 @@ export const refreshZaloToken = async () => {
   console.log('[Zalo Utils] Refreshing access token...')
 
   try {
-    const response: any = await $fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
+    let response: any = await $fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -83,6 +83,14 @@ export const refreshZaloToken = async () => {
       })
     })
 
+    if (typeof response === 'string') {
+      try {
+        response = JSON.parse(response)
+      } catch (e) {
+        console.error('[Zalo Utils] Could not parse Zalo response:', response)
+      }
+    }
+
     if (response.access_token) {
       const newConfig: ZaloOaConfig = {
         access_token: response.access_token,
@@ -94,7 +102,8 @@ export const refreshZaloToken = async () => {
       return newConfig.access_token
     } else {
       console.error('[Zalo Utils] Refresh token response error:', response)
-      throw new Error(`Failed to refresh Zalo token: ${response.error_description || response.message || 'Unknown error'}`)
+      const errorMsg = response.error_name || response.error_reason || response.error_description || response.message || JSON.stringify(response)
+      throw new Error(`Failed to refresh Zalo token: ${errorMsg}`)
     }
   } catch (error: any) {
     console.error('[Zalo Utils] Refresh token request failed:', error.data || error)
