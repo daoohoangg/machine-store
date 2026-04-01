@@ -124,7 +124,7 @@ function sendHtmlResponse(event: any, message: string, detail: string = '') {
     <html>
       <head>
         <title>Zalo Login</title>
-        <meta property="zalo-platform-site-verification" content="QS-S9uF2INrww9DX_iWBQtJ3aNAOjKKbDZGq" />
+        <meta name="zalo-platform-site-verification" content="Q8M1Th6lCIexYfSisfinD2gEe3d6-7HlCp0u" />
       </head>
       <body>
         <script>

@@ -39,7 +39,7 @@ export default defineNuxtConfig({
         { property: 'og:image', content: `${SITE_URL}/logo.png` },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:image', content: `${SITE_URL}/logo.png` },
-        { name: 'zalo-platform-site-verification', content: 'QS-S9uF2INrww9DX_iWBQtJ3aNAOjKKbDZGq' },
+        { name: 'zalo-platform-site-verification', content: 'Q8M1Th6lCIexYfSisfinD2gEe3d6-7HlCp0u' },
       ],
       link: [
         { rel: 'icon', type: 'image/png', href: '/logo.png' },
