@@ -7,11 +7,15 @@ interface ZaloOaConfig {
   expires_at: number
 }
 
-const CONFIG_PATH = path.resolve(process.cwd(), 'server/data/zalo_oa_config.json')
+const CONFIG_PATH = path.resolve('e:/freelance/machine-store/server/data/zalo_oa_config.json')
 
 export const getZaloConfig = (): ZaloOaConfig | null => {
   try {
-    if (!fs.existsSync(CONFIG_PATH)) return null
+    console.log('[Zalo Utils] Checking config at:', CONFIG_PATH)
+    if (!fs.existsSync(CONFIG_PATH)) {
+      console.error('[Zalo Utils] Config file NOT FOUND at:', CONFIG_PATH)
+      return null
+    }
     const content = fs.readFileSync(CONFIG_PATH, 'utf-8')
     console.log('[Zalo Utils] Config loaded successfully')
     return JSON.parse(content)
@@ -84,8 +88,8 @@ export const getValidAccessToken = async () => {
   const config = getZaloConfig()
   if (!config) throw new Error('Zalo OA config not found')
 
-  // Refresh if expired or expiring in 5 minutes
-  if (Date.now() + 5 * 60 * 1000 > config.expires_at) {
+  // Refresh if expired or expiring in 5 minutes, or if expires_at is not available/invalid
+  if (!config.expires_at || isNaN(Number(config.expires_at)) || Date.now() + 5 * 60 * 1000 > Number(config.expires_at)) {
     return await refreshZaloToken()
   }
 
