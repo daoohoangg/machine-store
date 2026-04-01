@@ -11,12 +11,28 @@ export const useAdminAuth = () => {
     }
   }
 
-  const login = (name: string = 'Admin') => {
-    isAdmin.value = true
-    adminName.value = name
-    if (import.meta.client) {
-      localStorage.setItem('admin_auth', 'true')
-      localStorage.setItem('admin_name', name)
+  const login = async (phone: string) => {
+    try {
+      const { data, error } = await useFetch('/api/admin/login', {
+        method: 'POST',
+        body: { phone }
+      })
+
+      if (error.value) throw error.value
+
+      if (data.value && (data.value as any).success) {
+        const payload = data.value as any
+        isAdmin.value = true
+        adminName.value = payload.admin?.name || 'Admin'
+        if (import.meta.client) {
+          localStorage.setItem('admin_auth', 'true')
+          localStorage.setItem('admin_name', payload.admin?.name || 'Admin')
+        }
+        return { success: true }
+      }
+    } catch (err: any) {
+      console.error('[Admin Login Composable Error]:', err)
+      return { success: false, error: err.statusMessage || 'Đăng nhập thất bại. Số điện thoại sai quyền!' }
     }
   }
 

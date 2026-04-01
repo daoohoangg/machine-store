@@ -13,7 +13,9 @@
           />
         </div>
         <div v-if="loginError" class="error-msg">{{ loginError }}</div>
-        <button class="btn-primary" @click="handleLogin">Đăng nhập</button>
+        <button class="btn-primary" @click="handleLogin" :disabled="isLoading">
+          {{ isLoading ? 'Đang kiểm tra...' : 'Đăng nhập' }}
+        </button>
       </div>
     </div>
     
@@ -23,6 +25,7 @@
         <div class="header-actions">
           <NuxtLink to="/admin/san-pham-group" class="btn-outline group-mgr-btn"><i class="fa-solid fa-layer-group"></i> Quản lý Nhóm SP</NuxtLink>
           <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý Bài viết</NuxtLink>
+          <NuxtLink to="/admin/accounts" class="btn-outline account-mgr-btn"><i class="fa-solid fa-users-gear"></i> Quản lý Tài khoản</NuxtLink>
           <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
         </div>
       </div>
@@ -139,6 +142,7 @@ const { newsList, loadNews } = useNews()
 const phoneInput = ref('')
 const loginError = ref('')
 const saveSuccess = ref(false)
+const isLoading = ref(false)
 
 const formSettings = ref({
   hotline: '',
@@ -162,13 +166,17 @@ onMounted(() => {
   }, 100)
 })
 
-const handleLogin = () => {
+const handleLogin = async () => {
+  if (!phoneInput.value) return;
   loginError.value = ''
-  if (phoneInput.value === '0333333333' || phoneInput.value === '0123') {
-    login(phoneInput.value === '0123' ? 'Admin 0123' : 'Admin Demo')
+  isLoading.value = true
+  const res = await login(phoneInput.value)
+  isLoading.value = false
+  
+  if (res && res.success) {
     formSettings.value = JSON.parse(JSON.stringify(settings.value))
   } else {
-    loginError.value = 'Số điện thoại không có quyền truy cập.'
+    loginError.value = res?.error || 'Số điện thoại không có quyền truy cập.'
   }
 }
 
