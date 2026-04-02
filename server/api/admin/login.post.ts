@@ -43,6 +43,23 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Sync admin info to Abaha as a customer
+    try {
+      const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
+      if (abahaToken) {
+        await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
+          method: 'POST',
+          body: {
+            tel: phone,
+            name: account?.full_name || undefined
+          }
+        });
+        console.log('[Abaha API] Successfully synced admin customer:', phone);
+      }
+    } catch (abahaErr: any) {
+      console.error('[Abaha API Error] Failed to sync admin customer:', abahaErr?.data || abahaErr.message);
+    }
+
     // Set auth cookie if needed, but returning success is enough for frontend
     const adminToken = Buffer.from(`admin_${phone}_${Date.now()}`).toString('base64')
     setCookie(event, 'admin_token', adminToken, {

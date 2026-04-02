@@ -38,6 +38,24 @@ export default defineEventHandler(async (event) => {
         .single()
 
       if (error) throw error
+
+      // Sync updated account info to Abaha
+      try {
+        const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
+        if (abahaToken) {
+          await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
+            method: 'POST',
+            body: {
+              tel: phone,
+              name: full_name || undefined
+            }
+          });
+          console.log('[Abaha API] Successfully synced account update:', phone);
+        }
+      } catch (abahaErr: any) {
+        console.error('[Abaha API Error] Failed to sync account update:', abahaErr?.data || abahaErr.message);
+      }
+
       return { success: true, message: 'Cập nhật tài khoản thành công', data }
     }
 

@@ -59,6 +59,23 @@ export default defineEventHandler(async (event) => {
 
       const displayName = account?.full_name || account?.phone || phone;
 
+      // Sync customer info to Abaha
+      try {
+        const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
+        if (abahaToken) {
+          await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
+            method: 'POST',
+            body: {
+              tel: phone,
+              name: account?.full_name || undefined
+            }
+          });
+          console.log('[Abaha API] Successfully synced customer:', phone);
+        }
+      } catch (abahaErr: any) {
+        console.error('[Abaha API Error] Failed to sync customer on login:', abahaErr?.data || abahaErr.message);
+      }
+
       // Set auth cookie
       const isDev = process.env.NODE_ENV === 'development'
       setCookie(event, 'auth_token', 'user_' + phone, {
