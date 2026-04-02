@@ -85,12 +85,35 @@
           <label>Họ và tên</label>
           <input type="text" v-model="editingAccount.full_name" placeholder="Nguyễn Văn A" />
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Giới tính</label>
+            <select v-model="editingAccount.gender">
+              <option value="">-- Chọn --</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ngày sinh</label>
+            <input type="date" v-model="editingAccount.birth_date" />
+          </div>
+        </div>
         <div class="form-group">
-          <label>Phân quyền (Role)</label>
-          <select v-model="editingAccount.role">
-            <option value="user">Khách hàng (User)</option>
-            <option value="admin">Quản trị viên (Admin)</option>
-          </select>
+          <label>Email</label>
+          <input type="email" v-model="editingAccount.email" placeholder="example@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Địa chỉ</label>
+          <input type="text" v-model="editingAccount.address" placeholder="Số nhà, đường, xã/phường..." />
+        </div>
+        <div class="form-group">
+          <label>Tên địa điểm / Tỉnh thành</label>
+          <input type="text" v-model="editingAccount.location_name" placeholder="Hà Nội, TP. HCM..." />
+        </div>
+        <div class="form-group">
+          <label>SĐT người giới thiệu</label>
+          <input type="text" v-model="editingAccount.invite_phone" placeholder="09xx... (nếu có)" />
         </div>
         
         <div class="modal-actions">
@@ -125,7 +148,13 @@ const editingAccount = ref({
   phone: '',
   full_name: '',
   role: 'user',
-  status: 'active'
+  status: 'active',
+  gender: '',
+  birth_date: '',
+  email: '',
+  address: '',
+  location_name: '',
+  invite_phone: ''
 })
 
 onMounted(() => {
@@ -160,7 +189,13 @@ const openCreateModal = () => {
     phone: '',
     full_name: '',
     role: 'user',
-    status: 'active'
+    status: 'active',
+    gender: '',
+    birth_date: '',
+    email: '',
+    address: '',
+    location_name: '',
+    invite_phone: ''
   }
   showModal.value = true
 }
@@ -171,7 +206,13 @@ const openEditModal = (account) => {
     phone: account.phone,
     full_name: account.full_name || '',
     role: account.role || 'user',
-    status: account.status || 'active'
+    status: account.status || 'active',
+    gender: account.gender || '',
+    birth_date: account.birth_date || '',
+    email: account.email || '',
+    address: account.address || '',
+    location_name: account.location_name || '',
+    invite_phone: account.invite_phone || ''
   }
   showModal.value = true
 }
@@ -190,7 +231,13 @@ const saveAccount = async () => {
         phone: editingAccount.value.phone,
         full_name: editingAccount.value.full_name,
         role: editingAccount.value.role,
-        status: editingAccount.value.status
+        status: editingAccount.value.status,
+        gender: editingAccount.value.gender,
+        birth_date: editingAccount.value.birth_date,
+        email: editingAccount.value.email,
+        address: editingAccount.value.address,
+        location_name: editingAccount.value.location_name,
+        invite_phone: editingAccount.value.invite_phone
       }
     })
     
@@ -367,15 +414,23 @@ const confirmDelete = async (account) => {
   display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
 .modal-content {
-  background: white; border-radius: 8px; width: 90%; max-width: 450px;
+  background: white; border-radius: 8px; width: 90%; max-width: 520px;
   padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  max-height: 90vh; overflow-y: auto;
 }
 .modal-content h2 { margin: 0 0 20px; color: #333; font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
 .form-group { margin-bottom: 15px; text-align: left; }
 .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; font-size: 14px; }
 .form-group input, .form-group select {
   width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; font-family: inherit;
+  box-sizing: border-box;
 }
 .form-group input:disabled { background: #f5f5f5; color: #888; cursor: not-allowed; }
 

@@ -9,18 +9,71 @@ export default defineEventHandler(async (event) => {
   
   try {
     if (method === 'GET') {
-      const { data: accounts, error } = await supabase
+      const { data: supabaseAccounts, error } = await supabase
         .from('accounts')
-        .select('id, phone, full_name, role, status, last_login, created_at')
+        .select('id, phone, full_name, last_login, created_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return accounts || []
+      const supaList = supabaseAccounts || []
+
+      // Lấy danh sách từ Abaha
+      let abahaCustomers: any[] = []
+      try {
+        const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
+        if (abahaToken) {
+           const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}`)
+           
+           if (Array.isArray(res?.data?.customers)) {
+             abahaCustomers = res.data.customers
+           } else if (Array.isArray(res?.data?.customers?.data)) { 
+             // in case of pagination
+             abahaCustomers = res.data.customers.data
+           }
+        }
+      } catch (err) {
+        console.error('[Admin Accounts] Lỗi lấy danh sách Abaha:', err)
+      }
+      
+      // Merge Abaha customers with Supabase rules
+      const mergedList = []
+      const usedPhones = new Set()
+      
+      for (const abahaCust of abahaCustomers) {
+        const phone = abahaCust.tel || ''
+        const name = abahaCust.name || ''
+        if (!phone) continue
+
+        usedPhones.add(phone)
+        const supaMatch = supaList.find(s => s.phone === phone)
+        
+        mergedList.push({
+          id: supaMatch?.id || `abaha_${abahaCust.id}`,
+          phone: phone,
+          full_name: supaMatch?.full_name || name, // Prefer Supabase name or Abaha name
+          role: 'user', // Default to user since role column is non-existent
+          status: 'active',
+          last_login: supaMatch?.last_login || null,
+          created_at: supaMatch?.created_at || new Date().toISOString()
+        })
+      }
+      
+      // Add Supabase accounts that don't exist in Abaha (e.g. system admins, old accounts)
+      for (const supa of supaList) {
+        if (!usedPhones.has(supa.phone)) {
+          mergedList.push(supa)
+        }
+      }
+
+      // Sắp xếp ưu tiên ngày tạo / vai trò Admin
+      mergedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+      return mergedList
     }
 
     if (method === 'POST' || method === 'PUT') {
       const body = await readBody(event)
-      const { phone, full_name, role, status } = body
+      const { phone, full_name, role, status, gender, birth_date, email, address, location_name, invite_phone } = body
 
       if (!phone) {
         throw createError({ statusCode: 400, statusMessage: 'Số điện thoại là bắt buộc' })
@@ -39,16 +92,22 @@ export default defineEventHandler(async (event) => {
 
       if (error) throw error
 
-      // Sync updated account info to Abaha
+      // Sync updated account info to Abaha (all fields)
       try {
         const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
         if (abahaToken) {
+          const abahaBody: any = { tel: phone }
+          if (full_name) abahaBody.name = full_name
+          if (address) abahaBody.address = address
+          if (location_name) abahaBody.location_name = location_name
+          if (birth_date) abahaBody.birth_date = birth_date
+          if (email) abahaBody.email = email
+          if (gender) abahaBody.gender = gender
+          if (invite_phone) abahaBody.invite_phone = invite_phone
+
           await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
             method: 'POST',
-            body: {
-              tel: phone,
-              name: full_name || undefined
-            }
+            body: abahaBody
           });
           console.log('[Abaha API] Successfully synced account update:', phone);
         }

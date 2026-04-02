@@ -7,7 +7,7 @@
     <template v-else>
       <div class="container">
         <div class="page-wrapper">
-          <AppSidebar :class="{ 'desktop-hidden': !showSidebar }" />
+          <AppSidebar v-if="showSidebar" />
           <main class="main-content">
             <slot />
           </main>
@@ -61,6 +61,7 @@ const showSidebar = computed(() => {
   // Hide sidebar on product detail page and category page
   if (route.path.startsWith('/san-pham/')) return false
   if (route.path.startsWith('/homepage')) return false
+  if (route.path.startsWith('/admin')) return false
   return true
 })
 
