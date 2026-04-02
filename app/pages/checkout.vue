@@ -58,7 +58,16 @@
 
       <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)"></textarea>
 
-      <button class="submit-btn" :disabled="selectedItems.length === 0" @click="submitOrder">🛒 Gửi đơn hàng</button>
+      <div class="security-box">
+        <NuxtTurnstile v-model="turnstileToken" />
+      </div>
+
+      <p v-if="errorMsg" class="error-text">{{ errorMsg }}</p>
+
+      <button class="submit-btn" :disabled="selectedItems.length === 0 || isSendingOtp" @click="submitOrder">
+        <span v-if="isSendingOtp">Đang xử lý...</span>
+        <span v-else>🛒 Gửi đơn hàng</span>
+      </button>
     </section>
 
     <section class="checkout-cart-card">
@@ -145,25 +154,63 @@ const formatPrice = (price: number | null) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-const submitOrder = () => {
-  if (selectedItems.value.length === 0) return
+const turnstileToken = ref('')
+const isSendingOtp = ref(false)
+const errorMsg = ref('')
 
-  createOrder({
-    receiver: {
-      fullName: form.fullName || 'Khách hàng',
-      phone: form.phone || '0000000000',
-      address: form.address || 'Chưa có địa chỉ',
-      city: form.city,
-      district: form.district,
-      ward: form.ward
-    },
-    items: cart.value,
-    paymentMethod: form.payment,
-    note: form.note,
-    type: 'normal'
-  })
+const submitOrder = async () => {
+  if (selectedItems.value.length === 0) {
+     errorMsg.value = 'Vui lòng chọn sản phẩm'
+     return
+  }
+  if (!form.fullName || !form.phone || !form.address) {
+     errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng'
+     return
+  }
+  if (!turnstileToken.value) {
+     errorMsg.value = 'Vui lòng xác minh bảo mật (Turnstile)'
+     return
+  }
 
-  router.push('/order/verify')
+  isSendingOtp.value = true
+  errorMsg.value = ''
+
+  try {
+    // 1. Send OTP via Zalo
+    await $fetch('/api/auth/send-otp', {
+      method: 'POST',
+      body: { 
+        phone: form.phone,
+        turnstileToken: turnstileToken.value
+      }
+    })
+
+    // 2. Create local order state
+    const fullAddress = `${form.address}, ${form.ward || ''}, ${form.district || ''}, ${form.city || ''}`.replace(/, , /g, ', ').trim()
+    
+    createOrder({
+      receiver: {
+        fullName: form.fullName,
+        phone: form.phone,
+        address: fullAddress,
+        city: form.city,
+        district: form.district,
+        ward: form.ward
+      },
+      items: cart.value,
+      paymentMethod: form.payment,
+      note: form.note,
+      type: 'normal'
+    })
+
+    // 3. Redirect to verify
+    router.push('/order/verify')
+  } catch (err: any) {
+    console.error('Error sending OTP:', err)
+    errorMsg.value = err.statusMessage || 'Có lỗi xảy ra khi gửi mã OTP. Vui lòng thử lại.'
+  } finally {
+    isSendingOtp.value = false
+  }
 }
 </script>
 
@@ -266,6 +313,17 @@ textarea {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.security-box {
+  margin: 15px 0;
+}
+
+.error-text {
+  color: #e31b1b;
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .items {

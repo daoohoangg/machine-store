@@ -34,8 +34,8 @@ const generateOrderId = () => {
 
 export const useOrder = () => {
   const currentOrder = useState<OrderData | null>('current_order', () => null)
-
   const hasOrder = computed(() => !!currentOrder.value)
+  const isLoading = useState<boolean>('order_loading', () => false)
 
   const createOrder = (payload: {
     receiver: OrderReceiver
@@ -62,6 +62,30 @@ export const useOrder = () => {
     return currentOrder.value
   }
 
+  const submitOrderToBackend = async () => {
+    if (!currentOrder.value) return null
+    
+    isLoading.value = true
+    try {
+      const response: any = await $fetch('/api/order/create', {
+        method: 'POST',
+        body: {
+          receiver: currentOrder.value.receiver,
+          items: currentOrder.value.items,
+          note: currentOrder.value.meta.note,
+          paymentMethod: currentOrder.value.meta.paymentMethod
+        }
+      })
+      
+      isLoading.value = false
+      return response
+    } catch (error: any) {
+      isLoading.value = false
+      console.error('[useOrder] Error submitting order:', error)
+      throw error
+    }
+  }
+
   const clearOrder = () => {
     currentOrder.value = null
   }
@@ -79,9 +103,11 @@ export const useOrder = () => {
   return {
     currentOrder,
     hasOrder,
+    isLoading,
     subtotal,
     total,
     createOrder,
+    submitOrderToBackend,
     clearOrder
   }
 }

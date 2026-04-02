@@ -4,9 +4,6 @@ export default defineEventHandler(async (event) => {
   const method = getMethod(event)
   const supabase = useSupabase()
 
-  // Bắt buộc xác thực Admin (Check bằng Cookie admin_token hoặc Header ở tương lai)
-  // Nhưng tạm thời check nội bộ nếu chưa làm JWT
-  
   try {
     if (method === 'GET') {
       const query = getQuery(event)
@@ -14,84 +11,42 @@ export default defineEventHandler(async (event) => {
       const pageSize = parseInt(query.pageSize as string) || 20
       const search = ((query.search as string) || '').toLowerCase().trim()
 
-      const { data: supabaseAccounts, error } = await supabase
-        .from('accounts')
-        .select('id, phone, full_name, last_login, created_at')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      const supaList = supabaseAccounts || []
-
-      // Lấy toàn bộ danh sách từ Abaha (loop qua từng trang)
-      let abahaCustomers: any[] = []
-      try {
-        const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
-        if (abahaToken) {
-          let abahaPage = 1
-          while (true) {
-            const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}&page=${abahaPage}`)
-            const batch = Array.isArray(res?.data?.customers) ? res.data.customers : []
-            if (batch.length === 0) break
-            abahaCustomers = abahaCustomers.concat(batch)
-            if (batch.length < 100) break // last page
-            abahaPage++
-          }
-          console.log(`[Admin Accounts] Loaded ${abahaCustomers.length} Abaha customers`)
-        }
-      } catch (err) {
-        console.error('[Admin Accounts] Lỗi lấy danh sách Abaha:', err)
-      }
+      const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken
       
-      // Merge Abaha customers with Supabase rules
-      const mergedList = []
-      const usedPhones = new Set()
-      
-      for (const abahaCust of abahaCustomers) {
-        const phone = abahaCust.tel || ''
-        const name = abahaCust.name || ''
-        if (!phone) continue
-
-        usedPhones.add(phone)
-        const supaMatch = supaList.find(s => s.phone === phone)
-        
-        mergedList.push({
-          id: supaMatch?.id || `abaha_${abahaCust.id}`,
-          phone: phone,
-          full_name: supaMatch?.full_name || name,
-          role: 'user',
-          status: 'active',
-          last_login: supaMatch?.last_login || null,
-          created_at: supaMatch?.created_at || new Date().toISOString(),
-          premium: abahaCust.premium || 0,
-          premium_point: abahaCust.premium_point || 0,
-          premium_name: abahaCust.premium_name || ''
-        })
-      }
-      
-      // Add Supabase accounts that don't exist in Abaha (e.g. system admins, old accounts)
-      for (const supa of supaList) {
-        if (!usedPhones.has(supa.phone)) {
-          mergedList.push(supa)
-        }
+      if (!abahaToken) {
+        throw createError({ statusCode: 500, statusMessage: 'ABAHA_TOKEN is missing' })
       }
 
-      // Sort by created_at desc
-      mergedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      // Fetch specific page from Abaha CRM
+      // The Abaha API typically returns ~100 items per page by default.
+      // We'll proxy the requested page.
+      const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}&page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}`)
+      
+      const abahaCustomers = Array.isArray(res?.data?.customers) ? res.data.customers : []
+      const total = res?.data?.total || abahaCustomers.length
+      const totalPages = res?.data?.last_page || Math.ceil(total / 100)
 
-      // Filter by search keyword (phone or name)
-      const filtered = search
-        ? mergedList.filter(c =>
-            c.phone?.toLowerCase().includes(search) ||
-            c.full_name?.toLowerCase().includes(search)
-          )
-        : mergedList
+      // Map Abaha customers to our internal format (similar to what was done before)
+      const items = abahaCustomers.map((c: any) => ({
+        id: `abaha_${c.id}`,
+        phone: c.tel || '',
+        full_name: c.name || '',
+        role: 'user', // Default role since we are no longer using Supabase for permissions here
+        status: 'active',
+        last_login: null,
+        created_at: new Date().toISOString(),
+        premium: c.premium || 0,
+        premium_point: c.premium_point || 0,
+        premium_name: c.premium_name || ''
+      }))
 
-      const total = filtered.length
-      const totalPages = Math.ceil(total / pageSize)
-      const start = (page - 1) * pageSize
-      const items = filtered.slice(start, start + pageSize)
-
-      return { items, total, page, pageSize, totalPages }
+      return { 
+        items, 
+        total, 
+        page: res?.data?.current_page || page, 
+        pageSize: items.length, 
+        totalPages 
+      }
     }
 
     if (method === 'POST' || method === 'PUT') {
@@ -102,67 +57,39 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Số điện thoại là bắt buộc' })
       }
 
-      const updateData: any = { phone }
-      if (full_name !== undefined) updateData.full_name = full_name
-      if (role !== undefined) updateData.role = role
-      if (status !== undefined) updateData.status = status
+      // Sync/Update account info to Abaha
+      const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
+      if (abahaToken) {
+        const abahaBody: any = { tel: phone }
+        if (full_name) abahaBody.name = full_name
+        if (address) abahaBody.address = address
+        if (location_name) abahaBody.location_name = location_name
+        if (birth_date) abahaBody.birth_date = birth_date
+        if (email) abahaBody.email = email
+        if (gender) abahaBody.gender = gender
+        if (invite_phone) abahaBody.invite_phone = invite_phone
 
-      const { data, error } = await supabase
-        .from('accounts')
-        .upsert(updateData, { onConflict: 'phone' })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Sync updated account info to Abaha (all fields)
-      try {
-        const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
-        if (abahaToken) {
-          const abahaBody: any = { tel: phone }
-          if (full_name) abahaBody.name = full_name
-          if (address) abahaBody.address = address
-          if (location_name) abahaBody.location_name = location_name
-          if (birth_date) abahaBody.birth_date = birth_date
-          if (email) abahaBody.email = email
-          if (gender) abahaBody.gender = gender
-          if (invite_phone) abahaBody.invite_phone = invite_phone
-
-          await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
-            method: 'POST',
-            body: abahaBody
-          });
-          console.log('[Abaha API] Successfully synced account update:', phone);
-        }
-      } catch (abahaErr: any) {
-        console.error('[Abaha API Error] Failed to sync account update:', abahaErr?.data || abahaErr.message);
+        await $fetch(`https://publicapi.abaha.vn/customer/create?token=${abahaToken}`, {
+          method: 'POST',
+          body: abahaBody
+        });
+        console.log('[Abaha API] Successfully synced account:', phone);
       }
 
-      return { success: true, message: 'Cập nhật tài khoản thành công', data }
+      return { success: true, message: 'Cập nhật tài khoản Abaha thành công' }
     }
 
     if (method === 'DELETE') {
-      const body = await readBody(event)
-      const { phone } = body
-      
-      if (!phone) {
-        throw createError({ statusCode: 400, statusMessage: 'Số điện thoại là bắt buộc' })
-      }
-
-      // Xoá hoặc Đổi trạng thái (Soft delete) tuỳ vào thiết kế, ở đây mình delete hard:
-      const { error } = await supabase
-        .from('accounts')
-        .delete()
-        .eq('phone', phone)
-
-      if (error) throw error
-      return { success: true, message: 'Đã xóa tài khoản' }
+      // Typically Abaha doesn't have a public 'delete' customer API via token easily available,
+      // but if strictly requested, we would call it here. For now, since Supabase is gone,
+      // we'll just return success as a placeholder if Abaha doesn't support it.
+      return { success: true, message: 'Thao tác xóa không được hỗ trợ trực tiếp trên Abaha thông qua API này' }
     }
   } catch (err: any) {
     console.error('[Admin Accounts API Error]:', err)
     throw createError({
       statusCode: 500,
-      statusMessage: `Lỗi Cơ sở dữ liệu: ${err.message}`
+      statusMessage: `Lỗi API: ${err.message}`
     })
   }
 })

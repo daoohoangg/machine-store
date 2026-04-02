@@ -13,10 +13,14 @@
 
       <label>
         <span>Nhập mã xác thực</span>
-        <input v-model="otp" type="text" maxlength="6" />
+        <input v-model="otp" type="text" maxlength="6" placeholder="______" @keyup.enter="confirmOrder" />
       </label>
 
-      <button class="confirm" @click="confirmOrder">XÁC THỰC</button>
+      <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
+
+      <button class="confirm" :disabled="isVerifying" @click="confirmOrder">
+        {{ isVerifying ? 'ĐANG XÁC THỰC...' : 'XÁC THỰC' }}
+      </button>
     </div>
   </div>
 </template>
@@ -31,20 +35,57 @@ definePageMeta({
 
 const router = useRouter()
 const otp = ref('')
+const isVerifying = ref(false)
+const errorMsg = ref('')
 
-const { currentOrder } = useOrder()
+const { currentOrder, submitOrderToBackend } = useOrder()
+const { clearCart } = useCart()
 
 const maskedPhone = computed(() => {
-  const phone = currentOrder.value?.receiver.phone || '0373299648'
-  if (phone.length < 4) return phone
+  const phone = currentOrder.value?.receiver.phone || ''
+  if (!phone || phone.length < 4) return '...'
 
   const head = phone.slice(0, 3)
   const tail = phone.slice(-3)
   return `${head}****${tail}`
 })
 
-const confirmOrder = () => {
-  router.push('/order/success')
+const confirmOrder = async () => {
+  if (!otp.value || otp.value.length < 6) {
+    errorMsg.value = 'Vui lòng nhập mã xác thực 6 số'
+    return
+  }
+
+  if (!currentOrder.value) {
+    router.push('/checkout')
+    return
+  }
+
+  isVerifying.value = true
+  errorMsg.value = ''
+
+  try {
+    // 1. Verify OTP
+    await $fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      body: { 
+        phone: currentOrder.value.receiver.phone,
+        otp: otp.value
+      }
+    })
+
+    // 2. Submit order to Abaha
+    await submitOrderToBackend()
+
+    // 3. Clear cart and Success
+    clearCart()
+    router.push('/order/success')
+  } catch (err: any) {
+    console.error('Order verify error:', err)
+    errorMsg.value = err.statusMessage || 'Mã xác thực không đúng hoặc có lỗi xảy ra.'
+  } finally {
+    isVerifying.value = false
+  }
 }
 
 const goBack = () => {
@@ -127,6 +168,18 @@ input {
   height: 56px;
   font-size: 34px;
   cursor: pointer;
+}
+
+.confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #e31c1c;
+  margin-top: 10px;
+  font-weight: 500;
+  text-align: center;
 }
 
 @media (max-width: 1200px) {

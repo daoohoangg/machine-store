@@ -101,6 +101,13 @@ export const useCart = () => {
     }
   }
 
+  const clearCart = () => {
+    cart.value = []
+    if (process.client) {
+      localStorage.removeItem('tuanminh_cart')
+    }
+  }
+
   return {
     cart,
     totalItems,
@@ -110,6 +117,7 @@ export const useCart = () => {
     addToCart,
     removeFromCart,
     updateQuantity,
-    toggleSelection
+    toggleSelection,
+    clearCart
   }
 }

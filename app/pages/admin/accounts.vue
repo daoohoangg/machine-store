@@ -15,28 +15,20 @@
         <h1>Quản lý Tài khoản & Phân quyền</h1>
       </div>
 
-      <div class="dashboard-stats" v-if="total > 0">
         <div class="stat-card">
           <div class="stat-icon users"><i class="fa-solid fa-users"></i></div>
           <div class="stat-info">
             <div class="stat-value">{{ total }}</div>
-            <div class="stat-label">Tổng tài khoản</div>
+            <div class="stat-label">Tổng khách hàng</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon admin"><i class="fa-solid fa-user-shield"></i></div>
-          <div class="stat-info">
-            <div class="stat-value">{{ adminCount }}</div>
-            <div class="stat-label">Ban quản trị</div>
-          </div>
-        </div>
-      </div>
 
       <div class="accounts-container">
         <div class="table-actions">
           <h3>Danh sách người dùng</h3>
           <div class="search-bar">
-            <i class="fa-solid fa-magnifying-glass"></i>
+            <i v-if="!isLoading" class="fa-solid fa-magnifying-glass"></i>
+            <i v-else class="fa-solid fa-spinner fa-spin search-loader"></i>
             <input
               type="text"
               v-model="searchQuery"
@@ -58,16 +50,17 @@
               <th>Số điện thoại</th>
               <th>Họ tên</th>
               <th>Hạng thành viên</th>
-              <th>Phân quyền</th>
-              <th>Đăng nhập cuối</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="accounts.length === 0">
-              <td colspan="6" class="empty-state">Chưa có dữ liệu người dùng</td>
+            <tr v-if="filteredAccounts.length === 0">
+              <td colspan="6" class="empty-state">
+                <span v-if="isLoading">Đang tìm kiếm...</span>
+                <span v-else>Không tìm thấy người dùng phù hợp</span>
+              </td>
             </tr>
-            <tr v-for="account in accounts" :key="account.phone">
+            <tr v-for="account in filteredAccounts" :key="account.phone">
               <td><strong>{{ account.phone }}</strong></td>
               <td>{{ account.full_name || 'Khách vãng lai' }}</td>
               <td>
@@ -76,10 +69,6 @@
                 </span>
                 <span v-else class="tier-badge tier-0">Thành viên</span>
               </td>
-              <td>
-                <span class="role-badge" :class="account.role">{{ account.role === 'admin' ? 'Admin' : 'Khách hàng' }}</span>
-              </td>
-              <td>{{ formatDate(account.last_login || account.created_at) }}</td>
               <td class="actions">
                 <button class="btn-icon edit" @click="openEditModal(account)" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></button>
                 <button v-if="account.phone !== currentAdminPhone" class="btn-icon delete" @click="confirmDelete(account)" title="Xoá"><i class="fa-solid fa-trash"></i></button>
@@ -88,21 +77,15 @@
           </tbody>
         </table>
 
-        <!-- Pagination -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button class="page-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
-            <i class="fa-solid fa-chevron-left"></i>
+        <!-- Pagination replaced with Load More -->
+        <div class="load-more-container" v-if="hasMore">
+          <button class="btn-load-more" :disabled="isMoreLoading" @click="goToPage(currentPage + 1)">
+            <i v-if="isMoreLoading" class="fa-solid fa-spinner fa-spin"></i>
+            {{ isMoreLoading ? 'Đang tải thêm khách hàng...' : 'Xem thêm khách hàng' }}
           </button>
-          <template v-for="p in paginationRange" :key="p">
-            <span v-if="p === '...'" class="page-ellipsis">...</span>
-            <button v-else class="page-btn" :class="{ active: p === currentPage }" @click="goToPage(p)">
-              {{ p }}
-            </button>
-          </template>
-          <button class="page-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-          <span class="page-info">Trang {{ currentPage }}/{{ totalPages }} &middot; {{ total }} khách hàng</span>
+        </div>
+        <div class="page-footer-info" v-if="total > 0">
+          Hiển thị {{ accounts.length }}/{{ total }} khách hàng
         </div>
       </div>
     </div>
@@ -170,16 +153,28 @@ useHead({ title: 'Quản lý Tài khoản - Admin' })
 const { isAdmin, initAuth } = useAdminAuth()
 const accounts = ref([])
 const isLoading = ref(true)
+const isMoreLoading = ref(false)
 const isSaving = ref(false)
 const showModal = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(1)
 const total = ref(0)
-const PAGE_SIZE = 20
+const PAGE_SIZE = 100
 const searchQuery = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-const adminCount = computed(() => accounts.value.filter(a => a.role === 'admin').length) 
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+const filteredAccounts = computed(() => {
+  if (!searchQuery.value) return accounts.value
+  const q = searchQuery.value.toLowerCase().trim()
+  // Local filter for instant "real-time" feel while waiting for API
+  return accounts.value.filter(a => 
+    a.phone?.toLowerCase().includes(q) || 
+    a.full_name?.toLowerCase().includes(q) ||
+    a.premium_name?.toLowerCase().includes(q)
+  )
+})
 
 const editingAccount = ref({
   isNew: false,
@@ -202,31 +197,40 @@ onMounted(() => {
   }
 })
 
-const fetchAccounts = async (page = currentPage.value, search = searchQuery.value) => {
-  isLoading.value = true
+const fetchAccounts = async (page = 1, search = searchQuery.value, append = false) => {
+  if (append) isMoreLoading.value = true
+  else isLoading.value = true
+
   try {
-    const { data, error } = await useFetch('/api/admin/accounts', {
+    const res = await $fetch('/api/admin/accounts', {
       query: { page, pageSize: PAGE_SIZE, search: search || undefined }
-    })
-    if (!error.value && data.value) {
-      const res = data.value as any
-      accounts.value = res.items || []
-      total.value = res.total || 0
-      totalPages.value = res.totalPages || 1
-      currentPage.value = res.page || page
+    }) as any
+    
+    const newItems = res.items || []
+    if (append) {
+      accounts.value = [...accounts.value, ...newItems]
+    } else {
+      accounts.value = newItems
     }
+    
+    total.value = res.total || 0
+    totalPages.value = res.totalPages || 1
+    currentPage.value = res.page || page
   } catch (err) {
     console.error('Lỗi khi tải danh sách:', err)
   }
   isLoading.value = false
+  isMoreLoading.value = false
 }
 
 const onSearch = () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     currentPage.value = 1
-    fetchAccounts(1, searchQuery.value)
-  }, 400)
+    // Clear current list to show loading state immediately for a "real-time" feel
+    accounts.value = [] 
+    fetchAccounts(1, searchQuery.value, false)
+  }, 300)
 }
 
 const clearSearch = () => {
@@ -237,26 +241,8 @@ const clearSearch = () => {
 
 const goToPage = (p: number) => {
   if (p < 1 || p > totalPages.value) return
-  currentPage.value = p
-  fetchAccounts(p)
-}
-
-const paginationRange = computed(() => {
-  const total = totalPages.value
-  const cur = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const pages: (number | string)[] = [1]
-  if (cur > 3) pages.push('...')
-  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
-  if (cur < total - 2) pages.push('...')
-  pages.push(total)
-  return pages
-})
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'Chưa đăng nhập'
-  const date = new Date(dateString)
-  return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')} - ${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear()}`
+  // Đối với lazy loading, ta chỉ append nên page truyền vào thường là currentPage + 1
+  fetchAccounts(p, searchQuery.value, true)
 }
 
 const openCreateModal = () => {
@@ -426,7 +412,6 @@ const confirmDelete = async (account) => {
 }
 
 .stat-icon.users { background: linear-gradient(135deg, #4D96FF, #0061FF); }
-.stat-icon.admin { background: linear-gradient(135deg, #e31b1b, #a51313); }
 
 .stat-info { flex: 1; }
 .stat-value { font-size: 24px; font-weight: 700; color: #333; line-height: 1; }
@@ -463,7 +448,8 @@ const confirmDelete = async (account) => {
   border-radius: 6px;
   padding: 6px 12px;
 }
-.search-bar i { color: #999; font-size: 13px; }
+.search-bar i { color: #999; font-size: 13px; margin-right: 4px; }
+.search-loader { color: #e31b1b !important; }
 .search-bar input {
   border: none;
   background: transparent;
@@ -497,31 +483,30 @@ const confirmDelete = async (account) => {
 .loading-state { text-align: center; padding: 40px; color: #999; }
 .empty-state { text-align: center; padding: 40px; color: #999; }
 
-/* Pagination */
-.pagination {
+/* Load More button */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+.btn-load-more {
+  padding: 12px 30px;
+  background: #fff;
+  color: #e31b1b;
+  border: 2px solid #e31b1b;
+  border-radius: 30px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 20px;
-  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 15px;
 }
-.page-btn {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.15s;
-  display: flex; align-items: center; justify-content: center;
-}
-.page-btn:hover:not(:disabled) { background: #f5f5f5; border-color: #e31b1b; color: #e31b1b; }
-.page-btn.active { background: #e31b1b; color: #fff; border-color: #e31b1b; font-weight: 700; }
-.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.page-ellipsis { padding: 0 4px; color: #999; }
-.page-info { margin-left: 8px; font-size: 13px; color: #777; }
+.btn-load-more:hover:not(:disabled) { background: #e31b1b; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(227,27,27,0.2); }
+.btn-load-more:disabled { opacity: 0.6; cursor: not-allowed; }
+.page-footer-info { text-align: center; color: #888; font-size: 13px; margin-top: 5px; }
 
 .data-table {
   width: 100%;
@@ -535,15 +520,6 @@ const confirmDelete = async (account) => {
 }
 
 .data-table th { background: #f9f9f9; font-weight: 600; color: #555; }
-
-.role-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.role-badge.admin { background: #ffebee; color: #e31b1b; border: 1px solid #ffcdd2; }
-.role-badge.user { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
 
 .actions { display: flex; gap: 8px; }
 .btn-icon {
