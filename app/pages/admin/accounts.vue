@@ -15,18 +15,18 @@
         <h1>Quản lý Tài khoản & Phân quyền</h1>
       </div>
 
-      <div class="dashboard-stats" v-if="accounts.length > 0">
+      <div class="dashboard-stats" v-if="total > 0">
         <div class="stat-card">
           <div class="stat-icon users"><i class="fa-solid fa-users"></i></div>
           <div class="stat-info">
-            <div class="stat-value">{{ accounts.length }}</div>
+            <div class="stat-value">{{ total }}</div>
             <div class="stat-label">Tổng tài khoản</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon admin"><i class="fa-solid fa-user-shield"></i></div>
           <div class="stat-info">
-            <div class="stat-value">{{ accounts.filter(a => a.role === 'admin').length }}</div>
+            <div class="stat-value">{{ adminCount }}</div>
             <div class="stat-label">Ban quản trị</div>
           </div>
         </div>
@@ -35,6 +35,16 @@
       <div class="accounts-container">
         <div class="table-actions">
           <h3>Danh sách người dùng</h3>
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Tìm theo tên, SĐT..."
+              @input="onSearch"
+            />
+            <button v-if="searchQuery" class="clear-btn" @click="clearSearch"><i class="fa-solid fa-xmark"></i></button>
+          </div>
           <button class="btn-primary" @click="openCreateModal"><i class="fa-solid fa-plus"></i> Thêm Tài khoản</button>
         </div>
 
@@ -47,6 +57,7 @@
             <tr>
               <th>Số điện thoại</th>
               <th>Họ tên</th>
+              <th>Hạng thành viên</th>
               <th>Phân quyền</th>
               <th>Đăng nhập cuối</th>
               <th>Thao tác</th>
@@ -54,11 +65,17 @@
           </thead>
           <tbody>
             <tr v-if="accounts.length === 0">
-              <td colspan="5" class="empty-state">Chưa có dữ liệu người dùng</td>
+              <td colspan="6" class="empty-state">Chưa có dữ liệu người dùng</td>
             </tr>
             <tr v-for="account in accounts" :key="account.phone">
               <td><strong>{{ account.phone }}</strong></td>
               <td>{{ account.full_name || 'Khách vãng lai' }}</td>
+              <td>
+                <span v-if="account.premium_name" class="tier-badge">
+                  {{ account.premium_name }}
+                </span>
+                <span v-else class="tier-badge tier-0">Thành viên</span>
+              </td>
               <td>
                 <span class="role-badge" :class="account.role">{{ account.role === 'admin' ? 'Admin' : 'Khách hàng' }}</span>
               </td>
@@ -70,6 +87,23 @@
             </tr>
           </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div class="pagination" v-if="totalPages > 1">
+          <button class="page-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <template v-for="p in paginationRange" :key="p">
+            <span v-if="p === '...'" class="page-ellipsis">...</span>
+            <button v-else class="page-btn" :class="{ active: p === currentPage }" @click="goToPage(p)">
+              {{ p }}
+            </button>
+          </template>
+          <button class="page-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <span class="page-info">Trang {{ currentPage }}/{{ totalPages }} &middot; {{ total }} khách hàng</span>
+        </div>
       </div>
     </div>
 
@@ -127,8 +161,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 useHead({ title: 'Quản lý Tài khoản - Admin' })
@@ -138,10 +172,14 @@ const accounts = ref([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const showModal = ref(false)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const total = ref(0)
+const PAGE_SIZE = 20
+const searchQuery = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-// We can get the current admin phone from the login state if we stored it, 
-// for now we don't have it exactly mapped in local storage, but the user understands.
-const currentAdminPhone = ref('') 
+const adminCount = computed(() => accounts.value.filter(a => a.role === 'admin').length) 
 
 const editingAccount = ref({
   isNew: false,
@@ -164,18 +202,56 @@ onMounted(() => {
   }
 })
 
-const fetchAccounts = async () => {
+const fetchAccounts = async (page = currentPage.value, search = searchQuery.value) => {
   isLoading.value = true
   try {
-    const { data, error } = await useFetch('/api/admin/accounts')
+    const { data, error } = await useFetch('/api/admin/accounts', {
+      query: { page, pageSize: PAGE_SIZE, search: search || undefined }
+    })
     if (!error.value && data.value) {
-      accounts.value = data.value
+      const res = data.value as any
+      accounts.value = res.items || []
+      total.value = res.total || 0
+      totalPages.value = res.totalPages || 1
+      currentPage.value = res.page || page
     }
   } catch (err) {
     console.error('Lỗi khi tải danh sách:', err)
   }
   isLoading.value = false
 }
+
+const onSearch = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    fetchAccounts(1, searchQuery.value)
+  }, 400)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  currentPage.value = 1
+  fetchAccounts(1, '')
+}
+
+const goToPage = (p: number) => {
+  if (p < 1 || p > totalPages.value) return
+  currentPage.value = p
+  fetchAccounts(p)
+}
+
+const paginationRange = computed(() => {
+  const total = totalPages.value
+  const cur = currentPage.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | string)[] = [1]
+  if (cur > 3) pages.push('...')
+  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
+  if (cur < total - 2) pages.push('...')
+  pages.push(total)
+  return pages
+})
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Chưa đăng nhập'
@@ -244,7 +320,7 @@ const saveAccount = async () => {
     if (error.value) throw error.value
     
     showModal.value = false
-    await fetchAccounts() // reload list
+    await fetchAccounts(currentPage.value) // reload current page
   } catch (err) {
     alert(err.message || 'Lỗi khi lưu tài khoản')
   }
@@ -261,7 +337,7 @@ const confirmDelete = async (account) => {
     })
     
     if (error.value) throw error.value
-    await fetchAccounts()
+    await fetchAccounts(currentPage.value)
   } catch (err) {
     alert(err.message || 'Lỗi khi xoá')
   }
@@ -369,9 +445,83 @@ const confirmDelete = async (account) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 .table-actions h3 { margin: 0; color: #333; }
+
+/* Search bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 320px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+.search-bar i { color: #999; font-size: 13px; }
+.search-bar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+}
+.clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.clear-btn:hover { color: #e31b1b; }
+
+/* Membership tier badges */
+.tier-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.tier-0 { background: #f5e6d3; color: #8B5E3C; border: 1px solid #d4a574; }  /* Đồng */
+.tier-1 { background: #f0f0f0; color: #555; border: 1px solid #bbb; }          /* Bạc */
+.tier-2 { background: #fff8e1; color: #B8860B; border: 1px solid #ffd700; }   /* Vàng */
+.tier-3 { background: #e8f5e9; color: #1a7a4a; border: 1px solid #4caf50; }   /* Bạch Kim */
+.loading-state { text-align: center; padding: 40px; color: #999; }
+.empty-state { text-align: center; padding: 40px; color: #999; }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.page-btn:hover:not(:disabled) { background: #f5f5f5; border-color: #e31b1b; color: #e31b1b; }
+.page-btn.active { background: #e31b1b; color: #fff; border-color: #e31b1b; font-weight: 700; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.page-ellipsis { padding: 0 4px; color: #999; }
+.page-info { margin-left: 8px; font-size: 13px; color: #777; }
 
 .data-table {
   width: 100%;

@@ -9,6 +9,11 @@ export default defineEventHandler(async (event) => {
   
   try {
     if (method === 'GET') {
+      const query = getQuery(event)
+      const page = Math.max(1, parseInt(query.page as string) || 1)
+      const pageSize = parseInt(query.pageSize as string) || 20
+      const search = ((query.search as string) || '').toLowerCase().trim()
+
       const { data: supabaseAccounts, error } = await supabase
         .from('accounts')
         .select('id, phone, full_name, last_login, created_at')
@@ -17,19 +22,21 @@ export default defineEventHandler(async (event) => {
       if (error) throw error
       const supaList = supabaseAccounts || []
 
-      // Lấy danh sách từ Abaha
+      // Lấy toàn bộ danh sách từ Abaha (loop qua từng trang)
       let abahaCustomers: any[] = []
       try {
         const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken;
         if (abahaToken) {
-           const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}`)
-           
-           if (Array.isArray(res?.data?.customers)) {
-             abahaCustomers = res.data.customers
-           } else if (Array.isArray(res?.data?.customers?.data)) { 
-             // in case of pagination
-             abahaCustomers = res.data.customers.data
-           }
+          let abahaPage = 1
+          while (true) {
+            const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}&page=${abahaPage}`)
+            const batch = Array.isArray(res?.data?.customers) ? res.data.customers : []
+            if (batch.length === 0) break
+            abahaCustomers = abahaCustomers.concat(batch)
+            if (batch.length < 100) break // last page
+            abahaPage++
+          }
+          console.log(`[Admin Accounts] Loaded ${abahaCustomers.length} Abaha customers`)
         }
       } catch (err) {
         console.error('[Admin Accounts] Lỗi lấy danh sách Abaha:', err)
@@ -50,11 +57,14 @@ export default defineEventHandler(async (event) => {
         mergedList.push({
           id: supaMatch?.id || `abaha_${abahaCust.id}`,
           phone: phone,
-          full_name: supaMatch?.full_name || name, // Prefer Supabase name or Abaha name
-          role: 'user', // Default to user since role column is non-existent
+          full_name: supaMatch?.full_name || name,
+          role: 'user',
           status: 'active',
           last_login: supaMatch?.last_login || null,
-          created_at: supaMatch?.created_at || new Date().toISOString()
+          created_at: supaMatch?.created_at || new Date().toISOString(),
+          premium: abahaCust.premium || 0,
+          premium_point: abahaCust.premium_point || 0,
+          premium_name: abahaCust.premium_name || ''
         })
       }
       
@@ -65,10 +75,23 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      // Sắp xếp ưu tiên ngày tạo / vai trò Admin
+      // Sort by created_at desc
       mergedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-      return mergedList
+      // Filter by search keyword (phone or name)
+      const filtered = search
+        ? mergedList.filter(c =>
+            c.phone?.toLowerCase().includes(search) ||
+            c.full_name?.toLowerCase().includes(search)
+          )
+        : mergedList
+
+      const total = filtered.length
+      const totalPages = Math.ceil(total / pageSize)
+      const start = (page - 1) * pageSize
+      const items = filtered.slice(start, start + pageSize)
+
+      return { items, total, page, pageSize, totalPages }
     }
 
     if (method === 'POST' || method === 'PUT') {
