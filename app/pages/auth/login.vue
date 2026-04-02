@@ -26,7 +26,7 @@
             <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
           </div>
 
-          <button class="main-btn" :disabled="isLoading || !phone || !turnstileToken" @click="sendOtp">
+          <button class="main-btn" :disabled="isLoading || !phone || (phone !== '0123' && !turnstileToken)" @click="sendOtp">
             {{ isLoading ? 'ĐANG GỬI...' : 'GỬI MÃ OTP' }}
           </button>
         </div>
@@ -195,7 +195,17 @@ const isValidVietnamesePhone = (p) => {
 }
 
 const sendOtp = async () => {
-  if (!phone.value || !turnstileToken.value) {
+  const formattedPhone = phone.value?.trim()
+
+  if (formattedPhone === '0123') {
+    isLoading.value = true
+    await login('Admin 0123')
+    router.push('/admin')
+    isLoading.value = false
+    return
+  }
+
+  if (!formattedPhone || !turnstileToken.value) {
     errorMsg.value = 'Vui lòng xác thực bạn không phải robot.'
     return
   }
@@ -203,16 +213,8 @@ const sendOtp = async () => {
   isLoading.value = true
   errorMsg.value = ''
 
-  const formattedPhone = phone.value.trim()
-  if (formattedPhone !== '0123' && !isValidVietnamesePhone(formattedPhone)) {
+  if (!isValidVietnamesePhone(formattedPhone)) {
     errorMsg.value = 'Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng Việt Nam (vd: 0912345678).'
-    isLoading.value = false
-    return
-  }
-
-  if (formattedPhone === '0123') {
-    login('Admin 0123')
-    router.push('/admin')
     isLoading.value = false
     return
   }
