@@ -22,12 +22,11 @@
         <div v-if="step === 1">
           <input v-model="phone" type="text" placeholder="Nhập số điện thoại" @keyup.enter="sendOtp" />
           
-          <div class="captcha-box">
-            <span class="captcha-label">Mã xác thực: {{ captchaNum1 }} + {{ captchaNum2 }} = </span>
-            <input v-model="captchaAnswer" type="number" placeholder="Nhập kết quả" @keyup.enter="sendOtp" class="captcha-input"/>
+          <div class="turnstile-wrapper">
+            <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
           </div>
 
-          <button class="main-btn" :disabled="isLoading || !phone || !captchaAnswer" @click="sendOtp">
+          <button class="main-btn" :disabled="isLoading || !phone || !turnstileToken" @click="sendOtp">
             {{ isLoading ? 'ĐANG GỬI...' : 'GỬI MÃ OTP' }}
           </button>
         </div>
@@ -53,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
@@ -70,20 +69,9 @@ const isLoading = ref(false)
 const isLoadingZalo = ref(false)
 const errorMsg = ref('')
 
-// Captcha state
-const captchaNum1 = ref(0)
-const captchaNum2 = ref(0)
-const captchaAnswer = ref('')
-
-const generateCaptcha = () => {
-  captchaNum1.value = Math.floor(Math.random() * 10) + 1
-  captchaNum2.value = Math.floor(Math.random() * 10) + 1
-  captchaAnswer.value = ''
-}
-
-onMounted(() => {
-  generateCaptcha()
-})
+// Turnstile state
+const turnstileToken = ref('')
+const turnstileRef = ref(null)
 
 // Zalo Auth PKCE Helpers
 const generateRandomString = (length) => {
@@ -207,16 +195,13 @@ const isValidVietnamesePhone = (p) => {
 }
 
 const sendOtp = async () => {
-  if (!phone.value || !captchaAnswer.value) return
-  isLoading.value = true
-  errorMsg.value = ''
-
-  if (parseInt(captchaAnswer.value) !== captchaNum1.value + captchaNum2.value) {
-    errorMsg.value = 'Kết quả phép tính không đúng. Vui lòng thử lại.'
-    generateCaptcha()
-    isLoading.value = false
+  if (!phone.value || !turnstileToken.value) {
+    errorMsg.value = 'Vui lòng xác thực bạn không phải robot.'
     return
   }
+  
+  isLoading.value = true
+  errorMsg.value = ''
 
   const formattedPhone = phone.value.trim()
   if (formattedPhone !== '0123' && !isValidVietnamesePhone(formattedPhone)) {
@@ -234,13 +219,20 @@ const sendOtp = async () => {
   try {
     const res = await $fetch('/api/auth/send-otp', {
       method: 'POST',
-      body: { phone: phone.value }
+      body: { 
+        phone: phone.value,
+        turnstileToken: turnstileToken.value 
+      }
     })
     if (res?.success) {
       step.value = 2
     }
   } catch (err) {
     errorMsg.value = err.data?.statusMessage || 'Có lỗi xảy ra khi gửi OTP'
+    if (turnstileRef.value) {
+      turnstileRef.value.reset()
+    }
+    turnstileToken.value = ''
   } finally {
     isLoading.value = false
   }
@@ -347,27 +339,10 @@ input {
   font-size: 29px;
 }
 
-.captcha-box {
+.turnstile-wrapper {
+  margin-bottom: 12px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  background: #fff;
-  padding: 0 12px;
-  border: 1px solid #bbb;
-  border-radius: 4px;
-}
-.captcha-label {
-  font-size: 18px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-.captcha-input {
-  border: none !important;
-  margin-bottom: 0 !important;
-  height: 46px !important;
-  padding: 0 !important;
-  flex: 1;
+  justify-content: center;
 }
 
 .password-row {

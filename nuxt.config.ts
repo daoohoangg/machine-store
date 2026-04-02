@@ -11,8 +11,12 @@ export default defineNuxtConfig({
         Roboto: [400, 500, 700],
       }
     }],
-    '@nuxtjs/sitemap'
+    '@nuxtjs/sitemap',
+    '@nuxtjs/turnstile'
   ],
+  turnstile: {
+    siteKey: '0x4AAAAAACzTFbG5vv_mKiVd'
+  },
   css: ['~/assets/css/main.css'],
   site: {
     url: SITE_URL,
@@ -49,6 +53,9 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
+    turnstile: {
+      secretKey: '0x4AAAAAACzTFfV7eyFNyfWShoJleWd_xcY'
+    },
     tokenApi: process.env.TOKEN_API,
     geminiApiKey: process.env.GEMINI_API_KEY,
     speedSmsToken: process.env.SPEEDSMS_ACCESS_TOKEN,

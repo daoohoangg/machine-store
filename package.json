@@ -12,6 +12,7 @@
   "dependencies": {
     "@nuxtjs/google-fonts": "^3.2.0",
     "@nuxtjs/sitemap": "^7.6.0",
+    "@nuxtjs/turnstile": "^1.1.2",
     "@supabase/supabase-js": "^2.100.1",
     "@vueup/vue-quill": "^1.0.0-beta.11",
     "better-sqlite3": "^12.8.0",
