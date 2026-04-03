@@ -257,10 +257,12 @@ const submitOrder = async () => {
 
   // Force login check
   if (!isUser.value && !isAdmin.value) {
-    router.push({
-      path: '/auth/login',
-      query: { redirect: route.fullPath }
-    })
+    if (confirm('Vui lòng đăng nhập trước khi đặt hàng')) {
+      router.push({
+        path: '/auth/login',
+        query: { redirect: route.fullPath }
+      })
+    }
     return
   }
 
