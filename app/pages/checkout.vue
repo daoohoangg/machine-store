@@ -18,21 +18,21 @@
         <span class="label-title">Địa chỉ <em>*</em></span>
         <div class="three-col">
           <label>
-            <select v-model="form.city">
+            <select v-model="selectedProvinceCode" @change="onProvinceChange">
               <option value="">Tỉnh/Thành phố</option>
-              <option>Hà Nội</option>
-              <option>TP.HCM</option>
-              <option>Đà Nẵng</option>
+              <option v-for="p in provinces" :key="p.code" :value="p.code">{{ p.name }}</option>
             </select>
           </label>
           <label>
-            <select v-model="form.district">
+            <select v-model="selectedDistrictCode" @change="onDistrictChange" :disabled="!selectedProvinceCode">
               <option value="">Quận/Huyện/Thị Xã</option>
+              <option v-for="d in districts" :key="d.code" :value="d.code">{{ d.name }}</option>
             </select>
           </label>
           <label>
-            <select v-model="form.ward">
+            <select v-model="selectedWardCode" @change="onWardChange" :disabled="!selectedDistrictCode">
               <option value="">Phường/Xã/Thị trấn</option>
+              <option v-for="w in wards" :key="w.code" :value="w.code">{{ w.name }}</option>
             </select>
           </label>
         </div>
@@ -114,9 +114,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed, onMounted, ref } from 'vue'
 import { useCart } from '~/composables/useCart'
 import { useOrder } from '~/composables/useOrder'
+import { useLocations } from '~/composables/useLocations'
 
 definePageMeta({
   layout: 'checkout'
@@ -131,7 +132,45 @@ const {
   toggleSelection
 } = useCart()
 const { createOrder } = useOrder()
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
 const router = useRouter()
+
+const selectedProvinceCode = ref('')
+const selectedDistrictCode = ref('')
+const selectedWardCode = ref('')
+
+onMounted(async () => {
+  await fetchProvinces()
+})
+
+const onProvinceChange = async () => {
+  form.district = ''
+  form.ward = ''
+  selectedDistrictCode.value = ''
+  selectedWardCode.value = ''
+  
+  const province = provinces.value.find(p => p.code == selectedProvinceCode.value)
+  form.city = province ? province.name : ''
+  if (selectedProvinceCode.value) {
+    await fetchDistricts(selectedProvinceCode.value)
+  }
+}
+
+const onDistrictChange = async () => {
+  form.ward = ''
+  selectedWardCode.value = ''
+  
+  const district = districts.value.find(d => d.code == selectedDistrictCode.value)
+  form.district = district ? district.name : ''
+  if (selectedDistrictCode.value) {
+    await fetchWards(selectedDistrictCode.value)
+  }
+}
+
+const onWardChange = () => {
+  const ward = wards.value.find(w => w.code == selectedWardCode.value)
+  form.ward = ward ? ward.name : ''
+}
 
 const selectedItems = computed(() => cart.value.filter((item) => item.selected))
 
