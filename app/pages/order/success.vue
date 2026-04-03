@@ -8,8 +8,7 @@
           Nếu cần hỗ trợ Quý khách vui lòng liên hệ:
         </p>
         <p>
-          <strong>Hà Nội:</strong> <a href="#">024.3568.6969</a>
-          <strong>TP.HCM:</strong> <a href="#">028.3833.6666</a>
+          <strong>Hotline:</strong> <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')">{{ settings.hotline }}</a>
         </p>
         <p>
           Thời gian giao hàng dự kiến: <strong>{{ deliveryEstimate }}</strong>
@@ -78,10 +77,8 @@
           <li>KHÔNG thanh toán bất kỳ phụ phí nào phát sinh khi chưa có xác nhận từ tổng đài Tuấn Minh.</li>
           <li>KHÔNG nhập vào đường link lạ của shipper gửi.</li>
         </ul>
-        <p>
-          Nếu cần hỗ trợ về đơn hàng <strong>{{ orderId }}</strong> Quý khách vui lòng liên hệ:
-          <strong>Hà Nội:</strong> 024.3568.6969 - <strong>TP.HCM:</strong> 028.3833.6666
-        </p>
+          Nếu cần hỗ trợ về đơn hàng <strong>{{ orderId }}</strong> Quý khách vui lòng liên hệ hotline:
+          <strong>{{ settings.hotline }}</strong>
       </section>
 
     </section>
@@ -89,8 +86,7 @@
     <aside class="right">
       <div class="panel">
         <h4>Hỗ trợ khách hàng</h4>
-        <p>☎ 024.3568.6969 - Phía Bắc & Trung</p>
-        <p>☎ 028.3833.6666 - Phía Nam</p>
+        <p>☎ Hotline: {{ settings.hotline }}</p>
         <p><strong>Hà Nội:</strong> 56 Duy Tân, Phường Cầu Giấy</p>
         <p><strong>TP.HCM:</strong> 716-718 Điện Biên Phủ, Phường Vườn Lài</p>
       </div>
@@ -104,14 +100,12 @@
       <div class="panel">
         <h4>Chăm sóc khách hàng</h4>
         <p>Góp ý, khiếu nại: (8h00 - 17h30)</p>
-        <p>Toàn quốc: (028) 3833 3222</p>
+        <p>Toàn quốc: {{ settings.hotline }}</p>
         <p>Email: care@tuanminh.vn</p>
       </div>
     </aside>
 
     <section class="full-width">
-      <OrderFeaturedCategories />
-      <OrderRecommendedProducts />
       <OrderFlashSaleStrip />
     </section>
   </div>
@@ -119,16 +113,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import OrderFeaturedCategories from '~/components/order/FeaturedCategories.vue'
-import OrderRecommendedProducts from '~/components/order/RecommendedProducts.vue'
 import OrderFlashSaleStrip from '~/components/order/FlashSaleStrip.vue'
 import { useOrder } from '~/composables/useOrder'
+import { useSiteSettings } from '~/composables/useSiteSettings'
 
 definePageMeta({
   layout: 'checkout'
 })
 
 const { currentOrder, subtotal, total } = useOrder()
+const { settings } = useSiteSettings()
 
 const fallbackDate = '10/03/2026'
 
