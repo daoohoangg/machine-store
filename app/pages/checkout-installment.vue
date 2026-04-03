@@ -127,6 +127,8 @@ import { reactive, computed, onMounted, ref } from 'vue'
 import { useCart } from '~/composables/useCart'
 import { useOrder } from '~/composables/useOrder'
 import { useLocations } from '~/composables/useLocations'
+import { useAdminAuth } from '~/composables/useAdminAuth'
+import { useRoute } from 'vue-router'
 
 definePageMeta({
   layout: 'checkout'
@@ -138,11 +140,14 @@ const {
   isAllSelected,
   updateQuantity,
   removeFromCart,
-  toggleSelection
+  toggleSelection,
+  clearCart
 } = useCart()
-const { createOrder } = useOrder()
+const { createOrder, submitOrderToBackend } = useOrder()
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
+const { isUser, isAdmin, userName, userPhone, initAuth } = useAdminAuth()
 const router = useRouter()
+const route = useRoute()
 
 const selectedProvinceCode = ref('')
 const selectedDistrictCode = ref('')
@@ -150,6 +155,53 @@ const selectedWardCode = ref('')
 
 onMounted(async () => {
   await fetchProvinces()
+  await initAuth()
+
+  if (isUser.value || isAdmin.value) {
+    // 1. Basic pre-fill from session
+    form.fullName = userName.value
+    form.phone = userPhone.value
+
+    // 2. Fetch detailed profile from server
+    try {
+      const data: any = await $fetch('/api/auth/me')
+      if (data?.authenticated && data.user) {
+        const u = data.user
+        form.fullName = u.full_name || form.fullName
+        form.phone = u.phone || form.phone
+        form.address = u.address || ''
+        
+        // Match names to codes for cascading selects
+        if (u.city) {
+          const p = provinces.value.find(p => p.name === u.city)
+          if (p) {
+            selectedProvinceCode.value = p.code.toString()
+            await fetchDistricts(p.code)
+            form.city = u.city
+            
+            if (u.district) {
+              const d = districts.value.find(d => d.name === u.district)
+              if (d) {
+                selectedDistrictCode.value = d.code.toString()
+                await fetchWards(d.code)
+                form.district = u.district
+                
+                if (u.ward) {
+                  const w = wards.value.find(w => w.name === u.ward)
+                  if (w) {
+                    selectedWardCode.value = w.code.toString()
+                    form.ward = u.ward
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Checkout Installment Pre-fill Error]:', e)
+    }
+  }
 })
 
 const onProvinceChange = async () => {
@@ -210,14 +262,25 @@ const formatPrice = (price: number | null) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-const submitOrder = () => {
+const submitOrder = async () => {
   if (selectedItems.value.length === 0) return
+
+  // Force login check
+  if (!isUser.value && !isAdmin.value) {
+    router.push({
+      path: '/auth/login',
+      query: { redirect: route.fullPath }
+    })
+    return
+  }
+
+  const fullAddress = `${form.address}, ${form.ward || ''}, ${form.district || ''}, ${form.city || ''}`.replace(/, , /g, ', ').trim()
 
   createOrder({
     receiver: {
       fullName: form.fullName || 'Khách hàng',
       phone: form.phone || '0000000000',
-      address: form.address || 'Chưa có địa chỉ',
+      address: fullAddress || 'Chưa có địa chỉ',
       city: form.city,
       district: form.district,
       ward: form.ward
@@ -228,7 +291,15 @@ const submitOrder = () => {
     type: 'installment'
   })
 
-  router.push('/order/verify')
+  if (isUser.value || isAdmin.value) {
+     // Logged in: Directly submit and go to success
+     await submitOrderToBackend()
+     clearCart()
+     router.push('/order/success')
+  } else {
+     // Should not be reachable, but redirecting to verify as fallback
+     router.push('/order/verify')
+  }
 }
 </script>
 

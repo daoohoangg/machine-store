@@ -52,8 +52,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 definePageMeta({
@@ -61,7 +61,14 @@ definePageMeta({
 })
 
 const router = useRouter()
-const { login } = useAdminAuth()
+const route = useRoute()
+const { login, setUser } = useAdminAuth()
+
+const redirectPath = computed(() => {
+  const path = route.query.redirect
+  return path && typeof path === 'string' && path.startsWith('/') ? path : '/'
+})
+
 const step = ref(1)
 const phone = ref('')
 const otp = ref('')
@@ -135,7 +142,7 @@ const loginWithZalo = async () => {
       if (popup) popup.close()
       const { setUser } = useAdminAuth()
       setUser(detail || 'Zalo User', '', false)
-      router.push('/')
+      router.push(redirectPath.value)
       return
     } 
     
@@ -176,7 +183,7 @@ const loginWithZalo = async () => {
           // Use name from profile or fallback
           const { setUser } = useAdminAuth()
           setUser(profileData?.name || 'Zalo User', '', false)
-          router.push('/')
+          router.push(redirectPath.value)
         } else {
           throw new Error('Không thể hoàn tất đăng nhập trên hệ thống')
         }
@@ -247,7 +254,7 @@ const verifyOtp = async () => {
       // Use setUser to update the local and global state correctly
       const { setUser } = useAdminAuth()
       setUser(res.name || res.phone || phone.value, phone.value, false)
-      router.push('/')
+      router.push(redirectPath.value)
     }
   } catch (err) {
     errorMsg.value = err.data?.statusMessage || 'Mã OTP không hợp lệ hoặc đã hết hạn'

@@ -80,11 +80,12 @@
               </div>
             </template>
             <template v-else>
-              <div class="user-trigger">
+              <NuxtLink to="/auth/profile" class="user-trigger">
                 <span class="action-icon"><i class="fa-solid fa-user"></i></span>
                 <span class="action-label">{{ displayAccountName }}</span>
-              </div>
+              </NuxtLink>
               <div class="user-dropdown">
+                <NuxtLink to="/auth/profile" class="dropdown-item"><i class="fa-solid fa-user-pen"></i> Thông tin tài khoản</NuxtLink>
                 <button class="dropdown-item text-danger" @click="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
               </div>
             </template>

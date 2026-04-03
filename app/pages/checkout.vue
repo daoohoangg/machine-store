@@ -118,6 +118,8 @@ import { reactive, computed, onMounted, ref } from 'vue'
 import { useCart } from '~/composables/useCart'
 import { useOrder } from '~/composables/useOrder'
 import { useLocations } from '~/composables/useLocations'
+import { useAdminAuth } from '~/composables/useAdminAuth'
+import { useRoute } from 'vue-router'
 
 definePageMeta({
   layout: 'checkout'
@@ -129,11 +131,14 @@ const {
   isAllSelected,
   updateQuantity,
   removeFromCart,
-  toggleSelection
+  toggleSelection,
+  clearCart
 } = useCart()
-const { createOrder } = useOrder()
+const { createOrder, submitOrderToBackend } = useOrder()
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
+const { isUser, isAdmin, userName, userPhone, initAuth } = useAdminAuth()
 const router = useRouter()
+const route = useRoute()
 
 const selectedProvinceCode = ref('')
 const selectedDistrictCode = ref('')
@@ -141,6 +146,53 @@ const selectedWardCode = ref('')
 
 onMounted(async () => {
   await fetchProvinces()
+  await initAuth()
+
+  if (isUser.value || isAdmin.value) {
+    // 1. Basic pre-fill from session
+    form.fullName = userName.value
+    form.phone = userPhone.value
+
+    // 2. Fetch detailed profile from server
+    try {
+      const data: any = await $fetch('/api/auth/me')
+      if (data?.authenticated && data.user) {
+        const u = data.user
+        form.fullName = u.full_name || form.fullName
+        form.phone = u.phone || form.phone
+        form.address = u.address || ''
+        
+        // Match names to codes for cascading selects
+        if (u.city) {
+          const p = provinces.value.find(p => p.name === u.city)
+          if (p) {
+            selectedProvinceCode.value = p.code.toString()
+            await fetchDistricts(p.code)
+            form.city = u.city
+            
+            if (u.district) {
+              const d = districts.value.find(d => d.name === u.district)
+              if (d) {
+                selectedDistrictCode.value = d.code.toString()
+                await fetchWards(d.code)
+                form.district = u.district
+                
+                if (u.ward) {
+                  const w = wards.value.find(w => w.name === u.ward)
+                  if (w) {
+                    selectedWardCode.value = w.code.toString()
+                    form.ward = u.ward
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Checkout Pre-fill Error]:', e)
+    }
+  }
 })
 
 const onProvinceChange = async () => {
@@ -199,32 +251,32 @@ const errorMsg = ref('')
 
 const submitOrder = async () => {
   if (selectedItems.value.length === 0) {
-     errorMsg.value = 'Vui lòng chọn sản phẩm'
-     return
+    errorMsg.value = 'Vui lòng chọn sản phẩm'
+    return
   }
+
+  // Force login check
+  if (!isUser.value && !isAdmin.value) {
+    router.push({
+      path: '/auth/login',
+      query: { redirect: route.fullPath }
+    })
+    return
+  }
+
   if (!form.fullName || !form.phone || !form.address) {
-     errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng'
-     return
+    errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng'
+    return
   }
   if (!turnstileToken.value) {
-     errorMsg.value = 'Vui lòng xác minh bảo mật (Turnstile)'
-     return
+    errorMsg.value = 'Vui lòng xác minh bảo mật (Turnstile)'
+    return
   }
 
   isSendingOtp.value = true
   errorMsg.value = ''
 
   try {
-    // 1. Send OTP via Zalo
-    await $fetch('/api/auth/send-otp', {
-      method: 'POST',
-      body: { 
-        phone: form.phone,
-        turnstileToken: turnstileToken.value
-      }
-    })
-
-    // 2. Create local order state
     const fullAddress = `${form.address}, ${form.ward || ''}, ${form.district || ''}, ${form.city || ''}`.replace(/, , /g, ', ').trim()
     
     createOrder({
@@ -242,11 +294,22 @@ const submitOrder = async () => {
       type: 'normal'
     })
 
-    // 3. Redirect to verify
-    router.push('/order/verify')
+    if (isUser.value || isAdmin.value) {
+      // Logged in: Directly submit and go to success
+      await submitOrderToBackend()
+      clearCart()
+      router.push('/order/success')
+    } else {
+      // Should not be reachable due to the check above, but keeping for reference
+      await $fetch('/api/auth/send-otp', {
+        method: 'POST',
+        body: { phone: form.phone, turnstileToken: turnstileToken.value }
+      })
+      router.push('/order/verify')
+    }
   } catch (err: any) {
-    console.error('Error sending OTP:', err)
-    errorMsg.value = err.statusMessage || 'Có lỗi xảy ra khi gửi mã OTP. Vui lòng thử lại.'
+    console.error('Submit order error:', err)
+    errorMsg.value = err.statusMessage || err.data?.statusMessage || 'Có lỗi xảy ra khi xử lý đơn hàng.'
   } finally {
     isSendingOtp.value = false
   }

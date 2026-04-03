@@ -61,8 +61,7 @@ export default defineEventHandler(async (event) => {
     return {
       authenticated: true,
       user: {
-        phone: account.phone,
-        name: account.full_name || account.phone,
+        ...account,
         isAdmin: isAdmin || account.role === 'admin'
       }
     }
