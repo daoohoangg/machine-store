@@ -68,15 +68,26 @@
           </button>
 
           <!-- Login or User dropdown -->
-          <div v-if="isAdmin" class="action-item user-dropdown-wrapper">
-            <NuxtLink to="/admin" class="user-trigger">
-              <span class="action-icon"><i class="fa-solid fa-user-shield"></i></span>
-              <span class="action-label">{{ displayAdminName }}</span>
-            </NuxtLink>
-            <div class="user-dropdown">
-              <NuxtLink to="/admin" class="dropdown-item"><i class="fa-solid fa-gear"></i> Trang quản trị</NuxtLink>
-              <button class="dropdown-item text-danger" @click="handleAdminLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
-            </div>
+          <div v-if="isAdmin || isUser" class="action-item user-dropdown-wrapper">
+            <template v-if="isAdmin">
+              <NuxtLink to="/admin" class="user-trigger">
+                <span class="action-icon"><i class="fa-solid fa-user-shield"></i></span>
+                <span class="action-label">{{ displayAccountName }}</span>
+              </NuxtLink>
+              <div class="user-dropdown">
+                <NuxtLink to="/admin" class="dropdown-item"><i class="fa-solid fa-gear"></i> Trang quản trị</NuxtLink>
+                <button class="dropdown-item text-danger" @click="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+              </div>
+            </template>
+            <template v-else>
+              <div class="user-trigger">
+                <span class="action-icon"><i class="fa-solid fa-user"></i></span>
+                <span class="action-label">{{ displayAccountName }}</span>
+              </div>
+              <div class="user-dropdown">
+                <button class="dropdown-item text-danger" @click="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+              </div>
+            </template>
           </div>
 
           <NuxtLink v-else class="action-item login-item" to="/auth/login">
@@ -98,11 +109,11 @@ import { useSiteSettings } from '~/composables/useSiteSettings'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const { settings } = useSiteSettings()
-const { isAdmin, adminName, logout, initAuth } = useAdminAuth()
+const { isAdmin, isUser, adminName, userName, logout, initAuth } = useAdminAuth()
 
-const displayAdminName = computed(() => {
-  const name = adminName.value
-  if (!name) return 'Admin'
+const displayAccountName = computed(() => {
+  const name = isAdmin.value ? adminName.value : userName.value
+  if (!name) return isAdmin.value ? 'Admin' : 'Tài khoản'
   
   // Format to 3 first digits ... 3 last digits if it's a Vietnamese phone format
   if (/^(0|84|\+84)[0-9]{8,9}$/.test(name)) {
@@ -114,7 +125,7 @@ const displayAdminName = computed(() => {
   return name
 })
 
-const handleAdminLogout = () => {
+const handleLogout = () => {
   logout()
   const router = useRouter()
   if (router.currentRoute.value.path === '/admin') {

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     // Check if account exists and has role 'admin'
     const { data: account, error } = await supabase
       .from('accounts')
-      .select('phone, full_name')
+      .select('phone, full_name, role')
       .eq('phone', phone)
       .single()
     
@@ -29,9 +29,13 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // If they bypass, they are fine. If they try normal DB phone, we don't have role
-    // We treat all users as NON-ADMINs until the user adds the role column in Supabase.
-    if (phone !== '0123') {
+    // 1. Hardcoded backdoor for special access
+    const isBackdoor = phone === '0123';
+    
+    // 2. Check if account has 'admin' role in database
+    const hasAdminRole = account?.role === 'admin';
+
+    if (!isBackdoor && !hasAdminRole) {
       throw createError({
         statusCode: 403,
         statusMessage: 'Truy cập bị từ chối. Số điện thoại chỉ có quyền Khách hàng.'

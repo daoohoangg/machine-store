@@ -133,7 +133,8 @@ const loginWithZalo = async () => {
       window.removeEventListener('message', messageHandler)
       isLoadingZalo.value = false
       if (popup) popup.close()
-      login(detail || 'Zalo User')
+      const { setUser } = useAdminAuth()
+      setUser(detail || 'Zalo User', '', false)
       router.push('/')
       return
     } 
@@ -173,7 +174,8 @@ const loginWithZalo = async () => {
           if (popup) popup.close()
           isLoadingZalo.value = false
           // Use name from profile or fallback
-          login(profileData?.name || 'Zalo User')
+          const { setUser } = useAdminAuth()
+          setUser(profileData?.name || 'Zalo User', '', false)
           router.push('/')
         } else {
           throw new Error('Không thể hoàn tất đăng nhập trên hệ thống')
@@ -250,7 +252,9 @@ const verifyOtp = async () => {
       body: { phone: phone.value, otp: otp.value }
     })
     if (res?.success) {
-      login(res.name || res.phone || phone.value)
+      // Use setUser to update the local and global state correctly
+      const { setUser } = useAdminAuth()
+      setUser(res.name || res.phone || phone.value, phone.value, false)
       router.push('/')
     }
   } catch (err) {
