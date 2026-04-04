@@ -596,12 +596,7 @@ const handleAddToCart = () => {
   if (!product.value) return
 
   for (let i = 0; i < quantity.value; i += 1) {
-    addToCart({
-      title: product.value.title,
-      price: product.value.price,
-      oldPrice: product.value.oldPrice,
-      image: product.value.image
-    })
+    addToCart(product.value)
   }
 }
 

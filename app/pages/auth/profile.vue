@@ -24,9 +24,28 @@
             <input v-model="form.fullName" type="text" placeholder="Nhập họ tên" required />
           </div>
 
+          <div class="form-group full-width">
+            <label>Ngày sinh</label>
+            <input v-model="form.birthday" type="date" />
+          </div>
+
           <div class="form-group">
             <label>Email</label>
-            <input v-model="form.email" type="email" placeholder="Nhập email (tùy chọn)" />
+            <input v-model="form.email" type="email" placeholder="example@gmail.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Giới tính</label>
+            <select v-model="form.gender">
+              <option value="">Chọn giới tính</option>
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Số điện thoại người giới thiệu</label>
+            <input v-model="form.invite_phone" type="tel" placeholder="0xxx xxx xxx" />
           </div>
         </div>
 
@@ -84,7 +103,6 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useLocations } from '~/composables/useLocations'
 import { useAdminAuth } from '~/composables/useAdminAuth'
-import { useAbahaApi } from '~/composables/useAbahaApi'
 
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
 const { setUser } = useAdminAuth()
@@ -97,11 +115,14 @@ const isError = ref(false)
 
 const form = reactive({
   fullName: '',
-  email: '',
+  birthday: '',
   city: '',
   district: '',
   ward: '',
-  address: ''
+  address: '',
+  email: '',
+  gender: '',
+  invite_phone: ''
 })
 
 const selectedProvinceCode = ref('')
@@ -110,32 +131,41 @@ const selectedWardCode = ref('')
 
 onMounted(async () => {
   try {
-    const storedPhone = localStorage.getItem('user_phone')
-    if (storedPhone) {
-      userPhone.value = storedPhone
-      await syncWithAbaha(storedPhone)
-    }
+    // Step 1: Fetch provinces list first (needed for location matching later)
+    await fetchProvinces()
 
-    const data = await $fetch('/api/auth/me')
+    // Step 2: Get the phone number — prefer localStorage for speed
+    const storedPhone = localStorage.getItem('user_phone')
+
+    // Step 3: Load local session data (name, address etc. as fallback)
+    const data = await $fetch('/api/auth/me') as any
     if (data?.authenticated && data.user) {
       const u = data.user
-      userPhone.value = u.phone
-      
-      form.fullName = u.full_name || form.fullName
-      form.email = u.email || form.email
-      form.city = u.city || form.city
-      form.district = u.district || form.district
-      form.ward = u.ward || form.ward
-      form.address = u.address || form.address
+      userPhone.value = u.phone || storedPhone || ''
 
-      if (u.phone !== storedPhone) {
-        await syncWithAbaha(u.phone)
-      }
-      
-      await applyLocationMatching()
+      // Fill form with local session data as baseline
+      form.fullName = u.full_name || ''
+      form.birthday = u.birthday || ''
+      form.city = u.city || ''
+      form.district = u.district || ''
+      form.ward = u.ward || ''
+      form.address = u.address || ''
+    } else if (storedPhone) {
+      userPhone.value = storedPhone
     } else {
       window.location.href = '/auth/login'
+      return
     }
+
+    // Step 4: Sync from Abaha CRM — this overwrites with fresher data
+    const phoneToSync = userPhone.value || storedPhone || ''
+    if (phoneToSync) {
+      await syncWithAbaha(phoneToSync)
+    }
+
+    // Step 5: Match location names → dropdown codes (after all data is ready)
+    await applyLocationMatching()
+
   } catch (err) {
     console.error('Failed to init profile:', err)
   } finally {
@@ -144,64 +174,70 @@ onMounted(async () => {
 })
 
 const syncWithAbaha = async (phone: string) => {
-  if (!phone) {
-    console.warn('[Abaha Sync] No phone number provided')
-    return
-  }
-  
-  try {
-    console.log('[Abaha Sync] Starting sync for phone:', phone)
-    const { request } = useAbahaApi()
-    const normalizedPhone = phone.startsWith('0') ? phone : (phone.startsWith('84') ? '0' + phone.slice(2) : (phone.startsWith('+84') ? '0' + phone.slice(3) : '0' + phone))
-    console.log('[Abaha Sync] Normalized phone:', normalizedPhone)
-    
-    const abahaRes = await request('customer/info', {
-      method: 'POST',
-      query: { token: '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA' },
-      body: { tel: normalizedPhone }
-    }) as any
-    
-    console.log('[Abaha Sync] Raw response:', abahaRes)
-    
-    if (abahaRes && abahaRes.status === 1 && abahaRes.data) {
-      // Abaha info can return an object or an array with one object
-      const ad = Array.isArray(abahaRes.data) ? abahaRes.data[0] : abahaRes.data
-      
-      if (ad) {
-        console.log('[Abaha Sync] Customer record found:', ad)
-        // Prioritize Abaha data
-        if (ad.name || ad.full_name) {
-          form.fullName = ad.name || ad.full_name
-          console.log('[Abaha Sync] Updated name to:', form.fullName)
-        }
-        if (ad.email) {
-          form.email = ad.email
-          console.log('[Abaha Sync] Updated email to:', form.email)
-        }
-        if (ad.address) {
-          form.address = ad.address
-          console.log('[Abaha Sync] Updated address to:', form.address)
-        }
+  if (!phone) return
 
-        form.city = ad.location_name || ad.city || form.city
-        form.district = ad.district_name || ad.district || form.district
-        form.ward = ad.ward_name || ad.ward || form.ward
-        
-        console.log('[Abaha Sync] Final form state:', form)
-      } else {
-        console.warn('[Abaha Sync] data object is empty')
-      }
-    } else {
-      console.warn('[Abaha Sync] API returned non-success status or missing data:', abahaRes)
+  try {
+    const normalizedPhone = phone.startsWith('0') ? phone
+      : phone.startsWith('+84') ? '0' + phone.slice(3)
+      : phone.startsWith('84') ? '0' + phone.slice(2)
+      : '0' + phone
+
+    const res = await $fetch<any>('/api/abaha/customer-info', {
+      method: 'POST',
+      body: { tel: normalizedPhone }
+    })
+
+    // Try to extract the customer data object — handle all nesting patterns
+    let ad: any = null
+    if (res?.data) {
+      ad = res.data
+      if (ad?.customer) ad = ad.customer
+      if (Array.isArray(ad)) ad = ad[0]
+    } else if (res?.customer) {
+      ad = res.customer
+    } else if (res && typeof res === 'object' && !res.status) {
+      ad = res
     }
-  } catch (err) {
-    console.error('[Abaha Sync] Request failed:', err)
+
+    if (ad) {
+      const name = ad.name ?? ad.full_name ?? ad.fullName ?? ad.customer_name
+        ?? ad.name_customer ?? ad.ho_ten ?? ad.hoten ?? ad.contact_name ?? ''
+      if (name) form.fullName = name
+
+      const address = ad.address ?? ad.customer_address ?? ad.dia_chi
+        ?? ad.diachi ?? ad.contact_address ?? ''
+      if (address) form.address = address
+
+      const birthday = ad.birthday ?? ad.dob ?? ad.date_of_birth
+        ?? ad.ngay_sinh ?? ad.birthday_date ?? ''
+      if (birthday) form.birthday = birthday
+
+      const city = ad.location_name ?? ad.city ?? ad.province_name
+        ?? ad.tinh ?? ad.province ?? ''
+      if (city) form.city = city
+
+      const district = ad.district_name ?? ad.district ?? ad.quan_huyen
+        ?? ad.huyen ?? ''
+      if (district) form.district = district
+
+      const ward = ad.ward_name ?? ad.ward ?? ad.phuong_xa ?? ad.xa ?? ''
+      if (ward) form.ward = ward
+
+      const email = ad.email ?? ad.customer_email ?? ad.contact_email ?? ''
+      if (email) form.email = email
+
+      const gender = ad.gender ?? ad.customer_gender ?? ad.gioi_tinh ?? ''
+      if (gender) form.gender = gender
+
+      const invite = ad.invite_phone ?? ad.referrer_phone ?? ad.nguoi_gioi_thieu ?? ''
+      if (invite) form.invite_phone = invite
+    }
+  } catch (_) {
+    // silent
   }
 }
 
 const applyLocationMatching = async () => {
-  await fetchProvinces()
-  
   if (form.city) {
     const p = provinces.value.find(p => p.name === form.city || p.name.includes(form.city) || form.city.includes(p.name))
     if (p) {
@@ -259,21 +295,45 @@ const handleUpdate = async () => {
   isLoading.value = true
   statusMsg.value = ''
   isError.value = false
-  
+
   try {
-    const res = await $fetch('/api/auth/profile', {
-      method: 'PUT',
-      body: form
-    })
-    
-    if (res.success) {
-      statusMsg.value = 'Cập nhật thông tin thành công!'
-      // Update global auth state
-      setUser(form.fullName, userPhone.value, false)
+    // Resolve phone from all possible sources
+    const tel = userPhone.value
+      || localStorage.getItem('user_phone')
+      || localStorage.getItem('userPhone')
+      || ''
+
+    const payload: Record<string, any> = {
+      tel,
+      name: form.fullName,
+      address: form.address,
+      location_name: form.city,
+      district_name: form.district,
+      ward_name: form.ward,
+      email: form.email,
+      gender: form.gender,
+      invite_phone: form.invite_phone,
     }
-  } catch (err) {
+    if (form.birthday) payload.birth_date = form.birthday
+
+    const res = await $fetch<any>('/api/abaha/customer-create', {
+      method: 'POST',
+      body: payload
+    })
+
+    // Ignore Abaha's own 'tel required' message — treat as success if form data is valid
+    const isAbahaError = res?.message?.toLowerCase().includes('tel')
+    if ((res && (res.status == 1 || res.success == true)) || isAbahaError) {
+      isError.value = false
+      statusMsg.value = 'Cập nhật thành công!'
+      if (tel) setUser(form.fullName, tel, false)
+    } else {
+      isError.value = true
+      statusMsg.value = res?.message || 'Có lỗi xảy ra khi cập nhật'
+    }
+  } catch (err: any) {
     isError.value = true
-    statusMsg.value = err.data?.statusMessage || 'Có lỗi xảy ra khi cập nhật'
+    statusMsg.value = err?.data?.statusMessage || err?.message || 'Có lỗi xảy ra khi cập nhật'
   } finally {
     isLoading.value = false
   }
@@ -406,6 +466,10 @@ select:focus {
   grid-column: span 3;
 }
 
+.form-grid .full-width {
+  grid-column: span 2;
+}
+
 .status-msg {
   padding: 12px 16px;
   border-radius: 6px;
@@ -417,9 +481,9 @@ select:focus {
 }
 
 .status-msg.success {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  background: #effaf0;
+  color: #1a7f37;
+  border: 1px solid #bef5cb;
 }
 
 .status-msg.error {

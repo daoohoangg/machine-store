@@ -9,14 +9,7 @@ export const useAdminAuth = () => {
 
   const initAuth = async () => {
     if (import.meta.client) {
-      // 1. Initial Local storage check
-      isAdmin.value = localStorage.getItem('admin_auth') === 'true'
-      adminName.value = localStorage.getItem('admin_name') || 'Admin'
-      isUser.value = localStorage.getItem('user_auth') === 'true'
-      userName.value = localStorage.getItem('user_name') || ''
-      userPhone.value = localStorage.getItem('user_phone') || ''
-
-      // 2. Verify on server-side to get actual state/profile
+      // 1. Re-verify with server to get actual profile (Syncs with Abaha CRM)
       try {
         const data = await $fetch('/api/auth/me')
         if (data && (data as any).authenticated) {

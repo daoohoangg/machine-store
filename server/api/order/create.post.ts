@@ -13,12 +13,23 @@ export default defineEventHandler(async (event) => {
 
   // Map incoming body to Abaha schema provided by user
   const abahaBody = {
-    product_items: body.items?.map((item: any) => ({
-      id: item.id,
-      name: item.title || item.name,
-      qty: item.quantity || item.qty || 1,
-      price: item.price
-    })) || [],
+    product_items: body.items?.map((item: any) => {
+      // Prioritize product_code or code from raw metadata, fallback to numeric id
+      const productCode = item.raw?.product_code || item.raw?.code || String(item.id)
+      const quantity = Number(item.quantity || item.qty || 1)
+      const price = Number(item.price) || 0
+
+      // If we don't have a valid product identification, we skip the item
+      if (!productCode || productCode === 'null' || productCode === 'undefined') {
+          return null
+      }
+
+      return {
+        product_code: productCode,
+        quantity: quantity,
+        price: price
+      }
+    }).filter(Boolean) || [],
     discount: body.discount || 0,
     fee: body.fee || 0,
     tel: body.receiver?.phone || body.tel,
@@ -27,9 +38,6 @@ export default defineEventHandler(async (event) => {
       tel: body.receiver?.phone || body.tel,
       address: body.receiver?.address || body.address
     },
-    address_default: 1,
-    name: body.receiver?.fullName || body.name,
-    address: body.receiver?.address || body.address,
     user_note: body.note || "",
     orders_time: Math.floor(Date.now() / 1000),
     status: 1
@@ -40,6 +48,9 @@ export default defineEventHandler(async (event) => {
   try {
     const response: any = await $fetch(abahaApiUrl, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       query: { token: abahaToken },
       body: abahaBody
     })

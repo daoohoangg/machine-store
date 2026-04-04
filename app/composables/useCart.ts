@@ -1,7 +1,7 @@
-import { ref, watch, computed } from 'vue'
+import { watch, computed } from 'vue'
 
 export interface CartItem {
-  id: string; // Ensure id is string (title serves as id here)
+  id: string; // Real numeric ID from Abaha CRM
   title: string;
   price: number;
   oldPrice: number | null;
@@ -9,13 +9,13 @@ export interface CartItem {
   image: string;
   quantity: number;
   selected: boolean;
+  raw?: any; // The entire original product object from Abaha
 }
 
-// Global state
-const cart = ref<CartItem[]>([])
-const isInitialized = ref(false)
-
 export const useCart = () => {
+  const cart = useState<CartItem[]>('tuanminh_cart_data', () => [])
+  const isInitialized = useState<boolean>('tuanminh_cart_init', () => false)
+
   // 1. Initialize from localStorage on client side
   if (!isInitialized.value && process.client) {
     const savedCart = localStorage.getItem('tuanminh_cart')
@@ -60,25 +60,33 @@ export const useCart = () => {
 
   // 4. Actions
   const addToCart = (product: any) => {
+    // Determine the real ID (numeric ID from CRM preferred over title)
+    const realId = String(product.id || product.item_id || product.title)
+    
     // Parse strings to numbers for cart calculation
     const priceNum = product.price ? parseInt(product.price.toString().replace(/\./g, '')) : 0
     const oldPriceNum = product.oldPrice ? parseInt(product.oldPrice.toString().replace(/\./g, '')) : null
     
     // Check if exists
-    const existingIndex = cart.value.findIndex(item => item.title === product.title)
+    const existingIndex = cart.value.findIndex(item => item.id === realId || item.title === product.title)
     
     if (existingIndex !== -1) {
       cart.value[existingIndex].quantity += 1
+      // Update metadata if it was missing
+      if (!cart.value[existingIndex].raw && product) {
+        cart.value[existingIndex].raw = product
+      }
     } else {
       cart.value.push({
-        id: product.title, // using title as unique ID for this clone
+        id: realId,
         title: product.title,
         price: priceNum,
         oldPrice: oldPriceNum,
         gift: product.gift || false,
         image: product.image || 'https://placehold.co/100x100?text=S%E1%BA%A3n+ph%E1%BA%A9m',
         quantity: 1,
-        selected: true // Auto select when added
+        selected: true,
+        raw: product // Store entire object
       })
     }
   }

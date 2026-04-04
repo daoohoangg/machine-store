@@ -145,97 +145,55 @@ const selectedWardCode = ref('')
 
 onMounted(async () => {
   await fetchProvinces()
-  await initAuth()
-
-  if (isUser.value || isAdmin.value) {
-    // 1. Basic pre-fill from session/stores
-    form.fullName = userName.value || form.fullName
-    form.phone = userPhone.value || form.phone
-
-    // 2. Try fetching from Abaha CRM for the most complete/updated data
-    try {
-      const abahaRes = await request('customer/info', {
-        method: 'POST',
-        body: { tel: userPhone.value }
-      }) as any
-      
-      if (abahaRes?.status === 1 && abahaRes.data) {
-        const ad = abahaRes.data
-        form.fullName = ad.name || form.fullName
-        form.phone = ad.phone || ad.tel || form.phone
-        form.address = ad.address || form.address
-        
-        // Use temp variables for matching
-        const city = ad.location_name || ''
-        const district = ad.district_name || ''
-        const ward = ad.ward_name || ''
-
-        if (city) {
-          const p = provinces.value.find(p => p.name === city || p.name.includes(city) || city.includes(p.name))
-          if (p) {
-            selectedProvinceCode.value = p.code.toString()
-            form.city = p.name
-            await fetchDistricts(p.code)
-            
-            if (district) {
-              const d = districts.value.find(d => d.name === district || d.name.includes(district) || district.includes(d.name))
-              if (d) {
-                selectedDistrictCode.value = d.code.toString()
-                form.district = d.name
-                await fetchWards(d.code)
-                
-                if (ward) {
-                  const w = wards.value.find(w => w.name === ward || w.name.includes(ward) || ward.includes(w.name))
-                  if (w) {
-                    selectedWardCode.value = w.code.toString()
-                    form.ward = w.name
-                  }
-                }
-              }
-            }
-          }
-        }
-      } else {
-        // Fallback to local profile if Abaha CRM fails or returns nothing
-        const data: any = await $fetch('/api/auth/me')
-        if (data?.authenticated && data.user) {
-          const u = data.user
-          form.fullName = u.full_name || form.fullName
-          form.phone = u.phone || form.phone
-          form.address = u.address || ''
-          
-          if (u.city) {
-            const p = provinces.value.find(p => p.name === u.city || p.name.includes(u.city) || u.city.includes(p.name))
-            if (p) {
-              selectedProvinceCode.value = p.code.toString()
-              form.city = p.name
-              await fetchDistricts(p.code)
-              
-              if (u.district) {
-                const d = districts.value.find(d => d.name === u.district || d.name.includes(u.district) || u.district.includes(d.name))
-                if (d) {
-                  selectedDistrictCode.value = d.code.toString()
-                  form.district = d.name
-                  await fetchWards(d.code)
-                  
-                  if (u.ward) {
-                    const w = wards.value.find(w => w.name === u.ward || w.name.includes(u.ward) || u.ward.includes(w.name))
-                    if (w) {
-                      selectedWardCode.value = w.code.toString()
-                      form.ward = w.name
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('[Checkout Pre-fill] Abaha CRM sync failed, check manually:', err)
+  
+  // initAuth now fetches full Abaha CRM profile (name, phone, address, city, district, ward)
+  const authData: any = await $fetch('/api/auth/me')
+  
+  if (authData?.authenticated && authData.user) {
+    const u = authData.user
+    
+    // Set basic info
+    form.fullName = u.name || u.full_name || form.fullName
+    form.phone = u.phone || form.phone
+    form.address = u.address || form.address
+    
+    // Auto-select location dropdowns if data exists
+    if (u.city) {
+      await applyLocationMatching(u.city, u.district || '', u.ward || '')
     }
   }
 })
+
+const applyLocationMatching = async (city: string, district: string, ward: string) => {
+  if (!city) return
+
+  // 1. Find Province
+  const p = provinces.value.find(p => p.name === city || p.name.includes(city) || city.includes(p.name))
+  if (p) {
+    selectedProvinceCode.value = p.code.toString()
+    form.city = p.name
+    await fetchDistricts(p.code)
+    
+    // 2. Find District
+    if (district) {
+      const d = districts.value.find(d => d.name === district || d.name.includes(district) || district.includes(d.name))
+      if (d) {
+        selectedDistrictCode.value = d.code.toString()
+        form.district = d.name
+        await fetchWards(d.code)
+        
+        // 3. Find Ward
+        if (ward) {
+          const w = wards.value.find(w => w.name === ward || w.name.includes(ward) || ward.includes(w.name))
+          if (w) {
+            selectedWardCode.value = w.code.toString()
+            form.ward = w.name
+          }
+        }
+      }
+    }
+  }
+}
 
 const onProvinceChange = async () => {
   form.district = ''
