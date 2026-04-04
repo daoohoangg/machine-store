@@ -58,9 +58,7 @@
 
       <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)"></textarea>
 
-      <div class="security-box">
-        <NuxtTurnstile v-model="turnstileToken" />
-      </div>
+
 
       <p v-if="errorMsg" class="error-text">{{ errorMsg }}</p>
 
@@ -119,7 +117,7 @@ import { useCart } from '~/composables/useCart'
 import { useOrder } from '~/composables/useOrder'
 import { useLocations } from '~/composables/useLocations'
 import { useAdminAuth } from '~/composables/useAdminAuth'
-import { useRoute } from 'vue-router'
+import { useAbahaApi } from '~/composables/useAbahaApi'
 
 definePageMeta({
   layout: 'checkout'
@@ -137,6 +135,7 @@ const {
 const { createOrder, submitOrderToBackend } = useOrder()
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
 const { isUser, isAdmin, userName, userPhone, initAuth } = useAdminAuth()
+const { request } = useAbahaApi()
 const router = useRouter()
 const route = useRoute()
 
@@ -149,39 +148,82 @@ onMounted(async () => {
   await initAuth()
 
   if (isUser.value || isAdmin.value) {
-    // 1. Basic pre-fill from session
-    form.fullName = userName.value
-    form.phone = userPhone.value
+    // 1. Basic pre-fill from session/stores
+    form.fullName = userName.value || form.fullName
+    form.phone = userPhone.value || form.phone
 
-    // 2. Fetch detailed profile from server
+    // 2. Try fetching from Abaha CRM for the most complete/updated data
     try {
-      const data: any = await $fetch('/api/auth/me')
-      if (data?.authenticated && data.user) {
-        const u = data.user
-        form.fullName = u.full_name || form.fullName
-        form.phone = u.phone || form.phone
-        form.address = u.address || ''
+      const abahaRes = await request('customer/info', {
+        method: 'POST',
+        body: { tel: userPhone.value }
+      }) as any
+      
+      if (abahaRes?.status === 1 && abahaRes.data) {
+        const ad = abahaRes.data
+        form.fullName = ad.name || form.fullName
+        form.phone = ad.phone || ad.tel || form.phone
+        form.address = ad.address || form.address
         
-        // Match names to codes for cascading selects
-        if (u.city) {
-          const p = provinces.value.find(p => p.name === u.city)
+        // Use temp variables for matching
+        const city = ad.location_name || ''
+        const district = ad.district_name || ''
+        const ward = ad.ward_name || ''
+
+        if (city) {
+          const p = provinces.value.find(p => p.name === city || p.name.includes(city) || city.includes(p.name))
           if (p) {
             selectedProvinceCode.value = p.code.toString()
+            form.city = p.name
             await fetchDistricts(p.code)
-            form.city = u.city
             
-            if (u.district) {
-              const d = districts.value.find(d => d.name === u.district)
+            if (district) {
+              const d = districts.value.find(d => d.name === district || d.name.includes(district) || district.includes(d.name))
               if (d) {
                 selectedDistrictCode.value = d.code.toString()
+                form.district = d.name
                 await fetchWards(d.code)
-                form.district = u.district
                 
-                if (u.ward) {
-                  const w = wards.value.find(w => w.name === u.ward)
+                if (ward) {
+                  const w = wards.value.find(w => w.name === ward || w.name.includes(ward) || ward.includes(w.name))
                   if (w) {
                     selectedWardCode.value = w.code.toString()
-                    form.ward = u.ward
+                    form.ward = w.name
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // Fallback to local profile if Abaha CRM fails or returns nothing
+        const data: any = await $fetch('/api/auth/me')
+        if (data?.authenticated && data.user) {
+          const u = data.user
+          form.fullName = u.full_name || form.fullName
+          form.phone = u.phone || form.phone
+          form.address = u.address || ''
+          
+          if (u.city) {
+            const p = provinces.value.find(p => p.name === u.city || p.name.includes(u.city) || u.city.includes(p.name))
+            if (p) {
+              selectedProvinceCode.value = p.code.toString()
+              form.city = p.name
+              await fetchDistricts(p.code)
+              
+              if (u.district) {
+                const d = districts.value.find(d => d.name === u.district || d.name.includes(u.district) || u.district.includes(d.name))
+                if (d) {
+                  selectedDistrictCode.value = d.code.toString()
+                  form.district = d.name
+                  await fetchWards(d.code)
+                  
+                  if (u.ward) {
+                    const w = wards.value.find(w => w.name === u.ward || w.name.includes(u.ward) || u.ward.includes(w.name))
+                    if (w) {
+                      selectedWardCode.value = w.code.toString()
+                      form.ward = w.name
+                    }
                   }
                 }
               }
@@ -189,8 +231,8 @@ onMounted(async () => {
           }
         }
       }
-    } catch (e) {
-      console.error('[Checkout Pre-fill Error]:', e)
+    } catch (err) {
+      console.warn('[Checkout Pre-fill] Abaha CRM sync failed, check manually:', err)
     }
   }
 })
@@ -245,7 +287,7 @@ const formatPrice = (price: number | null) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-const turnstileToken = ref('')
+
 const isSendingOtp = ref(false)
 const errorMsg = ref('')
 
@@ -270,10 +312,7 @@ const submitOrder = async () => {
     errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng'
     return
   }
-  if (!turnstileToken.value) {
-    errorMsg.value = 'Vui lòng xác minh bảo mật (Turnstile)'
-    return
-  }
+
 
   isSendingOtp.value = true
   errorMsg.value = ''
@@ -305,7 +344,7 @@ const submitOrder = async () => {
       // Should not be reachable due to the check above, but keeping for reference
       await $fetch('/api/auth/send-otp', {
         method: 'POST',
-        body: { phone: form.phone, turnstileToken: turnstileToken.value }
+        body: { phone: form.phone }
       })
       router.push('/order/verify')
     }
@@ -419,9 +458,7 @@ textarea {
   cursor: not-allowed;
 }
 
-.security-box {
-  margin: 15px 0;
-}
+
 
 .error-text {
   color: #e31b1b;

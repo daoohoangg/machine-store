@@ -80,10 +80,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useLocations } from '~/composables/useLocations'
 import { useAdminAuth } from '~/composables/useAdminAuth'
+import { useAbahaApi } from '~/composables/useAbahaApi'
 
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
 const { setUser } = useAdminAuth()
@@ -109,45 +110,30 @@ const selectedWardCode = ref('')
 
 onMounted(async () => {
   try {
-    // 1. Fetch current user data
+    const storedPhone = localStorage.getItem('user_phone')
+    if (storedPhone) {
+      userPhone.value = storedPhone
+      await syncWithAbaha(storedPhone)
+    }
+
     const data = await $fetch('/api/auth/me')
     if (data?.authenticated && data.user) {
       const u = data.user
       userPhone.value = u.phone
-      form.fullName = u.full_name || ''
-      form.email = u.email || ''
-      form.city = u.city || ''
-      form.district = u.district || ''
-      form.ward = u.ward || ''
-      form.address = u.address || ''
       
-      // 2. Load locations and try to match existing names to codes
-      await fetchProvinces()
-      
-      if (form.city) {
-        const p = provinces.value.find(p => p.name === form.city)
-        if (p) {
-          selectedProvinceCode.value = p.code
-          await fetchDistricts(p.code)
-          
-          if (form.district) {
-            const d = districts.value.find(d => d.name === form.district)
-            if (d) {
-              selectedDistrictCode.value = d.code
-              await fetchWards(d.code)
-              
-              if (form.ward) {
-                const w = wards.value.find(w => w.name === form.ward)
-                if (w) {
-                  selectedWardCode.value = w.code
-                }
-              }
-            }
-          }
-        }
+      form.fullName = u.full_name || form.fullName
+      form.email = u.email || form.email
+      form.city = u.city || form.city
+      form.district = u.district || form.district
+      form.ward = u.ward || form.ward
+      form.address = u.address || form.address
+
+      if (u.phone !== storedPhone) {
+        await syncWithAbaha(u.phone)
       }
+      
+      await applyLocationMatching()
     } else {
-      // Not logged in, redirect to login
       window.location.href = '/auth/login'
     }
   } catch (err) {
@@ -156,6 +142,89 @@ onMounted(async () => {
     loadingInit.value = false
   }
 })
+
+const syncWithAbaha = async (phone: string) => {
+  if (!phone) {
+    console.warn('[Abaha Sync] No phone number provided')
+    return
+  }
+  
+  try {
+    console.log('[Abaha Sync] Starting sync for phone:', phone)
+    const { request } = useAbahaApi()
+    const normalizedPhone = phone.startsWith('0') ? phone : (phone.startsWith('84') ? '0' + phone.slice(2) : (phone.startsWith('+84') ? '0' + phone.slice(3) : '0' + phone))
+    console.log('[Abaha Sync] Normalized phone:', normalizedPhone)
+    
+    const abahaRes = await request('customer/info', {
+      method: 'POST',
+      query: { token: '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA' },
+      body: { tel: normalizedPhone }
+    }) as any
+    
+    console.log('[Abaha Sync] Raw response:', abahaRes)
+    
+    if (abahaRes && abahaRes.status === 1 && abahaRes.data) {
+      // Abaha info can return an object or an array with one object
+      const ad = Array.isArray(abahaRes.data) ? abahaRes.data[0] : abahaRes.data
+      
+      if (ad) {
+        console.log('[Abaha Sync] Customer record found:', ad)
+        // Prioritize Abaha data
+        if (ad.name || ad.full_name) {
+          form.fullName = ad.name || ad.full_name
+          console.log('[Abaha Sync] Updated name to:', form.fullName)
+        }
+        if (ad.email) {
+          form.email = ad.email
+          console.log('[Abaha Sync] Updated email to:', form.email)
+        }
+        if (ad.address) {
+          form.address = ad.address
+          console.log('[Abaha Sync] Updated address to:', form.address)
+        }
+
+        form.city = ad.location_name || ad.city || form.city
+        form.district = ad.district_name || ad.district || form.district
+        form.ward = ad.ward_name || ad.ward || form.ward
+        
+        console.log('[Abaha Sync] Final form state:', form)
+      } else {
+        console.warn('[Abaha Sync] data object is empty')
+      }
+    } else {
+      console.warn('[Abaha Sync] API returned non-success status or missing data:', abahaRes)
+    }
+  } catch (err) {
+    console.error('[Abaha Sync] Request failed:', err)
+  }
+}
+
+const applyLocationMatching = async () => {
+  await fetchProvinces()
+  
+  if (form.city) {
+    const p = provinces.value.find(p => p.name === form.city || p.name.includes(form.city) || form.city.includes(p.name))
+    if (p) {
+      selectedProvinceCode.value = p.code
+      await fetchDistricts(p.code)
+      
+      if (form.district) {
+        const d = districts.value.find(d => d.name === form.district || d.name.includes(form.district) || form.district.includes(d.name))
+        if (d) {
+          selectedDistrictCode.value = d.code
+          await fetchWards(d.code)
+          
+          if (form.ward) {
+            const w = wards.value.find(w => w.name === form.ward || w.name.includes(form.ward) || form.ward.includes(w.name))
+            if (w) {
+              selectedWardCode.value = w.code
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 const onProvinceChange = async () => {
   form.district = ''

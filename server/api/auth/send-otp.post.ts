@@ -14,32 +14,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Verify Turnstile
-  const { turnstileToken } = body
-  if (!turnstileToken) {
-    throw createError({ statusCode: 400, statusMessage: 'Vui lòng xác thực CAPTCHA (Turnstile)' })
-  }
 
-  const secret = useRuntimeConfig().turnstile?.secretKey || '0x4AAAAAACzTFfV7eyFNyfWShoJleWd_xcY'
-  try {
-    const verifyRes: any = await $fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      body: new URLSearchParams({
-        secret,
-        response: turnstileToken
-      }).toString(),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    })
-    
-    if (!verifyRes.success) {
-      console.warn('[Turnstile] Failed verification:', verifyRes)
-      throw createError({ statusCode: 400, statusMessage: 'Xác minh bảo mật thất bại. Hãy thử lại.' })
-    }
-  } catch (err: any) {
-    if (err.statusCode) throw err
-    console.error('[Turnstile] Error verifying:', err.message)
-    throw createError({ statusCode: 500, statusMessage: 'Lỗi kết nối máy chủ xác thực bảo mật.' })
-  }
 
   // Basic Vietnam phone validation (starts with 0, 84, or +84)
   if (!/^(\+?84|0)\d{9,10}$/.test(phone)) {

@@ -67,16 +67,7 @@
         
         <button class="checkout-btn" @click="goCheckout">Mua ngay</button>
         
-        <div class="installment-btns">
-          <button class="installment-btn yellow" @click="goInstallment">
-            <strong>Trả góp</strong><br/>
-            <small>Duyệt nhanh, Không cần thẻ</small>
-          </button>
-          <button class="installment-btn yellow" @click="goInstallment">
-            <strong>Trả góp qua thẻ</strong><br/>
-            <small>Visa, Master, JCB, AMEX</small>
-          </button>
-        </div>
+
       </div>
     </div>
   </div>
@@ -108,10 +99,7 @@ const goCheckout = () => {
   router.push('/checkout')
 }
 
-const goInstallment = () => {
-  emit('close')
-  router.push('/checkout-installment')
-}
+
 </script>
 
 <style scoped>
@@ -311,27 +299,5 @@ const goInstallment = () => {
 .checkout-btn:hover {
   background: #008000;
 }
-.installment-btns {
-  display: flex;
-  gap: 10px;
-}
-.installment-btn {
-  flex: 1;
-  background: #fcd500;
-  border: none;
-  padding: 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: #333;
-}
-.installment-btn:hover {
-  background: #e6c200;
-}
-.installment-btn strong {
-  display: block;
-  font-size: 14px;
-}
-.installment-btn small {
-  font-size: 11px;
-}
+
 </style>
