@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
       address: body.receiver?.address || body.address
     },
     user_note: body.note || "",
-    orders_time: Math.floor(Date.now() / 1000),
+    orders_time: new Date(Date.now() + 7 * 3600000).toISOString().replace(/T/, ' ').replace(/\..+/, ''), // VN Time: YYYY-MM-DD HH:mm:ss
     status: 1
   }
 
