@@ -9,7 +9,6 @@ export default defineEventHandler(async (event) => {
     tel: tel,
     name: body.name || '',
     address: body.address || '',
-    location_name: body.location_name || '',
     birth_date: body.birth_date || body.birthday || '',
     email: body.email || '',
     gender: body.gender || '',

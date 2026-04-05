@@ -92,6 +92,7 @@ export default defineEventHandler(async (event) => {
           userObj.city = ad.location_name ?? ad.city ?? ad.province_name ?? userObj.city
           userObj.district = ad.district_name ?? ad.district ?? userObj.district
           userObj.ward = ad.ward_name ?? ad.ward ?? userObj.ward
+          userObj.premium_name = ad.premium_name ?? ad.degree_name ?? ad.type_name ?? ''
         }
       } catch (err) {
         console.error('[Abaha Sync Error]:', err)

@@ -480,7 +480,7 @@ const specRows = computed(() => {
 
   const specs = [
     { label: 'Thương hiệu', value: product.value.brand },
-    { label: 'Mã sản phẩm', value: product.value.id },
+    { label: 'Mã sản phẩm', value: product.value.productCode || product.value.id },
     ...mappedSpecs
   ]
 

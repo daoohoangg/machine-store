@@ -24,6 +24,14 @@
             <input v-model="form.fullName" type="text" placeholder="Nhập họ tên" required />
           </div>
 
+          <div class="form-group readonly">
+            <label>Hạng thành viên</label>
+            <div class="input-display tier-badge" v-if="membershipTier">
+              <i class="fa-solid fa-crown"></i> {{ membershipTier }}
+            </div>
+            <div class="input-display" v-else>Thành viên mới</div>
+          </div>
+
           <div class="form-group full-width">
             <label>Ngày sinh</label>
             <input v-model="form.birthday" type="date" />
@@ -108,6 +116,7 @@ const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards 
 const { setUser } = useAdminAuth()
 
 const userPhone = ref('')
+const membershipTier = ref('')
 const loadingInit = ref(true)
 const isLoading = ref(false)
 const statusMsg = ref('')
@@ -150,6 +159,7 @@ onMounted(async () => {
       form.district = u.district || ''
       form.ward = u.ward || ''
       form.address = u.address || ''
+      membershipTier.value = u.premium_name || ''
     } else if (storedPhone) {
       userPhone.value = storedPhone
     } else {
@@ -204,24 +214,63 @@ const syncWithAbaha = async (phone: string) => {
         ?? ad.name_customer ?? ad.ho_ten ?? ad.hoten ?? ad.contact_name ?? ''
       if (name) form.fullName = name
 
-      const address = ad.address ?? ad.customer_address ?? ad.dia_chi
-        ?? ad.diachi ?? ad.contact_address ?? ''
-      if (address) form.address = address
+      const tier = ad.premium_name ?? ad.degree_name ?? ad.type_name ?? ad.member_tier ?? ''
+      if (tier) membershipTier.value = tier
 
       const birthday = ad.birthday ?? ad.dob ?? ad.date_of_birth
         ?? ad.ngay_sinh ?? ad.birthday_date ?? ''
       if (birthday) form.birthday = birthday
 
-      const city = ad.location_name ?? ad.city ?? ad.province_name
-        ?? ad.tinh ?? ad.province ?? ''
-      if (city) form.city = city
+      const rawCity = ad.location_name ?? ad.city ?? ad.province_name ?? ad.tinh ?? ad.province ?? ''
+      const rawDistrict = ad.district_name ?? ad.district ?? ad.quan_huyen ?? ad.huyen ?? ''
+      const rawWard = ad.ward_name ?? ad.ward ?? ad.phuong_xa ?? ad.xa ?? ''
+      const rawAddress = ad.address ?? ad.customer_address ?? ad.dia_chi ?? ad.diachi ?? ad.contact_address ?? ''
 
-      const district = ad.district_name ?? ad.district ?? ad.quan_huyen
-        ?? ad.huyen ?? ''
-      if (district) form.district = district
+      // 1. Initial assignment
+      form.city = rawCity
+      form.district = rawDistrict
+      form.ward = rawWard
+      form.address = rawAddress
 
-      const ward = ad.ward_name ?? ad.ward ?? ad.phuong_xa ?? ad.xa ?? ''
-      if (ward) form.ward = ward
+      // 2. If separate component fields are missing but address is full, try parsing from end
+      if (rawAddress && (!rawCity || !rawDistrict || !rawWard)) {
+        const parts = rawAddress.split(',').map(p => p.trim()).filter(Boolean)
+        if (parts.length >= 3) {
+          if (!form.city) form.city = parts[parts.length - 1]
+          if (!form.district && parts.length >= 2) form.district = parts[parts.length - 2]
+          if (!form.ward && parts.length >= 3) form.ward = parts[parts.length - 3]
+        }
+      }
+
+      // 3. Re-run location matching to find selected dropdown codes
+      await applyLocationMatching()
+
+      // 4. Cleanup detail address based on confirmed components
+      if (form.address) {
+        let detail = form.address
+        // Iteratively strip all location components from the end (City -> Dist -> Ward)
+        // Also strip generically any segments starting with standard Vietnamese labels to handle corruption
+        const genericLocPattern = /,?\s*(Tỉnh|Thành\s*phố|TP\.?|Quận|Huyện|Thị\s*xã|Phường|Xã|Thị\s*trấn)\s*[^,]+$/i
+        
+        let prev = ''
+        while (detail !== prev) {
+          prev = detail
+          
+          // First try specifically with known components for standard clean-up
+          const toRemove = [form.ward, form.district, form.city].filter(Boolean).reverse()
+          for (const part of toRemove) {
+             const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+             const regex = new RegExp(`,?\\s*${escaped}\\s*$`, 'i')
+             detail = detail.replace(regex, '').trim()
+          }
+
+          // Then apply generic stripping to catch leftover segments or old province/district data
+          detail = detail.replace(genericLocPattern, '').trim()
+        }
+
+        if (detail.endsWith(',')) detail = detail.slice(0, -1).trim()
+        form.address = detail
+      }
 
       const email = ad.email ?? ad.customer_email ?? ad.contact_email ?? ''
       if (email) form.email = email
@@ -237,24 +286,50 @@ const syncWithAbaha = async (phone: string) => {
   }
 }
 
+const normalizeLocation = (val: string) => {
+  if (!val) return ''
+  return val.toLowerCase()
+    .replace(/^(tỉnh\s+|thành\s*phố\s+|tp\.\s*|quận\s+|huyện\s+|thị\s*xã\s+|phường\s+|xã\s+|thị\s*trấn\s+)/gi, '')
+    .trim()
+}
+
 const applyLocationMatching = async () => {
-  if (form.city) {
-    const p = provinces.value.find(p => p.name === form.city || p.name.includes(form.city) || form.city.includes(p.name))
-    if (p) {
-      selectedProvinceCode.value = p.code
-      await fetchDistricts(p.code)
-      
-      if (form.district) {
-        const d = districts.value.find(d => d.name === form.district || d.name.includes(form.district) || form.district.includes(d.name))
-        if (d) {
-          selectedDistrictCode.value = d.code
-          await fetchWards(d.code)
-          
-          if (form.ward) {
-            const w = wards.value.find(w => w.name === form.ward || w.name.includes(form.ward) || form.ward.includes(w.name))
-            if (w) {
-              selectedWardCode.value = w.code
-            }
+  if (!form.city) return
+
+  // 1. Match Province
+  const normCity = normalizeLocation(form.city)
+  const p = provinces.value.find(p => {
+    const np = normalizeLocation(p.name)
+    return np === normCity || np.includes(normCity) || normCity.includes(np)
+  })
+
+  if (p) {
+    selectedProvinceCode.value = String(p.code)
+    form.city = p.name // Update to standardized name
+    await fetchDistricts(p.code)
+    
+    // 2. Match District
+    if (form.district) {
+      const normDist = normalizeLocation(form.district)
+      const d = districts.value.find(d => {
+        const nd = normalizeLocation(d.name)
+        return nd === normDist || nd.includes(normDist) || normDist.includes(nd)
+      })
+      if (d) {
+        selectedDistrictCode.value = String(d.code)
+        form.district = d.name // Update to standardized name
+        await fetchWards(d.code)
+        
+        // 3. Match Ward
+        if (form.ward) {
+          const normWard = normalizeLocation(form.ward)
+          const w = wards.value.find(w => {
+            const nw = normalizeLocation(w.name)
+            return nw === normWard || nw.includes(normWard) || normWard.includes(nw)
+          })
+          if (w) {
+            selectedWardCode.value = String(w.code)
+            form.ward = w.name // Update to standardized name
           }
         }
       }
@@ -303,13 +378,35 @@ const handleUpdate = async () => {
       || localStorage.getItem('userPhone')
       || ''
 
+    // Clean detail address again before concatenation to ensure no duplicates are saved
+    let detail = form.address
+    const genericLocPattern = /,?\s*(Tỉnh|Thành\s*phố|TP\.?|Quận|Huyện|Thị\s*xã|Phường|Xã|Thị\s*trấn)\s*[^,]+$/i
+    let prev = ''
+    while (detail !== prev) {
+      prev = detail
+      const toRemove = [form.ward, form.district, form.city].filter(Boolean).reverse()
+      for (const part of toRemove) {
+        const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`,?\\s*${escaped}\\s*$`, 'i')
+        detail = detail.replace(regex, '').trim()
+      }
+      detail = detail.replace(genericLocPattern, '').trim()
+    }
+    if (detail.endsWith(',')) detail = detail.slice(0, -1).trim()
+
+    // Concatenate address string: [Detail], [Ward], [District], [City]
+    const addressParts = [
+      detail,
+      form.ward,
+      form.district,
+      form.city
+    ].filter(Boolean)
+    const fullAddress = addressParts.join(', ')
+
     const payload: Record<string, any> = {
       tel,
       name: form.fullName,
-      address: form.address,
-      location_name: form.city,
-      district_name: form.district,
-      ward_name: form.ward,
+      address: fullAddress, // This is the full concatenated string
       email: form.email,
       gender: form.gender,
       invite_phone: form.invite_phone,
@@ -425,6 +522,17 @@ h1 {
   border-radius: 4px;
   color: #666;
   font-weight: 500;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.tier-badge {
+  background: #fff8e1;
+  color: #f57c00;
+  border: 1px solid #ffe082;
+  font-weight: 700;
+  gap: 8px;
 }
 
 input[type="text"],

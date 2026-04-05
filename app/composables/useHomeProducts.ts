@@ -2,6 +2,7 @@ import { useAbahaApi } from './useAbahaApi'
 
 export interface HomeProduct {
   id: string
+  productCode?: string
   slug: string
   title: string
   price: number
@@ -249,6 +250,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
 
         return {
           id: String(item.id),
+          productCode: item.product_code || item.code || String(item.id),
           slug: item.slug || `product-${item.id}`,
           title: item.name || 'Sản phẩm',
           price,

@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) => {
   // Map incoming body to Abaha schema provided by user
   const abahaBody = {
     product_items: body.items?.map((item: any) => {
-      // Prioritize product_code or code from raw metadata, fallback to numeric id
-      const productCode = item.raw?.product_code || item.raw?.code || String(item.id)
+      // Prioritize productCode from mapped metadata, then fallbacks
+      const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
       const quantity = Number(item.quantity || item.qty || 1)
       const price = Number(item.price) || 0
 

@@ -143,23 +143,68 @@ const selectedProvinceCode = ref('')
 const selectedDistrictCode = ref('')
 const selectedWardCode = ref('')
 
+const normalizeLocation = (val: string) => {
+  if (!val) return ''
+  return val.toLowerCase()
+    .replace(/^(tỉnh\s+|thành\s*phố\s+|tp\.\s*|quận\s+|huyện\s+|thị\s*xã\s+|phường\s+|xã\s+|thị\s*trấn\s+)/gi, '')
+    .trim()
+}
+
 onMounted(async () => {
   await fetchProvinces()
   
-  // initAuth now fetches full Abaha CRM profile (name, phone, address, city, district, ward)
   const authData: any = await $fetch('/api/auth/me')
   
   if (authData?.authenticated && authData.user) {
     const u = authData.user
     
-    // Set basic info
     form.fullName = u.name || u.full_name || form.fullName
     form.phone = u.phone || form.phone
-    form.address = u.address || form.address
     
-    // Auto-select location dropdowns if data exists
-    if (u.city) {
-      await applyLocationMatching(u.city, u.district || '', u.ward || '')
+    const rawCity = u.city || ''
+    const rawDistrict = u.district || ''
+    const rawWard = u.ward || ''
+    const rawAddress = u.address || ''
+
+    form.city = rawCity
+    form.district = rawDistrict
+    form.ward = rawWard
+    form.address = rawAddress
+
+    // 1. If components missing but address is full, try parsing
+    if (rawAddress && (!rawCity || !rawDistrict || !rawWard)) {
+      const parts = rawAddress.split(',').map(p => p.trim()).filter(Boolean)
+      if (parts.length >= 3) {
+        if (!form.city) form.city = parts[parts.length - 1]
+        if (!form.district && parts.length >= 2) form.district = parts[parts.length - 2]
+        if (!form.ward && parts.length >= 3) form.ward = parts[parts.length - 3]
+      }
+    }
+    
+    // 2. Select dropdowns
+    if (form.city) {
+      await applyLocationMatching(form.city, form.district, form.ward)
+    }
+
+    // 3. Cleanup detail address (remove city/dist/ward names repeating at end)
+    if (form.address) {
+      let detail = form.address
+      // Iteratively strip (City -> Dist -> Ward) and also generically catch corruption
+      const genericLocPattern = /,?\s*(Tỉnh|Thành\s*phố|TP\.?|Quận|Huyện|Thị\s*xã|Phường|Xã|Thị\s*trấn)\s*[^,]+$/i
+      
+      let prev = ''
+      while (detail !== prev) {
+        prev = detail
+        const toRemove = [form.ward, form.district, form.city].filter(Boolean).reverse()
+        for (const part of toRemove) {
+          const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const regex = new RegExp(`,?\\s*${escaped}\\s*$`, 'i')
+          detail = detail.replace(regex, '').trim()
+        }
+        detail = detail.replace(genericLocPattern, '').trim()
+      }
+      if (detail.endsWith(',')) detail = detail.slice(0, -1).trim()
+      form.address = detail
     }
   }
 })
@@ -168,7 +213,12 @@ const applyLocationMatching = async (city: string, district: string, ward: strin
   if (!city) return
 
   // 1. Find Province
-  const p = provinces.value.find(p => p.name === city || p.name.includes(city) || city.includes(p.name))
+  const normCity = normalizeLocation(city)
+  const p = provinces.value.find(p => {
+    const np = normalizeLocation(p.name)
+    return np === normCity || np.includes(normCity) || normCity.includes(np)
+  })
+
   if (p) {
     selectedProvinceCode.value = p.code.toString()
     form.city = p.name
@@ -176,7 +226,11 @@ const applyLocationMatching = async (city: string, district: string, ward: strin
     
     // 2. Find District
     if (district) {
-      const d = districts.value.find(d => d.name === district || d.name.includes(district) || district.includes(d.name))
+      const normDist = normalizeLocation(district)
+      const d = districts.value.find(d => {
+        const nd = normalizeLocation(d.name)
+        return nd === normDist || nd.includes(normDist) || normDist.includes(nd)
+      })
       if (d) {
         selectedDistrictCode.value = d.code.toString()
         form.district = d.name
@@ -184,7 +238,11 @@ const applyLocationMatching = async (city: string, district: string, ward: strin
         
         // 3. Find Ward
         if (ward) {
-          const w = wards.value.find(w => w.name === ward || w.name.includes(ward) || ward.includes(w.name))
+          const normWard = normalizeLocation(ward)
+          const w = wards.value.find(w => {
+            const nw = normalizeLocation(w.name)
+            return nw === normWard || nw.includes(normWard) || normWard.includes(nw)
+          })
           if (w) {
             selectedWardCode.value = w.code.toString()
             form.ward = w.name
@@ -276,7 +334,23 @@ const submitOrder = async () => {
   errorMsg.value = ''
 
   try {
-    const fullAddress = `${form.address}, ${form.ward || ''}, ${form.district || ''}, ${form.city || ''}`.replace(/, , /g, ', ').trim()
+    // Clean detail address before concatenation to ensure no duplicates
+    let detail = form.address
+    const genericLocPattern = /,?\s*(Tỉnh|Thành\s*phố|TP\.?|Quận|Huyện|Thị\s*xã|Phường|Xã|Thị\s*trấn)\s*[^,]+$/i
+    let prev = ''
+    while (detail !== prev) {
+      prev = detail
+      const toRemove = [form.ward, form.district, form.city].filter(Boolean).reverse()
+      for (const part of toRemove) {
+        const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`,?\\s*${escaped}\\s*$`, 'i')
+        detail = detail.replace(regex, '').trim()
+      }
+      detail = detail.replace(genericLocPattern, '').trim()
+    }
+    if (detail.endsWith(',')) detail = detail.slice(0, -1).trim()
+
+    const fullAddress = [detail, form.ward, form.district, form.city].filter(Boolean).join(', ')
     
     createOrder({
       receiver: {
