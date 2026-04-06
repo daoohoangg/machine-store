@@ -117,14 +117,6 @@ const { isAdmin, isUser, adminName, userName, logout, initAuth } = useAdminAuth(
 const displayAccountName = computed(() => {
   const name = isAdmin.value ? adminName.value : userName.value
   if (!name) return isAdmin.value ? 'Admin' : 'Tài khoản'
-  
-  // Format to 3 first digits ... 3 last digits if it's a Vietnamese phone format
-  if (/^(0|84|\+84)[0-9]{8,9}$/.test(name)) {
-    if (name.startsWith('+84')) {
-      return name.substring(0, 6) + '...' + name.substring(name.length - 3)
-    }
-    return name.substring(0, 3) + '...' + name.substring(name.length - 3)
-  }
   return name
 })
 

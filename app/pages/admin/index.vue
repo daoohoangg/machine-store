@@ -26,6 +26,7 @@
           <NuxtLink to="/admin/san-pham-group" class="btn-outline group-mgr-btn"><i class="fa-solid fa-layer-group"></i> Quản lý Nhóm SP</NuxtLink>
           <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý Bài viết</NuxtLink>
           <NuxtLink to="/admin/accounts" class="btn-outline account-mgr-btn"><i class="fa-solid fa-users-gear"></i> Quản lý Tài khoản</NuxtLink>
+          <NuxtLink to="/admin/edit-price" class="btn-outline price-mgr-btn"><i class="fa-solid fa-tags"></i> Cấu hình Giá</NuxtLink>
           <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
         </div>
       </div>
@@ -50,6 +51,13 @@
           <div class="stat-info">
             <div class="stat-value">{{ newsList.length }}</div>
             <div class="stat-label">Bài viết tin tức</div>
+          </div>
+        </div>
+        <div class="stat-card" @click="$router.push('/admin/edit-price')">
+          <div class="stat-icon price"><i class="fa-solid fa-tags"></i></div>
+          <div class="stat-info">
+            <div class="stat-value">%</div>
+            <div class="stat-label">Cấu hình chiết khấu</div>
           </div>
         </div>
       </div>
@@ -450,6 +458,7 @@ const saveSettings = () => {
 .stat-icon.flash { background: linear-gradient(135deg, #FFD93D, #FF8400); }
 .stat-icon.new { background: linear-gradient(135deg, #4D96FF, #0061FF); }
 .stat-icon.news { background: linear-gradient(135deg, #6BCB77, #1B9C85); }
+.stat-icon.price { background: linear-gradient(135deg, #F273E6, #9D3CFF); }
 
 .stat-value {
   font-size: 24px;

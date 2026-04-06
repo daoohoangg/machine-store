@@ -5,13 +5,13 @@ export interface TierAdjustment {
   percent: number
 }
 
-// These are the tiers from the image provided by the user
+// Default tiers centered around discounts
 const defaultTiers: TierAdjustment[] = [
-  { name: 'Giá NPP + 1%', percent: 1 },
-  { name: 'Giá NPP + 2%', percent: 2 },
-  { name: 'Giá NPP + 3%', percent: 3 },
-  { name: 'đại lý cấp 1, 2 ( Giá NPP )', percent: 0 },
-  { name: 'đại lý cấp 3 ( +5% giá NPP )', percent: 5 }
+  { name: 'Chiết khấu 3%', percent: 3 },
+  { name: 'Chiết khấu 5%', percent: 5 },
+  { name: 'Chiết khấu 7%', percent: 7 },
+  { name: 'Đại lý cấp 1, 2 (Mặc định)', percent: 0 },
+  { name: 'Đại lý cấp 3 (Giảm 2%)', percent: 2 }
 ]
 
 export const useMembershipPrices = () => {
@@ -71,8 +71,9 @@ export const useMembershipPrices = () => {
     const percent = getAdjustmentForTier(tierName)
     if (percent === 0) return basePrice
     
-    // Calculate and round to nearest 1,000 for Vietnamese currency
-    const adjusted = basePrice * (1 + percent / 100)
+    // Calculate as a DISCOUNT (subtraction)
+    // Formula: Price * (1 - percent/100)
+    const adjusted = basePrice * (1 - percent / 100)
     return Math.round(adjusted / 1000) * 1000
   }
 

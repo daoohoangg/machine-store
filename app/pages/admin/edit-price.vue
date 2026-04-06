@@ -3,10 +3,10 @@
     <div class="admin-card">
       <div class="header-back">
         <button class="back-btn" @click="$router.push('/admin')"><i class="fa-solid fa-arrow-left"></i> Trang quản trị</button>
-        <h1>Cấu hình chiết khấu theo hạng</h1>
+        <h1>Cấu hình chiết khấu (Giảm giá)</h1>
       </div>
       
-      <p class="subtitle">Thiết lập tỷ lệ phần trăm điều chỉnh giá bán dựa trên hạng thành viên của khách hàng.</p>
+      <p class="subtitle">Thiết lập tỷ lệ phần trăm chiết khấu trực tiếp trên giá bán dựa trên hạng thành viên của khách hàng.</p>
 
       <div class="tier-list">
         <div v-for="(tier, index) in localTiers" :key="index" class="tier-item">
@@ -15,12 +15,12 @@
             <input v-model="tier.name" type="text" placeholder="Ví dụ: Giá NPP + 1%" class="tier-name-input" />
           </div>
           <div class="tier-setting">
-            <span class="tier-label">Điều chỉnh (%):</span>
+            <span class="tier-label">Tỷ lệ chiết khấu (%):</span>
             <div class="input-wrapper">
               <input v-model.number="tier.percent" type="number" step="0.1" class="tier-percent-input" />
               <span class="unit">%</span>
             </div>
-            <p class="helper">Dùng số dương (+) để tăng giá, số âm (-) để giảm giá.</p>
+            <p class="helper">Nhập số dương (vd: 5) để giảm 5% giá sản phẩm cho hạng này.</p>
           </div>
           <button class="btn-remove" @click="removeTier(index)" title="Xóa hạng này">
             <i class="fa-solid fa-trash"></i>
@@ -95,13 +95,13 @@ const removeTier = (index: number) => {
 }
 
 const resetTiers = () => {
-  if (confirm('Bạn có chắc chắn muốn đặt lại toàn bộ hạng về mặc định?')) {
+  if (confirm('Bạn có chắc chắn muốn đặt lại toàn bộ hạng về mặc định chiết khấu?')) {
     const defaultTiers = [
-      { name: 'Giá NPP + 1%', percent: 1 },
-      { name: 'Giá NPP + 2%', percent: 2 },
-      { name: 'Giá NPP + 3%', percent: 3 },
-      { name: 'đại lý cấp 1, 2 ( Giá NPP )', percent: 0 },
-      { name: 'đại lý cấp 3 ( +5% giá NPP )', percent: 5 }
+      { name: 'Chiết khấu 3%', percent: 3 },
+      { name: 'Chiết khấu 5%', percent: 5 },
+      { name: 'Chiết khấu 7%', percent: 7 },
+      { name: 'Đại lý cấp 1, 2 (Mặc định)', percent: 0 },
+      { name: 'Đại lý cấp 3 (Giảm 2%)', percent: 2 }
     ]
     localTiers.value = JSON.parse(JSON.stringify(defaultTiers))
   }
@@ -131,7 +131,8 @@ const handleSave = async () => {
 }
 
 const calculatePreview = (base: number, percent: number) => {
-  const adjusted = base * (1 + percent / 100)
+  // Discount: Base * (1 - percent/100)
+  const adjusted = base * (1 - percent / 100)
   return Math.round(adjusted / 1000) * 1000
 }
 
