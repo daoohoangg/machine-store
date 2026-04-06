@@ -12,10 +12,6 @@
         {{ opt.label }}
       </button>
       
-      <!-- Special highlighted sort option -->
-      <button class="sort-btn highlight" :class="{ active: currentSort === 'meta' }" @click="selectSort('meta')">
-        <span class="meta-icon">👍</span> META gợi ý
-      </button>
     </div>
   </div>
 </template>
@@ -35,8 +31,7 @@ const sortOptions = [
   { id: 'price_asc', label: 'Giá tăng dần' },
   { id: 'price_desc', label: 'Giá giảm dần' },
   { id: 'discount', label: 'Giảm giá' },
-  { id: 'newest', label: 'Mới nhất' },
-  { id: 'installment', label: 'Trả góp' }
+  { id: 'newest', label: 'Mới nhất' }
 ]
 
 const selectSort = (id: string) => {

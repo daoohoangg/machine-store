@@ -58,10 +58,11 @@ const togglePhoneMenu = () => {
 }
 
 const showSidebar = computed(() => {
-  // Hide sidebar on product detail page and category page
+  // Hide sidebar on product detail page, category page, admin and auth pages
   if (route.path.startsWith('/san-pham/')) return false
   if (route.path.startsWith('/homepage')) return false
   if (route.path.startsWith('/admin')) return false
+  if (route.path.startsWith('/auth/')) return false
   return true
 })
 

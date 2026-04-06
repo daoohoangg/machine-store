@@ -34,6 +34,7 @@ const generateOrderId = () => {
 
 export const useOrder = () => {
   const currentOrder = useState<OrderData | null>('current_order', () => null)
+  const abahaOrderId = useState<number | string | null>('abaha_order_id', () => null)
   const hasOrder = computed(() => !!currentOrder.value)
   const isLoading = useState<boolean>('order_loading', () => false)
 
@@ -67,13 +68,15 @@ export const useOrder = () => {
     
     isLoading.value = true
     try {
-      const response: any = await $fetch('/api/order/create', {
+      const response: any = await $fetch('/api/order/update', {
         method: 'POST',
         body: {
+          id: abahaOrderId.value, // Pass mandatory ID for update
           receiver: currentOrder.value.receiver,
           items: currentOrder.value.items,
           note: currentOrder.value.meta.note,
-          paymentMethod: currentOrder.value.meta.paymentMethod
+          paymentMethod: currentOrder.value.meta.paymentMethod,
+          status: 5 // As requested: status 5 for final submit (Đặt hàng)
         }
       })
       
@@ -88,6 +91,7 @@ export const useOrder = () => {
 
   const clearOrder = () => {
     currentOrder.value = null
+    abahaOrderId.value = null
   }
 
   const subtotal = computed(() => {
@@ -102,6 +106,7 @@ export const useOrder = () => {
 
   return {
     currentOrder,
+    abahaOrderId,
     hasOrder,
     isLoading,
     subtotal,

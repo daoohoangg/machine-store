@@ -76,6 +76,7 @@
               </NuxtLink>
               <div class="user-dropdown">
                 <NuxtLink to="/admin" class="dropdown-item"><i class="fa-solid fa-gear"></i> Trang quản trị</NuxtLink>
+                <NuxtLink to="/auth/orders" class="dropdown-item"><i class="fa-solid fa-box"></i> Quản lý đơn hàng</NuxtLink>
                 <button class="dropdown-item text-danger" @click="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
               </div>
             </template>
@@ -86,6 +87,7 @@
               </NuxtLink>
               <div class="user-dropdown">
                 <NuxtLink to="/auth/profile" class="dropdown-item"><i class="fa-solid fa-user-pen"></i> Thông tin tài khoản</NuxtLink>
+                <NuxtLink to="/auth/orders" class="dropdown-item"><i class="fa-solid fa-box"></i> Đơn hàng của tôi</NuxtLink>
                 <button class="dropdown-item text-danger" @click="handleLogout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
               </div>
             </template>

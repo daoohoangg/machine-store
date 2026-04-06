@@ -160,6 +160,7 @@ onMounted(async () => {
       form.ward = u.ward || ''
       form.address = u.address || ''
       membershipTier.value = u.premium_name || ''
+      if (userPhone.value) setUser(form.fullName, userPhone.value, false, membershipTier.value)
     } else if (storedPhone) {
       userPhone.value = storedPhone
     } else {
@@ -423,7 +424,7 @@ const handleUpdate = async () => {
     if ((res && (res.status == 1 || res.success == true)) || isAbahaError) {
       isError.value = false
       statusMsg.value = 'Cập nhật thành công!'
-      if (tel) setUser(form.fullName, tel, false)
+      if (tel) setUser(form.fullName, tel, false, membershipTier.value)
     } else {
       isError.value = true
       statusMsg.value = res?.message || 'Có lỗi xảy ra khi cập nhật'

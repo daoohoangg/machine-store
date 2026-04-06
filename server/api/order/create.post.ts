@@ -2,7 +2,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const runtimeConfig = useRuntimeConfig()
   const abahaToken = runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN
-  const abahaApiUrl = "https://publicapi.abaha.vn/order/create";
+  const abahaCreateUrl = "https://publicapi.abaha.vn/order/create";
+  const abahaUpdateUrl = "https://publicapi.abaha.vn/order/update";
 
   if (!abahaToken) {
     throw createError({
@@ -11,15 +12,13 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Map incoming body to Abaha schema provided by user
+  // Map incoming body to Abaha schema
   const abahaBody = {
     product_items: body.items?.map((item: any) => {
-      // Prioritize productCode from mapped metadata, then fallbacks
       const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
       const quantity = Number(item.quantity || item.qty || 1)
       const price = Number(item.price) || 0
 
-      // If we don't have a valid product identification, we skip the item
       if (!productCode || productCode === 'null' || productCode === 'undefined') {
           return null
       }
@@ -39,35 +38,86 @@ export default defineEventHandler(async (event) => {
       address: body.receiver?.address || body.address
     },
     user_note: body.note || "",
-    orders_time: new Date(Date.now() + 7 * 3600000).toISOString().replace(/T/, ' ').replace(/\..+/, ''), // VN Time: YYYY-MM-DD HH:mm:ss
-    status: 1
+    orders_time: new Date(Date.now() + 7 * 3600000).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+    status: body.status || 1
   }
 
-  console.log('[Abaha Order API] Creating order with body:', JSON.stringify(abahaBody, null, 2));
+  const performUpdate = async (orderId: number | string) => {
+    const params = new URLSearchParams()
+    params.append('id', String(orderId))
+    params.append('product_items', JSON.stringify(abahaBody.product_items))
+    params.append('discount', JSON.stringify({ price: Number(body.discount) || 0, name: "Giảm giá" }))
+    params.append('fee', JSON.stringify({ price: Number(body.fee) || 0, name: "Phí ship" }))
+    params.append('tel', abahaBody.tel || '')
+    params.append('address_receiver', JSON.stringify({
+        address_default: null,
+        name: abahaBody.address_receiver.name,
+        tel: abahaBody.address_receiver.tel,
+        address: abahaBody.address_receiver.address
+    }))
+    params.append('user_note', abahaBody.user_note)
+    params.append('orders_time', String(Math.floor(Date.now() / 1000)))
+    params.append('status', String(body.status || 5))
+    params.append('pos_id', body.pos_id || `DH${orderId}`)
+    params.append('pos_type', "kiotviet")
+    params.append('check_product_inventory', 'false')
+    params.append('check_product_status', 'false')
+
+    return await $fetch(abahaUpdateUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      query: { token: abahaToken },
+      body: params.toString()
+    });
+  }
 
   try {
-    const response: any = await $fetch(abahaApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      query: { token: abahaToken },
-      body: abahaBody
-    })
+    let resultData: any = null;
 
-    console.log('[Abaha Order API] Response:', response);
+    if (body.id) {
+       return await performUpdate(body.id);
+    } else {
+      // Create flow using x-www-form-urlencoded
+      const createParams = new URLSearchParams()
+      createParams.append('tel', abahaBody.tel || '')
+      createParams.append('product_items', JSON.stringify(abahaBody.product_items))
+      createParams.append('address_receiver', JSON.stringify(abahaBody.address_receiver))
+      createParams.append('user_note', abahaBody.user_note)
+      createParams.append('status', String(abahaBody.status || 1))
+      createParams.append('orders_time', String(Math.floor(Date.now() / 1000)))
 
-    if (response.status === 0 || response.error) {
-       throw createError({
-         statusCode: 400,
-         statusMessage: response.message || "Lỗi khi tạo đơn hàng trên Abaha"
-       })
+      const createResponse: any = await $fetch(abahaCreateUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        query: { token: abahaToken },
+        body: createParams.toString()
+      })
+
+      console.log('[Abaha Order API] Create Response:', createResponse);
+
+      if (createResponse.status === 0 || createResponse.error) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: createResponse.message || "Lỗi khi tạo đơn hàng trên Abaha"
+        })
+      }
+
+      const orderId = createResponse.data?.id;
+      resultData = createResponse.data;
+
+      if (orderId && !body.skipUpdate) {
+        try {
+          await performUpdate(orderId);
+        } catch (updateError: any) {
+          console.error('[Abaha Order API] Background Update Error:', updateError.message);
+        }
+      }
     }
 
     return {
       success: true,
-      data: response.data,
-      message: 'Tạo đơn hàng thành công'
+      data: resultData,
+      message: body.id ? 'Cập nhật đơn hàng thành công' : 'Tạo đơn hàng thành công'
     }
   } catch (error: any) {
     console.error('[Abaha Order API] Exception:', error.data || error.message);

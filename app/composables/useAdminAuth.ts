@@ -6,6 +6,7 @@ export const useAdminAuth = () => {
   const adminName = useState('admin-name', () => '')
   const userName = useState('user-name', () => '')
   const userPhone = useState('user-phone', () => '')
+  const userTier = useState('user-tier', () => '')
 
   const initAuth = async () => {
     if (import.meta.client) {
@@ -25,6 +26,7 @@ export const useAdminAuth = () => {
             isUser.value = true
             userName.value = payload.user.name || payload.user.phone
             userPhone.value = payload.user.phone || ''
+            userTier.value = payload.user.premium_name || ''
             localStorage.setItem('user_auth', 'true')
             localStorage.setItem('user_name', userName.value)
             localStorage.setItem('user_phone', userPhone.value)
@@ -39,7 +41,7 @@ export const useAdminAuth = () => {
     }
   }
 
-  const setUser = (name: string, phone: string, asAdmin: boolean = false) => {
+  const setUser = (name: string, phone: string, asAdmin: boolean = false, tier: string = '') => {
     if (asAdmin) {
       isAdmin.value = true
       adminName.value = name || 'Admin'
@@ -54,6 +56,7 @@ export const useAdminAuth = () => {
       isUser.value = true
       userName.value = name || phone
       userPhone.value = phone || ''
+      userTier.value = tier || ''
       if (import.meta.client) {
         localStorage.setItem('user_auth', 'true')
         localStorage.setItem('user_name', userName.value)
@@ -95,6 +98,7 @@ export const useAdminAuth = () => {
     adminName.value = ''
     userName.value = ''
     userPhone.value = ''
+    userTier.value = ''
     if (import.meta.client) {
       localStorage.removeItem('admin_auth')
       localStorage.removeItem('admin_name')
@@ -105,5 +109,5 @@ export const useAdminAuth = () => {
     }
   }
 
-  return { isAdmin, adminName, isUser, userName, userPhone, setUser, login, logout, initAuth }
+  return { isAdmin, adminName, isUser, userName, userPhone, userTier, setUser, login, logout, initAuth }
 }

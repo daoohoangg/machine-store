@@ -1,4 +1,6 @@
 import { useAbahaApi } from './useAbahaApi'
+import { useAdminAuth } from './useAdminAuth'
+import { useMembershipPrices } from './useMembershipPrices'
 
 export interface HomeProduct {
   id: string
@@ -157,6 +159,10 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     default: () => [] as HomeProduct[]
   })
 
+  // Load auth and pricing context
+  const { userTier } = useAdminAuth()
+  const { calculateAdjustedPrice } = useMembershipPrices()
+
   // Manual loading state for loadMore
   const loadingMore = ref(false)
 
@@ -237,8 +243,13 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       const finalProducts = rawProducts
 
       return finalProducts.map((item: any): HomeProduct => {
-        const price = Number(item.price) || 0
-        const oldPrice = Number(item.discount) > price ? Number(item.discount) : null
+        const rawPriceBase = Number(item.price) || 0
+        const rawOldPriceBase = Number(item.discount) > rawPriceBase ? Number(item.discount) : null
+        
+        // Apply membership tier adjustment
+        const price = calculateAdjustedPrice(rawPriceBase, userTier.value)
+        const oldPrice = rawOldPriceBase ? calculateAdjustedPrice(rawOldPriceBase, userTier.value) : null
+        
         const discountText = inferDiscount(price, oldPrice)
         
         const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)

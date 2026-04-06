@@ -58,26 +58,37 @@ export const useCart = () => {
     }
   })
 
+  const { userPhone, userName, userTier } = useAdminAuth()
+  const { abahaOrderId } = useOrder()
+  const { calculateAdjustedPrice } = useMembershipPrices()
+
   // 4. Actions
   const addToCart = (product: any) => {
     // Determine the real ID (numeric ID from CRM preferred over title)
     const realId = String(product.id || product.item_id || product.title)
     
     // Parse strings to numbers for cart calculation
-    const priceNum = product.price ? parseInt(product.price.toString().replace(/\./g, '')) : 0
-    const oldPriceNum = product.oldPrice ? parseInt(product.oldPrice.toString().replace(/\./g, '')) : null
+    // Note: product.price is already adjusted in useHomeProducts if it came from there
+    const priceNum = product.price ? Number(product.price.toString().replace(/\./g, '')) : 0
+    const oldPriceNum = product.oldPrice ? Number(product.oldPrice.toString().replace(/\./g, '')) : null
     
     // Check if exists
     const existingIndex = cart.value.findIndex(item => item.id === realId || item.title === product.title)
     
+    let itemToSync: CartItem | null = null
+
     if (existingIndex !== -1) {
-      cart.value[existingIndex].quantity += 1
-      // Update metadata if it was missing
-      if (!cart.value[existingIndex].raw && product) {
-        cart.value[existingIndex].raw = product
+      const item = cart.value[existingIndex]
+      if (item) {
+        item.quantity += 1
+        // Update metadata if it was missing
+        if (!item.raw && product) {
+          item.raw = product
+        }
+        itemToSync = item
       }
     } else {
-      cart.value.push({
+      const newItem: CartItem = {
         id: realId,
         title: product.title,
         price: priceNum,
@@ -87,6 +98,35 @@ export const useCart = () => {
         quantity: 1,
         selected: true,
         raw: product // Store entire object
+      }
+      cart.value.push(newItem)
+      itemToSync = newItem
+    }
+
+    // Call Abaha API for cart sync if user is logged in
+    if (userPhone.value && itemToSync) {
+      console.log('[Cart Sync] Syncing to Abaha...', itemToSync.title)
+      $fetch('/api/order/create', {
+        method: 'POST',
+        body: {
+          id: abahaOrderId.value, // Continue current session order if available
+          receiver: {
+            fullName: userName.value || 'Khách hàng',
+            phone: userPhone.value,
+            address: 'Chưa có địa chỉ'
+          },
+          items: cart.value, // Pass all items to ensure cart is synced correctly
+          note: `Đang xem giỏ hàng`,
+          paymentMethod: 'cod',
+          status: 1, // Created
+          skipUpdate: true // Don't push to KiotViet/final status yet
+        }
+      }).then((resp: any) => {
+          if (resp && resp.data && resp.data.id) {
+              abahaOrderId.value = resp.data.id;
+          }
+      }).catch(err => {
+        console.error('[Cart Sync] Error syncing to Abaha:', err)
       })
     }
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="search-dropdown" v-if="isOpen">
+  <div class="search-dropdown" v-if="isOpen" @click.stop>
     <div class="modal-head">
       <p class="modal-title">Gợi ý tìm kiếm</p>
       <button class="close-btn" type="button" aria-label="Đóng tìm kiếm" @click="emit('close')">✕</button>
@@ -25,12 +25,6 @@
         </div>
       </div>
 
-      <!-- Promotion Banner inside dropdown -->
-      <div class="dropdown-promo">
-        <span class="promo-icon">%</span>
-        <span class="promo-text">Máy lạnh Chính hãng - Giá Tốt - Lắp đặt trọn gói - Giao hàng nhanh</span>
-        <span class="chevron">›</span>
-      </div>
 
       <!-- Hot Categories -->
       <div class="hot-categories-wrapper">
@@ -96,14 +90,14 @@
             @click="emit('close')"
           >
             <div class="result-img-wrapper">
-              <img v-if="item.image" :src="item.image" :alt="item.name" class="result-img" />
+              <img v-if="item.image" :src="item.image" :alt="item.title" class="result-img" />
               <div v-else class="result-img mock-img"></div>
             </div>
             <div class="result-info">
-              <div class="result-name">{{ item.name }}</div>
+              <div class="result-name">{{ item.title }}</div>
               <div class="result-prices">
                 <span class="result-price">{{ formatPrice(item.price) }}</span>
-                <span v-if="item.discount && item.discount > item.price" class="result-old-price">{{ formatPrice(item.discount) }}</span>
+                <span v-if="item.oldPrice && item.oldPrice > item.price" class="result-old-price">{{ formatPrice(item.oldPrice) }}</span>
               </div>
             </div>
           </NuxtLink>
@@ -211,8 +205,8 @@ const searchResults = computed(() => {
   
   const query = props.searchQuery.toLowerCase().trim()
   return products.value.filter((item: any) => {
-    const nameMatch = item.name && item.name.toLowerCase().includes(query)
-    const codeMatch = item.product_code && item.product_code.toLowerCase().includes(query)
+    const nameMatch = item.title && item.title.toLowerCase().includes(query)
+    const codeMatch = item.productCode && item.productCode.toLowerCase().includes(query)
     return nameMatch || codeMatch
   }).slice(0, 8)
 })

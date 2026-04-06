@@ -18,7 +18,7 @@
         </template>
         <template v-else>
           <span class="separator">›</span> 
-          <span class="current">{{ currentCategory === 'Máy Cưa Xăng' ? 'Máy Cưa' : (currentCategory || 'Danh mục sản phẩm') }}</span>
+          <span class="current">{{ currentCategory }}</span>
         </template>
       </div>
       
@@ -98,13 +98,20 @@ const route = useRoute()
 const { categories, fetchCategories } = useCategories()
 
 const categoryId = computed(() => route.query.categoryId as string)
+const searchName = computed(() => route.query.searchName as string)
+
 const currentCategory = computed(() => {
+  if (searchName.value) return `Kết quả tìm kiếm: "${searchName.value}"`
   const name = route.query.categoryName as string
-  return name || 'Danh mục sản phẩm'
+  if (!name) return 'Danh mục sản phẩm'
+  return name === 'Máy Cưa Xăng' ? 'Máy Cưa' : name
 })
 
-// Pass categoryId as a getter to useHomeProducts so it's reactive to URL changes
-const { products, pending } = useHomeProducts(() => categoryId.value)
+// Pass both categoryId and search query as a getter to useHomeProducts so it's reactive to URL changes
+const { products, pending } = useHomeProducts(() => ({
+  categoryId: categoryId.value,
+  search: searchName.value
+}))
 const { isImageFailed } = useImageGuard()
 
 const subCategories = computed<Category[]>(() => {
@@ -232,6 +239,15 @@ const extractBrand = (p: any): string => {
 const processedProducts = computed(() => {
   let list = [...allCategoryProducts.value]
   
+  // Apply search query filter client-side to ensure it strictly contains the characters
+  if (searchName.value) {
+    const q = searchName.value.toLowerCase().trim()
+    list = list.filter(p => 
+      (p.title && p.title.toLowerCase().includes(q)) || 
+      (p.productCode && p.productCode.toLowerCase().includes(q))
+    )
+  }
+
   // Apply brand filters
   if (selectedBrands.value.length > 0) {
     list = list.filter(p => {
