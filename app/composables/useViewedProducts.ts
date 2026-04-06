@@ -9,9 +9,13 @@ export interface ViewedProduct {
   image: string
   categoryId: number | string | null
   category: string
+  rawPrice?: number
+  rawOldPrice?: number | null
 }
 
 export const useViewedProducts = () => {
+  const { userTier } = useAdminAuth()
+  const { calculateAdjustedPrice } = useMembershipPrices()
   const viewedProducts = useState<ViewedProduct[]>('tuanminh-viewed-products-list', () => [])
   const maxItems = 5
 
@@ -30,9 +34,16 @@ export const useViewedProducts = () => {
   const addViewedProduct = (product: ViewedProduct) => {
     if (!product.id) return
     
+    // Ensure we store raw prices for recalculation if they aren't provided
+    const toStore = {
+      ...product,
+      rawPrice: product.rawPrice || product.price,
+      rawOldPrice: product.rawOldPrice || product.oldPrice
+    }
+    
     // Remove if already exists to move it to the top
     const filtered = viewedProducts.value.filter(p => p.id !== product.id)
-    const newList = [product, ...filtered].slice(0, maxItems)
+    const newList = [toStore, ...filtered].slice(0, maxItems)
     
     viewedProducts.value = newList
     
@@ -50,8 +61,20 @@ export const useViewedProducts = () => {
     })
   }
 
+  const viewedProductsAdjusted = computed(() => {
+    return viewedProducts.value.map(p => {
+      const base = p.rawPrice || p.price
+      const baseOld = p.rawOldPrice || p.oldPrice
+      return {
+        ...p,
+        price: calculateAdjustedPrice(base, userTier.value),
+        oldPrice: baseOld ? calculateAdjustedPrice(baseOld, userTier.value) : null
+      }
+    })
+  })
+
   return {
-    viewedProducts,
+    viewedProducts: viewedProductsAdjusted,
     addViewedProduct,
     lastViewedCategory: computed(() => viewedProducts.value[0]?.categoryId || null)
   }

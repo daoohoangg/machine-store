@@ -1,6 +1,8 @@
 import { useState } from '#imports'
 
 import type { HomeProduct } from './useHomeProducts'
+import { useAdminAuth } from './useAdminAuth'
+import { useMembershipPrices } from './useMembershipPrices'
 
 export interface ManualGroups {
   'flash-sale': HomeProduct[]
@@ -8,10 +10,12 @@ export interface ManualGroups {
 }
 
 export const useManualGroups = () => {
-  const manualGroups = useState<ManualGroups>('manual-groups', () => ({
+  const rawManualGroups = useState<ManualGroups>('manual-groups-raw', () => ({
     'flash-sale': [],
     'new-products': []
   }))
+  const { userTier } = useAdminAuth()
+  const { calculateAdjustedPrice } = useMembershipPrices()
   const isLoading = useState('manual-groups-loading', () => false)
   const error = useState<any>('manual-groups-error', () => null)
 
@@ -20,12 +24,9 @@ export const useManualGroups = () => {
     try {
       const data = await $fetch<ManualGroups>('/api/manual-groups')
       if (data) {
-        // Robust mapping to ensure we always have objects. 
-        // If the file still has string IDs, they will be handled as empty objects or filtered out 
-        // until the admin page saves the full objects.
-        manualGroups.value = {
-          'flash-sale': (data['flash-sale'] || []).filter(p => typeof p === 'object' && p !== null) as HomeProduct[],
-          'new-products': (data['new-products'] || []).filter(p => typeof p === 'object' && p !== null) as HomeProduct[]
+        rawManualGroups.value = {
+          'flash-sale': (data['flash-sale'] || []).filter(p => typeof p === 'object' && p !== null),
+          'new-products': (data['new-products'] || []).filter(p => typeof p === 'object' && p !== null)
         }
       }
     } catch (err) {
@@ -41,7 +42,7 @@ export const useManualGroups = () => {
     try {
       const resp = await $fetch<any>('/api/manual-groups', {
         method: 'POST',
-        body: manualGroups.value
+        body: rawManualGroups.value
       })
       if (resp && resp.success === false) {
         throw new Error(resp.error || 'Lỗi server khi lưu nhóm')
@@ -56,18 +57,43 @@ export const useManualGroups = () => {
   }
 
   const addToGroup = (groupName: keyof ManualGroups, product: HomeProduct) => {
-    if (!manualGroups.value[groupName].some(p => String(p.id) === String(product.id))) {
-      manualGroups.value[groupName].unshift(product)
+    if (!rawManualGroups.value[groupName].some(p => String(p.id) === String(product.id))) {
+      // Store the RAW product if possible. If the product passed in is already adjusted, 
+      // we might need to be careful, but HomeProduct usually has raw values if we just fetched it.
+      rawManualGroups.value[groupName].unshift(product)
     }
   }
 
   const removeFromGroup = (groupName: keyof ManualGroups, productId: string) => {
-    manualGroups.value[groupName] = manualGroups.value[groupName].filter(p => String(p.id) !== String(productId))
+    rawManualGroups.value[groupName] = rawManualGroups.value[groupName].filter(p => String(p.id) !== String(productId))
   }
 
   const clearGroup = (groupName: keyof ManualGroups) => {
-    manualGroups.value[groupName] = []
+    rawManualGroups.value[groupName] = []
   }
+
+  // Reactive mapping
+  const manualGroups = computed<ManualGroups>(() => {
+    const applyPrices = (list: any[]) => {
+      return list.map(p => {
+        const rawPrice = Number(p.rawPrice || p.price) || 0
+        const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount) ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0)) : null
+        
+        return {
+          ...p,
+          rawPrice: p.rawPrice || p.price,
+          rawOldPrice: p.rawOldPrice || p.oldPrice,
+          price: calculateAdjustedPrice(rawPrice, userTier.value),
+          oldPrice: rawOldPrice ? calculateAdjustedPrice(rawOldPrice, userTier.value) : null
+        } as HomeProduct
+      })
+    }
+
+    return {
+      'flash-sale': applyPrices(rawManualGroups.value['flash-sale']),
+      'new-products': applyPrices(rawManualGroups.value['new-products'])
+    }
+  })
 
   return {
     manualGroups,

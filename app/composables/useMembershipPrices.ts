@@ -55,16 +55,29 @@ export const useMembershipPrices = () => {
 
   const getAdjustmentForTier = (tierName: string | null | undefined): number => {
     if (!tierName) return 0
-    // Try to find exact match
-    const found = tiers.value.find(t => t.name === tierName)
-    if (found) return found.percent
+    
+    const normalizedId = tierName.trim().toLowerCase()
+    
+    // 1. Try to find exact match (case-insensitive)
+    const found = tiers.value.find(t => t.name.trim().toLowerCase() === normalizedId)
+    if (found) {
+      console.log(`[Pricing] Found exact match for tier "${tierName}": ${found.percent}%`)
+      return found.percent
+    }
 
-    // Try a more flexible match if necessary
-    const flexibleMatch = tiers.value.find(t => 
-      tierName.toLowerCase().includes(t.name.toLowerCase()) || 
-      t.name.toLowerCase().includes(tierName.toLowerCase())
-    )
-    return flexibleMatch ? flexibleMatch.percent : 0
+    // 2. Try a more flexible match (sub-string)
+    const flexibleMatch = tiers.value.find(t => {
+      const configName = t.name.trim().toLowerCase()
+      return normalizedId.includes(configName) || configName.includes(normalizedId)
+    })
+    
+    if (flexibleMatch) {
+      console.log(`[Pricing] Found flexible match for tier "${tierName}" via "${flexibleMatch.name}": ${flexibleMatch.percent}%`)
+      return flexibleMatch.percent
+    }
+
+    console.log(`[Pricing] No matching configuration found for tier: "${tierName}"`)
+    return 0
   }
 
   const calculateAdjustedPrice = (basePrice: number, tierName: string | null | undefined): number => {

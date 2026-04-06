@@ -8,7 +8,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useMembershipPrices } from '~/composables/useMembershipPrices'
+import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const BRAND_NAME = 'ĐIỆN MÁY TUẤN MINH'
 const route = useRoute()
@@ -32,6 +34,15 @@ const pageTitle = computed(() => {
   }
 
   return titleMap[route.path] || 'Trang'
+})
+
+const { loadTiers } = useMembershipPrices()
+const { initAuth } = useAdminAuth()
+
+onMounted(() => {
+  // Load global configurations
+  loadTiers()
+  initAuth()
 })
 
 useHead(() => ({

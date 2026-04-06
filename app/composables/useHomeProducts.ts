@@ -110,7 +110,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
   
   // products will contain the data for the current active category
   const nuxtApp = useNuxtApp()
-  const { data: products, pending, error, refresh } = useAsyncData(() => fetchKey.value, async () => {
+  const { data: rawProductsData, pending, error, refresh } = useAsyncData(() => fetchKey.value, async () => {
     const val = toValue(optionsOrCategoryIdMaybe)
     let filters: FetchOptions = {}
     
@@ -134,21 +134,21 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     // page and limit are passed via QUERY STRING, while category_id is in BODY.
     const promises = []
     for (let i = 1; i <= 6; i++) {
-        promises.push(fetchItems({ ...filters, page: i, limit: 100 }))
+        promises.push(fetchAsyncItems({ ...filters, page: i, limit: 100 }))
     }
     const results = await Promise.all(promises)
     const allProducts = results.flat()
-    const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values())
+    const uniqueProducts = Array.from(new Map(allProducts.map((item: any) => [item.id, item])).values())
     
     // Client-side filter by IDs if provided
     if (filters.ids && filters.ids.length > 0) {
       const idSet = new Set(filters.ids.map(String))
-      return uniqueProducts.filter(p => idSet.has(String(p.id)))
+      return uniqueProducts.filter((p: any) => idSet.has(String(p.id)))
     }
     
     console.log(`[useHomeProducts] Fetched 10 pages. Total flat: ${allProducts.length}, Unique: ${uniqueProducts.length}`)
     
-    return uniqueProducts
+    return uniqueProducts // These are raw API products
   }, {
     lazy: false,
     watch: [fetchKey], // Re-fetch when the key (and thus categoryId) changes
@@ -156,138 +156,65 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       // Use Nuxt's built-in payload cache to prevent redundant API calls on client navigation
       return nuxtApp.payload.data[key] || nuxtApp.static?.data?.[key]
     },
-    default: () => [] as HomeProduct[]
+    default: () => [] as any[]
   })
 
   // Load auth and pricing context
   const { userTier } = useAdminAuth()
-  const { calculateAdjustedPrice } = useMembershipPrices()
+  const { tiers, calculateAdjustedPrice } = useMembershipPrices()
 
   // Manual loading state for loadMore
   const loadingMore = ref(false)
 
-  async function fetchItems(filters: FetchOptions) {
-    try {
-      const parsedPage = Number(filters.page) || 1
-      const parsedLimit = Number(filters.limit) || 20 
-      const body: any = {}
-      const queryParams: any = { limit: parsedLimit, page: parsedPage }
+  // Reactive mapping of products based on current tier and loaded tiers
+  const products = computed(() => {
+    const rawList = rawProductsData.value || []
+    return rawList.map((item: any): HomeProduct => {
+      const rawPriceBase = Number(item.price) || 0
+      const rawOldPriceBase = (item.oldPrice || item.discount) ? Math.max(Number(item.oldPrice || 0), Number(item.discount || 0)) : null
       
-      if (filters.search) queryParams.search = filters.search
-      if (filters.price_min) queryParams.price_min = filters.price_min
-      if (filters.price_max) queryParams.price_max = filters.price_max
-      if (filters.sort) queryParams.sort = filters.sort
-      if (filters.order) queryParams.order = filters.order
+      // Safety check for old price: must be > current price if it exists
+      const finalOldPriceBase = (rawOldPriceBase && rawOldPriceBase > rawPriceBase) ? rawOldPriceBase : null
       
-      const cid = filters.categoryId
-
-      if (cid) {
-        const numericId = Number(cid)
-        if (!isNaN(numericId)) {
-          // Flatten child IDs if the category has children
-          const { categories } = useCategories()
-          let targetCategory: any = null
-          
-          const findCategory = (cats: any[]) => {
-            for (const c of cats) {
-              if (c.id === numericId) {
-                targetCategory = c
-                return true
-              }
-              if (c.children && findCategory(c.children)) return true
-            }
-            return false
-          }
-          if (categories.value) findCategory(categories.value)
-          
-          const expandedIds = [numericId]
-          const gatherChilrenIds = (cat: any) => {
-            if (cat && cat.children) {
-              cat.children.forEach((child: any) => {
-                expandedIds.push(child.id)
-                gatherChilrenIds(child)
-              })
-            }
-          }
-          gatherChilrenIds(targetCategory)
-          
-          body.category_id = numericId
-          body.cat_id = numericId
-          body.categories = expandedIds
-        } else {
-          body.category_id = cid
-          body.cat_id = cid
-        }
-      }
-
-      if (filters.group_id) {
-        body.group_id = filters.group_id
-      }
-
-      if (filters.ids && filters.ids.length > 0) {
-        // Some APIs use product_ids or ids. Let's try to pass it to the body as well.
-        body.product_ids = filters.ids
-      }
-
-      console.log(`[useHomeProducts] Fetching items for cid: ${cid}, group_id: ${filters.group_id}, search: ${filters.search}, page: ${parsedPage}, limit: ${parsedLimit}`)
-      const response = await request<any>('product/index', {
-        method: 'POST',
-        body,
-        query: queryParams
-      })
-
-      const rawProducts = response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
-      console.log(`[useHomeProducts] API returned ${rawProducts.length} items`)
+      // Apply membership tier adjustment
+      const price = calculateAdjustedPrice(rawPriceBase, userTier.value)
+      const oldPrice = finalOldPriceBase ? calculateAdjustedPrice(finalOldPriceBase, userTier.value) : null
       
-      // Trust the Abaha API filtering entirely instead of performing strict client-side ID checks
-      const finalProducts = rawProducts
+      const discountText = inferDiscount(price, oldPrice)
+      
+      const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)
+      const mainImage = item.image || gallery[0] || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'
 
-      return finalProducts.map((item: any): HomeProduct => {
-        const rawPriceBase = Number(item.price) || 0
-        const rawOldPriceBase = Number(item.discount) > rawPriceBase ? Number(item.discount) : null
-        
-        // Apply membership tier adjustment
-        const price = calculateAdjustedPrice(rawPriceBase, userTier.value)
-        const oldPrice = rawOldPriceBase ? calculateAdjustedPrice(rawOldPriceBase, userTier.value) : null
-        
-        const discountText = inferDiscount(price, oldPrice)
-        
-        const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)
-        const mainImage = item.image || gallery[0] || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'
+      const cleanedContent = cleanHtml(item.content)
+      const specs = cleanedContent.split('. ').slice(0, 3).filter(Boolean)
+      const detailedSpecs = extractSpecs(item.content)
 
-        const cleanedContent = cleanHtml(item.content)
-        const specs = cleanedContent.split('. ').slice(0, 3).filter(Boolean)
-        const detailedSpecs = extractSpecs(item.content)
+      return {
+        id: String(item.id),
+        productCode: item.product_code || item.code || String(item.id),
+        slug: item.slug || `product-${item.id}`,
+        title: item.name || 'Sản phẩm',
+        price,
+        oldPrice,
+        discount: discountText,
+        image: mainImage,
+        images: gallery.length ? gallery : [mainImage],
+        brand: item.brand || 'No Brand',
+        category: item.category_name || item.category || 'Sản phẩm',
+        categoryId: item.category_id || item.cat_id || null,
+        rating: Number(item.rate) || 5,
+        reviews: Number(item.comment_count) || 0,
+        isNew: false,
+        sold: Number(item.sales) || 0,
+        specs: specs,
+        fullSpecs: detailedSpecs.length > 0 ? detailedSpecs : [cleanedContent]
+      }
+    }).filter((item: HomeProduct) => {
+      return item.image && !item.image.includes('placehold') && !item.image.includes('noimage')
+    })
+  })
 
-        return {
-          id: String(item.id),
-          productCode: item.product_code || item.code || String(item.id),
-          slug: item.slug || `product-${item.id}`,
-          title: item.name || 'Sản phẩm',
-          price,
-          oldPrice,
-          discount: discountText,
-          image: mainImage,
-          images: gallery.length ? gallery : [mainImage],
-          brand: item.brand || 'No Brand',
-          category: item.category_name || item.category || 'Sản phẩm',
-          categoryId: item.category_id || item.cat_id || null,
-          rating: Number(item.rate) || 5,
-          reviews: Number(item.comment_count) || 0,
-          isNew: false,
-          sold: Number(item.sales) || 0,
-          specs: specs,
-          fullSpecs: detailedSpecs.length > 0 ? detailedSpecs : [cleanedContent]
-        }
-      }).filter((item: HomeProduct) => {
-        // Filter out products with no image or placeholder image
-        return item.image && !item.image.includes('placehold') && !item.image.includes('noimage')
-      })
-    } catch (err) {
-      console.error('API Error:', err)
-      return []
-    }
-  }
+// Removal of old non-reactive fetchItems mapping logic as it is now handled by the computed products property.
 
   const loadMore = async (pageToLoad: number) => {
     if (loadingMore.value) return
@@ -305,12 +232,68 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     // However, for loadMore, we typically just load the next page of 20 or 200 depending on limit.
     // If the base query was heavily limited, we will preserve it or default to 20.
     
-    const newItems = await fetchItems(filters)
-    if (newItems.length > 0 && products.value) {
-      products.value = [...products.value, ...newItems]
+    const newItems = await fetchAsyncItems(filters)
+    if (newItems.length > 0 && rawProductsData.value) {
+      rawProductsData.value = [...rawProductsData.value, ...newItems]
     }
     
     loadingMore.value = false
+  }
+
+  // Define the core fetch function to return RAW objects
+  async function fetchAsyncItems(filters: FetchOptions) {
+    try {
+      const parsedPage = Number(filters.page) || 1
+      const parsedLimit = Number(filters.limit) || 20 
+      const body: any = {}
+      const queryParams: any = { limit: parsedLimit, page: parsedPage }
+      
+      if (filters.search) queryParams.search = filters.search
+      if (filters.price_min) queryParams.price_min = filters.price_min
+      if (filters.price_max) queryParams.price_max = filters.price_max
+      if (filters.sort) queryParams.sort = filters.sort
+      if (filters.order) queryParams.order = filters.order
+      
+      const cid = filters.categoryId
+
+      if (cid) {
+        // ... (Category logic remains the same, omitted for brevity but preserved in real file)
+        const numericId = Number(cid)
+        if (!isNaN(numericId)) {
+          const { categories } = useCategories()
+          let targetCategory: any = null
+          const findCategory = (cats: any[]) => {
+            for (const c of cats) {
+              if (c.id === numericId) { targetCategory = c; return true; }
+              if (c.children && findCategory(c.children)) return true;
+            }
+            return false;
+          }
+          if (categories.value) findCategory(categories.value)
+          const expandedIds = [numericId]
+          const gatherChilrenIds = (cat: any) => {
+            if (cat && cat.children) {
+              cat.children.forEach((child: any) => {
+                expandedIds.push(child.id); gatherChilrenIds(child);
+              })
+            }
+          }
+          gatherChilrenIds(targetCategory)
+          body.category_id = numericId; body.cat_id = numericId; body.categories = expandedIds;
+        } else {
+          body.category_id = cid; body.cat_id = cid;
+        }
+      }
+
+      if (filters.group_id) body.group_id = filters.group_id
+      if (filters.ids && filters.ids.length > 0) body.product_ids = filters.ids
+
+      const response = await request<any>('product/index', { method: 'POST', body, query: queryParams })
+      return response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
+    } catch (err) {
+      console.error('API Error:', err)
+      return []
+    }
   }
 
   return {
