@@ -6,12 +6,14 @@ export const useAbahaApi = () => {
     
     // If we're on the client, use our server-side proxy
     if (import.meta.client || (typeof window !== 'undefined')) {
+      const method = options.method || 'POST'
       return $fetch<T>('/api/abaha-proxy', {
         ...options,
-        method: 'POST',
+        method: 'POST', // The proxy route itself is POST
         body: options.body || {},
         query: { 
           path: cleanPath,
+          method: method, // Forward the intended method
           token: '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA',
           ...options.query 
         }

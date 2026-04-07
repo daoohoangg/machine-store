@@ -2,14 +2,14 @@ import { defineEventHandler, readBody } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody(event)
+  const body = await readBody(event).catch(() => ({}))
   const query = getQuery(event)
   
-  // The path is passed in the query or body, let's assume it's part of the URL or a header
-  // For simplicity, let's expect a 'path' query param
-  // Strip internal 'path' param and merge with config token
-  const { path: queryPath, ...restQuery } = query
-  const forwardQuery = { 
+  // The path is passed in the query or body
+  const { path: queryPath, method: bodyMethod, ...restQuery } = query
+  const forwardMethod = (bodyMethod as string) || 'POST'
+  
+  const forwardQuery: any = { 
     ...restQuery, 
     token: restQuery.token || config.public.abahaToken 
   }
@@ -17,18 +17,16 @@ export default defineEventHandler(async (event) => {
   const cleanPath = (queryPath as string).startsWith('/') ? (queryPath as string).slice(1) : queryPath
   const targetUrl = `${config.public.abahaApiBaseUrl}${cleanPath}`
 
-  console.log('[Abaha Proxy] Forwarding to:', targetUrl)
-  console.log('[Abaha Proxy] Final Query Params:', forwardQuery)
-  console.log('[Abaha Proxy] Incoming Body:', body)
-
+  console.log(`[Abaha Proxy] Forwarding ${forwardMethod} to:`, targetUrl)
+  
   const fetchOptions: any = {
-    method: 'POST',
+    method: forwardMethod,
     query: forwardQuery,
     headers: {}
   }
 
-  // If there's a body, convert it to url-encoded format for Abaha compatibility
-  if (body && Object.keys(body).length > 0) {
+  // If there's a body and method is NOT GET, convert it to url-encoded format
+  if (forwardMethod !== 'GET' && body && Object.keys(body).length > 0) {
     const params = new URLSearchParams()
     for (const [key, value] of Object.entries(body)) {
       params.append(key, String(value))
