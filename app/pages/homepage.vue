@@ -30,7 +30,9 @@
             :category-name="currentCategory"
             :sub-categories="subCategories"
             :available-products="allCategoryProducts"
+            :product-count="processedProducts.length"
             @filter-changed="onFilterChanged"
+            @sort-changed="onSortChanged"
           />
         </div>
 
@@ -52,19 +54,6 @@
               </NuxtLink>
             </div>
             
-            <div class="top-filters">
-              <CategoryBrandFilter 
-                v-model="selectedBrands"
-                :available-products="allCategoryProducts"
-                @brand-toggled="onTopBrandToggled"
-              />
-              
-              <CategoryToolbar 
-                :product-count="processedProducts.length"
-                @sort-changed="onSortChanged"
-              />
-            </div>
-            
             <div v-if="processedProducts.length > 0" class="products-grid">
               <ProductCard
                 v-for="product in processedProducts"
@@ -73,8 +62,12 @@
               />
             </div>
 
-            <div v-else class="empty-state">
+            <div v-else-if="!pending" class="empty-state">
               <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.</p>
+            </div>
+            
+            <div v-else class="loading-state">
+              <p><i class="fa-solid fa-spinner fa-spin"></i> Đang tải sản phẩm...</p>
             </div>
           </ClientOnly>
         </div>
@@ -108,10 +101,17 @@ const currentCategory = computed(() => {
 })
 
 // Pass both categoryId and search query as a getter to useHomeProducts so it's reactive to URL changes
-const { products, pending } = useHomeProducts(() => ({
+const { products, pending, refresh } = useHomeProducts(() => ({
   categoryId: categoryId.value,
   search: searchName.value
 }))
+
+// Watch for category tree loading to refresh products if they were loaded before subcategories were known
+watch(() => categories.value, (newCats) => {
+  if (newCats && newCats.length > 0 && categoryId.value) {
+    refresh()
+  }
+}, { deep: true })
 const { isImageFailed } = useImageGuard()
 
 const subCategories = computed<Category[]>(() => {
@@ -169,13 +169,24 @@ const allCategoryProducts = computed(() => {
 
   const allIds = new Set<number>()
   allIds.add(cid)
-  const addChildren = (list: Category[]) => {
-    list.forEach(c => {
-      allIds.add(c.id)
-      if (c.children) addChildren(c.children)
-    })
+  
+  // Find the selected category node in the full tree to get all its descendants
+  const findAndAddDescendants = (list: Category[]) => {
+    for (const c of list) {
+      if (c.id === cid) {
+        const addAll = (cat: Category) => {
+          allIds.add(cat.id)
+          if (cat.children) cat.children.forEach(addAll)
+        }
+        addAll(c)
+        return true
+      }
+      if (c.children && findAndAddDescendants(c.children)) return true
+    }
+    return false
   }
-  addChildren(subCategories.value)
+  
+  findAndAddDescendants(categories.value)
   
   return products.value.filter(p => !isImageFailed(p.image) && p.categoryId && allIds.has(Number(p.categoryId)))
 })

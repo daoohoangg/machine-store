@@ -1,6 +1,8 @@
 <template>
   <section class="hero-banner" @mouseenter="stopSlide" @mouseleave="startSlide">
-    <button class="nav-arrow left" aria-label="Xem trước" @click="prevBanner">‹</button>
+    <button class="nav-arrow left" aria-label="Xem trước" @click="prevBanner">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
 
     <div class="banner-slider" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
       <div v-for="(banner, index) in banners" :key="index" class="banner-slide">
@@ -8,7 +10,9 @@
       </div>
     </div>
 
-    <button class="nav-arrow right" aria-label="Xem tiếp" @click="nextBanner">›</button>
+    <button class="nav-arrow right" aria-label="Xem tiếp" @click="nextBanner">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
 
     <div class="dots">
       <span 
@@ -130,23 +134,23 @@ onUnmounted(() => {
   bottom: 20px;
   transform: translateX(-50%);
   display: flex;
-  gap: 10px;
+  gap: 8px;
   z-index: 2;
 }
 
 .dots span {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .dots span.active {
   background: #fff;
-  transform: scale(1.3);
+  transform: scale(1.2);
 }
 
 @media (max-width: 1200px) {

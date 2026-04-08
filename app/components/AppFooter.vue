@@ -17,7 +17,7 @@ const { settings } = useSiteSettings()
           <span class="icon"><img src="https://meta.vn/images/icons/doi-tra-hang-icon.svg" alt="Đổi trả" class="badge-icon" /></span> Đổi trả trong 7 ngày
         </div>
         <div class="badge-item">
-          <span class="icon truck-icon"><i class="fa-solid fa-truck"></i></span> Giao hàng toàn quốc
+          <span class="icon truck-icon"><i class="fa-solid fa-truck-fast"></i></span> Giao hàng toàn quốc
         </div>
       </div>
     </div>
@@ -29,17 +29,23 @@ const { settings } = useSiteSettings()
         <div class="footer-col">
           <h5>Tổng đài hỗ trợ</h5>
           <div class="contact-block">
-            <p><strong>📞 Hotline</strong></p>
+            <p><strong><i class="fa-solid fa-phone"></i> Hotline</strong></p>
             <p>Mua hàng: <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-link">{{ settings.hotline }}</a></p>
             <p>Kỹ thuật: <a href="tel:19005068" class="phone-link">1900 5068</a></p>
           </div>
           <div class="contact-block">
-            <p><strong>🕒 Thời gian</strong></p>
+            <p><strong><i class="fa-solid fa-clock"></i> Thời gian</strong></p>
             <p>8h - 17h30 (Thứ 2 - Thứ 7)</p>
-            <p class="zalo-chat">
-              Chat Zalo 
-              <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="zalo-icon-img" />
-            </p>
+            <div class="zalo-chat">
+              <a :href="settings.zalo" target="_blank" class="chat-link">
+                Chat Zalo 
+                <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" />
+              </a>
+              <a :href="settings.facebook" target="_blank" class="chat-link fb">
+                Facebook 
+                <i class="fa-brands fa-facebook"></i>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -220,13 +226,30 @@ const { settings } = useSiteSettings()
 .zalo-chat {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   margin-top: 10px;
-  font-weight: bold;
 }
-.zalo-icon-img {
-  width: 24px;
-  height: 24px;
+.chat-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+  transition: color 0.2s;
+}
+.chat-link:hover {
+  color: #0068ff;
+}
+.chat-link.fb:hover {
+  color: #1877f2;
+}
+.chat-link i {
+  font-size: 20px;
+}
+.social-icon-img {
+  width: 20px;
+  height: 20px;
 }
 
 /* Social Links */

@@ -1,5 +1,5 @@
 <template>
-  <div class="brand-filter-grid" v-if="brands.length > 0">
+  <div :class="['brand-filter-grid', { 'is-sidebar': sidebar }]" v-if="brands.length > 0">
     <button 
       v-for="brand in displayBrands" 
       :key="brand.name"
@@ -10,8 +10,8 @@
       <img :src="getBrandImage(brand.name)" alt="" class="brand-icon" />
     </button>
     
-    <button v-if="brands.length > 11" class="brand-btn view-more" @click="expandBrands = !expandBrands">
-      Xem thêm<br>{{ brands.length - 11 }} hãng
+    <button v-if="brands.length > (sidebar ? 4 : 11)" class="brand-btn view-more" @click="expandBrands = !expandBrands">
+      {{ expandBrands ? 'Thu gọn' : 'Xem thêm' }}<br v-if="!sidebar">{{ brands.length - (sidebar ? 4 : 11) }} hãng
     </button>
   </div>
 </template>
@@ -21,7 +21,8 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   availableProducts: { type: Array, default: () => [] },
-  modelValue: { type: Array, default: () => [] }
+  modelValue: { type: Array, default: () => [] },
+  sidebar: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'brand-toggled'])
@@ -83,7 +84,8 @@ const brands = computed(() => {
 })
 
 const displayBrands = computed(() => {
-  return expandBrands.value ? brands.value : brands.value.slice(0, 11)
+  const limit = props.sidebar ? 4 : 11
+  return expandBrands.value ? brands.value : brands.value.slice(0, limit)
 })
 
 </script>
@@ -94,6 +96,13 @@ const displayBrands = computed(() => {
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   margin-bottom: 20px;
+}
+
+.brand-filter-grid.is-sidebar {
+  grid-template-columns: repeat(2, 1fr);
+  padding: 10px;
+  background: transparent;
+  margin-bottom: 0;
 }
 
 .brand-btn {

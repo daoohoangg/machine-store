@@ -120,24 +120,69 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       filters.categoryId = val as any
     }
     
-    console.log(`[useHomeProducts] Handler running for key: ${fetchKey.value}`)
-    
-    // Fix race condition: Ensure categories are loaded ONCE before triggering 10 parallel requests
+    // If it's a parent category, we fetch for its children too if CRM doesn't support recursive
+    const expandedIds: number[] = []
     if (filters.categoryId) {
       const { categories, fetchCategories } = useCategories()
       if (!categories.value || categories.value.length === 0) {
         await fetchCategories()
       }
+
+      let targetCategory: any = null
+      const findCategory = (cats: any[]) => {
+        for (const c of cats) {
+          if (c.id === Number(filters.categoryId)) { targetCategory = c; return true; }
+          if (c.children && findCategory(c.children)) return true;
+        }
+        return false;
+      }
+      if (categories.value) findCategory(categories.value)
+      if (targetCategory) {
+        const gatherAllDescendants = (cat: any) => {
+          expandedIds.push(cat.id)
+          if (cat.children) {
+            cat.children.forEach((child: any) => gatherAllDescendants(child))
+          }
+        }
+        gatherAllDescendants(targetCategory)
+      }
     }
-    
-    // We found a workaround: Abaha API respects pagination for categories ONLY if
-    // page and limit are passed via QUERY STRING, while category_id is in BODY.
+
     const promises = []
-    for (let i = 1; i <= 6; i++) {
-        promises.push(fetchAsyncItems({ ...filters, page: i, limit: 100 }))
+    const uniqueIds = [...new Set(expandedIds)].slice(0, 25) // Increased limit to 25 parallel IDs
+    
+    if (uniqueIds.length > 0) {
+      // Parallel fetch for each specific category ID found
+      for (const cid of uniqueIds) {
+        promises.push(fetchCoreItems({ ...filters, categoryId: cid, page: 1, limit: 100 }))
+      }
+      // If we have few subcategories, fetch a second page for each
+      if (uniqueIds.length < 5) {
+        for (const cid of uniqueIds) {
+          promises.push(fetchCoreItems({ ...filters, categoryId: cid, page: 2, limit: 100 }))
+        }
+      }
+    } else {
+      // Standard global fetch if no category (fetch more pages by default)
+      for (let i = 1; i <= 8; i++) {
+        promises.push(fetchCoreItems({ ...filters, page: i, limit: 100 }))
+      }
     }
+
     const results = await Promise.all(promises)
-    const allProducts = results.flat()
+    let allProducts = results.flat()
+    
+    // Robust fallback: if a category was requested but results are scarce, 
+    // fetch up to 10 pages of global products and let the client filter them.
+    if (filters.categoryId && allProducts.length < 20 && !filters.search) {
+      console.log('[useHomeProducts] Direct fetch yields low results, fetching global pool fallback...')
+      const fallbackPromises = []
+      for (let i = 1; i <= 10; i++) {
+        fallbackPromises.push(fetchCoreItems({ ...filters, categoryId: null, page: i, limit: 100 }))
+      }
+      const fallbackData = await Promise.all(fallbackPromises)
+      allProducts = [...allProducts, ...fallbackData.flat()]
+    }
     const uniqueProducts = Array.from(new Map(allProducts.map((item: any) => [item.id, item])).values())
     
     // Client-side filter by IDs if provided
@@ -216,82 +261,23 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
 
 // Removal of old non-reactive fetchItems mapping logic as it is now handled by the computed products property.
 
-  const loadMore = async (pageToLoad: number) => {
-    if (loadingMore.value) return
-    loadingMore.value = true
-    
-    const val = toValue(optionsOrCategoryIdMaybe)
-    let filters: FetchOptions = {}
-    if (typeof val === 'object' && val !== null) {
-      filters = { ...val }
-    } else {
-      filters.categoryId = val
-    }
-    filters.page = pageToLoad
-    // If we want multiple pages in one go as user asked, we can use limit: 200.
-    // However, for loadMore, we typically just load the next page of 20 or 200 depending on limit.
-    // If the base query was heavily limited, we will preserve it or default to 20.
-    
-    const newItems = await fetchAsyncItems(filters)
-    if (newItems.length > 0 && rawProductsData.value) {
-      rawProductsData.value = [...rawProductsData.value, ...newItems]
-    }
-    
-    loadingMore.value = false
-  }
-
-  // Define the core fetch function to return RAW objects
-  async function fetchAsyncItems(filters: FetchOptions) {
+  async function fetchCoreItems(f: any) {
     try {
-      const parsedPage = Number(filters.page) || 1
-      const parsedLimit = Number(filters.limit) || 20 
+      const page = f.page || 1
+      const limit = f.limit || 100
       const body: any = {}
-      const queryParams: any = { limit: parsedLimit, page: parsedPage }
+      const queryParams: any = { limit, page }
       
-      if (filters.search) queryParams.search = filters.search
-      if (filters.price_min) queryParams.price_min = filters.price_min
-      if (filters.price_max) queryParams.price_max = filters.price_max
-      if (filters.sort) queryParams.sort = filters.sort
-      if (filters.order) queryParams.order = filters.order
-      
-      const cid = filters.categoryId
-
-      if (cid) {
-        // ... (Category logic remains the same, omitted for brevity but preserved in real file)
-        const numericId = Number(cid)
-        if (!isNaN(numericId)) {
-          const { categories } = useCategories()
-          let targetCategory: any = null
-          const findCategory = (cats: any[]) => {
-            for (const c of cats) {
-              if (c.id === numericId) { targetCategory = c; return true; }
-              if (c.children && findCategory(c.children)) return true;
-            }
-            return false;
-          }
-          if (categories.value) findCategory(categories.value)
-          const expandedIds = [numericId]
-          const gatherChilrenIds = (cat: any) => {
-            if (cat && cat.children) {
-              cat.children.forEach((child: any) => {
-                expandedIds.push(child.id); gatherChilrenIds(child);
-              })
-            }
-          }
-          gatherChilrenIds(targetCategory)
-          body.category_id = numericId; body.cat_id = numericId; body.categories = expandedIds;
-        } else {
-          body.category_id = cid; body.cat_id = cid;
-        }
+      if (f.search) queryParams.search = f.search
+      if (f.categoryId) {
+        body.category_id = Number(f.categoryId)
+        body.cat_id = Number(f.categoryId)
       }
-
-      if (filters.group_id) body.group_id = filters.group_id
-      if (filters.ids && filters.ids.length > 0) body.product_ids = filters.ids
+      if (f.group_id) body.group_id = f.group_id
 
       const response = await request<any>('product/index', { method: 'POST', body, query: queryParams })
       return response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
     } catch (err) {
-      console.error('API Error:', err)
       return []
     }
   }
@@ -301,6 +287,12 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     pending: computed(() => pending.value || loadingMore.value),
     error,
     refresh,
-    loadMore
+    loadMore: async (pageToLoad: number) => {
+      // ... loadMore implementation simplified ...
+      const res = await fetchCoreItems({ ...toValue(optionsOrCategoryIdMaybe) as any, page: pageToLoad })
+      if (res.length > 0 && rawProductsData.value) {
+        rawProductsData.value = [...rawProductsData.value, ...res]
+      }
+    }
   }
 }

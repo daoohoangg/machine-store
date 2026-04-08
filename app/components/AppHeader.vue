@@ -404,7 +404,7 @@ onBeforeUnmount(() => {
   border-style: solid;
   border-color: transparent transparent #e31b1b transparent;
 }
-.hotline-item:hover .hl-number {
+ .hotline-item:hover .hl-number {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(12px);

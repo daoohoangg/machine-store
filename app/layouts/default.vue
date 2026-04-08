@@ -20,13 +20,25 @@
     <div class="mobile-menu-overlay" v-if="isMobileMenuOpen" @click="closeMobileMenu"></div>
 
     <!-- Floating Phone Icon -->
-    <div class="floating-phone-container" v-if="!isAdminPage">
+    <div 
+      class="floating-phone-container" 
+      v-if="!isAdminPage"
+      @mouseenter="isPhoneMenuOpen = true"
+      @mouseleave="isPhoneMenuOpen = false"
+    >
       <div v-show="isPhoneMenuOpen" class="phone-menu shadow-lg">
-        <a href="tel:0995556969" class="phone-menu-item">
-          <i class="fa-solid fa-cart-shopping"></i> Mua hàng: <strong>0995.556.969</strong>
+        <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')" class="phone-menu-item">
+          <i class="fa-solid fa-cart-shopping"></i> Mua hàng: <strong>{{ settings.hotline }}</strong>
         </a>
         <a href="tel:19005068" class="phone-menu-item">
           <i class="fa-solid fa-headset"></i> Kỹ thuật: <strong>1900 5068</strong>
+        </a>
+        <div class="menu-divider"></div>
+        <a :href="settings.zalo" target="_blank" class="phone-menu-item zalo-item">
+          <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="mini-zalo-img" /> Chat qua Zalo
+        </a>
+        <a :href="settings.facebook" target="_blank" class="phone-menu-item fb-item">
+          <i class="fa-brands fa-facebook"></i> Kết nối Facebook
         </a>
       </div>
       <button @click="togglePhoneMenu" class="floating-phone" aria-label="Gọi ngay">
@@ -45,6 +57,9 @@
 import { ref, provide, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMobileMenu } from '~/composables/useMobileMenu'
+import { useSiteSettings } from '~/composables/useSiteSettings'
+
+const { settings } = useSiteSettings()
 
 const route = useRoute()
 const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
@@ -178,6 +193,31 @@ provide('searchState', {
   font-size: 16px;
   width: 20px;
   text-align: center;
+}
+
+.menu-divider {
+  height: 1px;
+  background: #eee;
+  margin: 5px 0;
+}
+
+.mini-zalo-img {
+  width: 20px;
+  height: 20px;
+}
+
+.zalo-item:hover {
+  background: #e3f2fd;
+  color: #0068ff;
+}
+
+.fb-item i {
+  color: #1877f2 !important;
+}
+
+.fb-item:hover {
+  background: #e7f3ff;
+  color: #1877f2;
 }
 
 @keyframes slide-up {

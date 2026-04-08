@@ -7,25 +7,20 @@ const defaultPolicies = {
     icon: 'fa-credit-card',
     updatedAt: '2025-12-31 11:36:08',
     content: `<h2>Hình thức thanh toán</h2>
-<p><strong>1. Khách hàng thanh toán trực tiếp tại địa chỉ văn phòng:</strong></p>
+<p><strong>1. Nhận hàng thanh toán tại nhà (COD):</strong></p>
 <ul>
-  <li><em>Tại Hà Nội:</em><br>
-  Địa chỉ: Số 04/202 Cổ Linh – phường Long Biên – QUận Long Biên - Thành Phố Hà Nội<br>
-  SĐT : 0243.6700.443 . Thời gian phục vụ : từ 8h – 17h từ thứ 2 đến thứ 7</li>
-  <li><em>Tại Hồ Chí Minh:</em><br>
-  Địa chỉ: 350 Quốc lộ 1A – Phường Bình Hưng Hòa B – Quận Bình Tân – Thành Phố Hồ Chí Minh<br>
-  SĐT : 0283.535.1394. Thời gian phục vụ : từ 8h – 17h từ thứ 2 đến thứ 7</li>
+  <li>Khách hàng thanh toán tiền hàng cho nhân viên giao hàng khi nhận sản phẩm.</li>
+  <li><strong>Lưu ý:</strong> Khách hàng tự thanh toán phí vận chuyển (phí ship) trực tiếp cho bên đơn vị vận chuyển theo thỏa thuận hoặc biểu phí của đơn vị đó.</li>
 </ul>
-<p><strong>2. Khách hàng chuyển khoản qua ngân hàng :</strong></p>
+<p><strong>2. Thanh toán bằng Mã QR / Chuyển khoản:</strong></p>
 <ul>
-  <li><em>Ngân Hàng TMCP Đầu tư và Phát triển Việt Nam (BIDV):</em><br>
-  Chi nhánh: Hưng Yên<br>
-  Chủ tài khoản: Trần Đình Tuệ / Giám đốc<br>
-  Số tài khoản: 4651.0002.999999</li>
-  <li><em>Ngân hàng Nông Nghiệp và Phát Triển Nông Thôn Việt Nam (AGRIBANK):</em><br>
-  Chi nhánh: Long Biên – Hà Nội<br>
-  Chủ tài khoản: Trần Đình Tuệ / Giám đốc<br>
-  Số tài khoản: 1220.205.005.210</li>
+  <li>Khách hàng thực hiện quét mã QR hiển thị tại trang thanh toán hoặc chuyển khoản trực tiếp vào tài khoản ngân hàng của Điện Máy Tuấn Minh.</li>
+  <li>Đơn hàng sẽ được xác nhận và đóng gói ngay sau khi hệ thống ghi nhận thanh toán thành công.</li>
+</ul>
+<p><strong>3. Thanh toán trực tiếp tại văn phòng:</strong></p>
+<ul>
+  <li><em>Hà Nội:</em> Số 04/202 Cổ Linh, Phường Long Biên, TP. Hà Nội (SĐT: 0243.6700.443)</li>
+  <li><em>Hồ Chí Minh:</em> 350 Quốc lộ 1A, Phường Bình Hưng Hòa B, Quận Bình Tân, TP. HCM (SĐT: 0283.535.1394)</li>
 </ul>`
   },
   khachHang: {

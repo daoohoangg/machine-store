@@ -12,60 +12,69 @@
       </ul>
     </div>
 
-    <!-- Brands Filter Block -->
-    <div class="filter-block" v-if="brands.length > 0">
-      <h3 class="filter-title">THƯƠNG HIỆU</h3>
+    <!-- Sorting Block -->
+    <div class="filter-block">
+      <h3 class="filter-title">SẮP XẾP SẢN PHẨM</h3>
       <div class="filter-content">
-        <div class="checkbox-list">
-          <label v-for="brand in displayBrands" :key="brand.name" class="checkbox-item">
+        <div class="product-count-sidebar">{{ productCount }} Sản phẩm</div>
+        <div class="sort-list-sidebar">
+          <label v-for="opt in sortOptions" :key="opt.id" class="sort-radio-item">
             <input 
-              type="checkbox" 
-              :value="brand.name" 
-              v-model="selectedBrands"
-              @change="emitFilters"
+              type="radio" 
+              :value="opt.id" 
+              v-model="currentSort"
+              @change="emitSort"
             />
-            <span class="checkmark"></span>
-            <span class="label-text">{{ brand.name }} ({{ brand.count }})</span>
+            <span class="radio-mark"></span>
+            <span class="label-text">{{ opt.label }}</span>
           </label>
         </div>
-        <button v-if="brands.length > 5" class="view-more-btn" @click="expandBrands = !expandBrands">
-          {{ expandBrands ? 'Thu gọn ▴' : 'Xem thêm ▾' }}
-        </button>
+      </div>
+    </div>
+    
+    <!-- Brands Filter Block -->
+    <div class="filter-block">
+      <h3 class="filter-title">THƯƠNG HIỆU</h3>
+      <div class="filter-content-compact">
+        <CategoryBrandFilter 
+          :available-products="availableProducts"
+          v-model="selectedBrands"
+          sidebar
+          @brand-toggled="emitFilters"
+        />
       </div>
     </div>
 
-    <!-- Price Range Filter Block -->
-    <div class="filter-block">
-      <h3 class="filter-title">KHOẢNG GIÁ (VNĐ)</h3>
-      <div class="filter-content">
-        <div class="checkbox-list">
-          <label v-for="range in priceRanges" :key="range.id" class="checkbox-item">
-            <input 
-              type="checkbox" 
-              :value="range.id" 
-              v-model="selectedPriceRanges"
-              @change="emitFilters"
-            />
-            <span class="checkmark"></span>
-            <span class="label-text">{{ range.label }}</span>
-          </label>
-        </div>
-      </div>
-    </div>
+
   </aside>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import CategoryBrandFilter from '~/components/category/CategoryBrandFilter.vue'
 
 const props = defineProps({
   categoryId: { type: Number, required: true },
   categoryName: { type: String, default: 'DANH MỤC' },
   subCategories: { type: Array, default: () => [] },
-  availableProducts: { type: Array, default: () => [] }
+  availableProducts: { type: Array, default: () => [] },
+  productCount: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['filter-changed'])
+const emit = defineEmits(['filter-changed', 'sort-changed'])
+
+const currentSort = ref('best_selling')
+const sortOptions = [
+  { id: 'best_selling', label: 'Bán chạy nhất' },
+  { id: 'price_asc', label: 'Giá tăng dần' },
+  { id: 'price_desc', label: 'Giá giảm dần' },
+  { id: 'discount', label: 'Giảm giá' },
+  { id: 'newest', label: 'Mới nhất' }
+]
+
+const emitSort = () => {
+  emit('sort-changed', currentSort.value)
+}
 
 const selectedBrands = ref<string[]>([])
 const selectedPriceRanges = ref<string[]>([])
@@ -195,6 +204,10 @@ const priceRanges = [
   padding: 15px;
 }
 
+.filter-content-compact {
+  padding: 5px;
+}
+
 .checkbox-list {
   display: flex;
   flex-direction: column;
@@ -273,5 +286,70 @@ const priceRanges = [
 
 .view-more-btn:hover {
   text-decoration: underline;
+}
+.product-count-sidebar {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1a73e8;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dotted #eee;
+}
+
+.sort-list-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sort-radio-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  user-select: none;
+}
+
+.sort-radio-item input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio-mark {
+  height: 16px;
+  width: 16px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  margin-right: 10px;
+  position: relative;
+}
+
+.sort-radio-item:hover input ~ .radio-mark {
+  border-color: #1a73e8;
+}
+
+.sort-radio-item input:checked ~ .radio-mark {
+  border-color: #1a73e8;
+  background-color: #f4f8ff;
+}
+
+.radio-mark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1a73e8;
+}
+
+.sort-radio-item input:checked ~ .radio-mark:after {
+  display: block;
 }
 </style>

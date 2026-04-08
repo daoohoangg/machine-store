@@ -47,14 +47,15 @@
       <h3 class="card-title">🧾 Hình thức thanh toán (Nhấn để chọn) <em>*</em></h3>
 
       <div class="payment-box">
-        <label class="radio-row"><input v-model="form.payment" type="radio" value="cod" /> Giao hàng và thu tiền tại nhà (COD)</label>
-        <label class="radio-row"><input v-model="form.payment" type="radio" value="bank" /> Chuyển khoản qua Ngân hàng, quét mã QR</label>
-        <label class="radio-row"><input v-model="form.payment" type="radio" value="online" /> Thanh toán trực tuyến</label>
-        <label class="radio-row"><input v-model="form.payment" type="radio" value="bnpl" /> Mua trước trả sau - BNPL</label>
+        <label class="radio-row">
+          <input v-model="form.payment" type="radio" value="cod" /> 
+          <i class="fa-solid fa-truck-fast"></i> Nhận hàng thanh toán tại nhà ( Khách chịu phí ship bên vận chuyển )
+        </label>
+        <label class="radio-row">
+          <input v-model="form.payment" type="radio" value="bank" /> 
+          <i class="fa-solid fa-qrcode"></i> Thanh toán bằng Mã QR
+        </label>
       </div>
-
-      <label class="check-row"><input v-model="form.needInvoice" type="checkbox" /> Yêu cầu Tuấn Minh xuất hóa đơn</label>
-      <label class="check-row"><input v-model="form.needEmail" type="checkbox" /> Nhập email để theo dõi đơn hàng</label>
 
       <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)"></textarea>
 
@@ -102,17 +103,29 @@
       </div>
 
       <div class="summary" v-if="cart.length > 0">
+        <div class="voucher-input-group">
+          <input v-model="voucherCode" type="text" placeholder="Nhập mã giảm giá..." :disabled="isApplyingVoucher" @keyup.enter="applyVoucher" />
+          <button @click="applyVoucher" :disabled="isApplyingVoucher || !voucherCode">
+            <i class="fa-solid fa-ticket"></i> Áp dụng
+          </button>
+        </div>
+        <p v-if="voucherStatus" :class="['voucher-status', voucherStatus.type]">{{ voucherStatus.text }}</p>
+
         <p><span>Tiền hàng:</span> <strong>{{ formatPrice(totalPrice) }}đ</strong></p>
+        <p v-if="discountValue > 0" class="discount-row">
+          <span>Giảm giá ({{ appliedVoucher?.code }}):</span> 
+          <strong>-{{ formatPrice(discountValue) }}đ</strong>
+          <button class="remove-voucher" title="Gỡ mã" @click="resetVoucher">✕</button>
+        </p>
         <p><span>Vận chuyển:</span> <strong>Chưa rõ</strong></p>
-        <p class="total"><span>Tổng tiền:</span> <strong>{{ formatPrice(totalPrice) }}đ</strong></p>
-        <a class="coupon" href="#">🏷 Mã khuyến mại</a>
+        <p class="total"><span>Tổng thanh toán:</span> <strong>{{ formatPrice(finalTotal) }}đ</strong></p>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, onMounted, ref } from 'vue'
+import { reactive, computed, onMounted, ref, watch } from 'vue'
 import { useCart } from '~/composables/useCart'
 import { useOrder } from '~/composables/useOrder'
 import { useLocations } from '~/composables/useLocations'
@@ -307,6 +320,65 @@ const formatPrice = (price: number | null) => {
 const isSendingOtp = ref(false)
 const errorMsg = ref('')
 
+// Voucher logic
+const voucherCode = ref('')
+const isApplyingVoucher = ref(false)
+const appliedVoucher = ref<any>(null)
+const voucherStatus = ref<{ type: 'success' | 'error', text: string } | null>(null)
+
+const discountValue = computed(() => {
+  if (!appliedVoucher.value) return 0
+  if (appliedVoucher.value.type === 'percent') {
+    let raw = (totalPrice.value * appliedVoucher.value.value) / 100
+    if (appliedVoucher.value.max_discount) {
+      raw = Math.min(raw, appliedVoucher.value.max_discount)
+    }
+    return Math.floor(raw)
+  }
+  return appliedVoucher.value.value
+})
+
+const finalTotal = computed(() => {
+  return Math.max(0, totalPrice.value - discountValue.value)
+})
+
+const applyVoucher = async () => {
+  if (!voucherCode.value) return
+  isApplyingVoucher.value = true
+  voucherStatus.value = null
+  
+  try {
+    const res: any = await $fetch('/api/vouchers/validate', {
+      method: 'POST',
+      body: { code: voucherCode.value, totalValue: totalPrice.value }
+    })
+    
+    if (res.success) {
+      appliedVoucher.value = res.data
+      voucherStatus.value = { type: 'success', text: `Áp dụng thành công mã ${res.data.code}` }
+    }
+  } catch (err: any) {
+    voucherStatus.value = { type: 'error', text: err.statusMessage || 'Mã giảm giá không hợp lệ' }
+    appliedVoucher.value = null
+  } finally {
+    isApplyingVoucher.value = false
+  }
+}
+
+const resetVoucher = () => {
+  appliedVoucher.value = null
+  voucherCode.value = ''
+  voucherStatus.value = null
+}
+
+// Ensure voucher is still valid if cart total changes
+watch(totalPrice, (newVal) => {
+  if (appliedVoucher.value && newVal < (appliedVoucher.value.min_order_value || 0)) {
+    resetVoucher()
+    voucherStatus.value = { type: 'error', text: 'Đơn hàng không còn đủ giá trị tối thiểu cho voucher này' }
+  }
+})
+
 const submitOrder = async () => {
   if (selectedItems.value.length === 0) {
     errorMsg.value = 'Vui lòng chọn sản phẩm'
@@ -363,6 +435,8 @@ const submitOrder = async () => {
       },
       items: cart.value,
       paymentMethod: form.payment,
+      voucherCode: appliedVoucher.value?.code || '',
+      discountAmount: discountValue.value,
       note: form.note,
       type: 'normal'
     })
@@ -587,11 +661,61 @@ textarea {
   color: #d4161c;
 }
 
-.coupon {
-  color: #0a67c7;
-  margin-top: 8px;
-  display: inline-block;
+.voucher-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
 }
+
+.voucher-input-group input {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.voucher-input-group button {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.voucher-status {
+  font-size: 13px;
+  margin-top: -8px;
+  margin-bottom: 10px;
+}
+
+.voucher-status.success { color: #2e7d32; }
+.voucher-status.error { color: #d32f2f; }
+
+.discount-row {
+  color: #d32f2f;
+  font-weight: 500;
+}
+
+.remove-voucher {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 5px;
+  padding: 2px;
+}
+
+.remove-voucher:hover { color: #333; }
 
 .empty {
   padding: 12px 0;

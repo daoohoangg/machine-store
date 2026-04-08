@@ -23,10 +23,12 @@
         <NuxtLink :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`" class="category-item" @click="closeMobileMenu">
           <div class="item-icon">
             <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
-            <span v-else>{{ item.icon }}</span>
+            <i v-else :class="item.icon"></i>
           </div>
           <span class="item-name">{{ item.name }}</span>
-          <span v-if="item.children && item.children.length > 0" class="arrow-icon">›</span>
+          <span v-if="item.children && item.children.length > 0" class="arrow-icon">
+            <i class="fa-solid fa-chevron-right"></i>
+          </span>
         </NuxtLink>
 
         <!-- Sub-menu -->
@@ -72,22 +74,22 @@ const route = useRoute()
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
-  if (key.includes('máy phát điện') || key.includes('may phat dien')) return '⚡'
-  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return '🚿'
-  if (key.includes('nén khí') || key.includes('nen khi')) return '💨'
-  if (key.includes('cưa xăng') || key.includes('cua xang')) return '🪚'
-  if (key.includes('cắt cỏ') || key.includes('cat co')) return '✂️'
-  if (key.includes('xới đất') || key.includes('xoi dat')) return '🚜'
-  if (key.includes('bơm nước') || key.includes('bom nuoc')) return '🌊'
-  if (key.includes('đầm') || key.includes('dam')) return '🏗️'
-  if (key.includes('động cơ') || key.includes('dong co')) return '⚙️'
-  if (key.includes('khoan đất') || key.includes('khoan dat')) return '🕳️'
-  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return '🧪'
-  if (key.includes('tỉa cành') || key.includes('tia canh')) return '🪴'
-  if (key.includes('hút bụi') || key.includes('hut bui')) return '🧹'
-  if (key.includes('cầm tay') || key.includes('cam tay')) return '🔧'
-  if (key.includes('xịt') || key.includes('xit')) return '🔫'
-  return '🛍️'
+  if (key.includes('máy phát điện') || key.includes('may phat dien')) return 'fa-solid fa-bolt'
+  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return 'fa-solid fa-car-wash'
+  if (key.includes('nén khí') || key.includes('nen khi')) return 'fa-solid fa-wind'
+  if (key.includes('cưa xăng') || key.includes('cua xang')) return 'fa-solid fa-lines-leaning'
+  if (key.includes('cắt cỏ') || key.includes('cat co')) return 'fa-solid fa-scissors'
+  if (key.includes('xới đất') || key.includes('xoi dat')) return 'fa-solid fa-tractor'
+  if (key.includes('bơm nước') || key.includes('bom nuoc')) return 'fa-solid fa-droplet'
+  if (key.includes('đầm') || key.includes('dam')) return 'fa-solid fa-hammer'
+  if (key.includes('động cơ') || key.includes('dong co')) return 'fa-solid fa-gear'
+  if (key.includes('khoan đất') || key.includes('khoan dat')) return 'fa-solid fa-bore-hole'
+  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return 'fa-solid fa-spray-can'
+  if (key.includes('tỉa cành') || key.includes('tia canh')) return 'fa-solid fa-leaf'
+  if (key.includes('hút bụi') || key.includes('hut bui')) return 'fa-solid fa-broom'
+  if (key.includes('cầm tay') || key.includes('cam tay')) return 'fa-solid fa-wrench'
+  if (key.includes('xịt') || key.includes('xit')) return 'fa-solid fa-spray-can-sparkles'
+  return 'fa-solid fa-box-open'
 }
 
 const normalizeCategoryName = (value: string | null | undefined) => {
