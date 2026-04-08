@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-page container">
+  <div class="admin-page">
     <div v-if="!isAdmin" class="login-wrapper">
       <div class="login-box">
         <h2>Đăng nhập quản trị</h2>
@@ -346,7 +346,6 @@ const saveSettings = () => {
 
 .admin-dashboard {
   width: 100%;
-  max-width: 800px;
 }
 
 .admin-header {

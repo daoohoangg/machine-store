@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-page container">
+  <div class="admin-page">
     <div v-if="!isAdmin" class="login-wrapper">
       <div class="login-box">
         <h2>Bạn cần đăng nhập quản trị</h2>
@@ -219,8 +219,7 @@ watch(activeGroup, () => {
 }
 
 .admin-dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .admin-header {

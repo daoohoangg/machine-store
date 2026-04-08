@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-page container">
+  <div class="admin-page">
     <div v-if="!isAdmin" class="login-wrapper">
       <div class="login-box">
         <h2>Bạn cần đăng nhập</h2>
@@ -352,8 +352,6 @@ const confirmDelete = async (account) => {
 
 .admin-dashboard {
   width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
 }
 
 .admin-header {

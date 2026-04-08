@@ -1,5 +1,5 @@
 <template>
-  <div class="vouchers-admin container">
+  <div class="vouchers-admin">
     <div class="admin-header">
       <div class="title-group">
         <NuxtLink to="/admin" class="back-link"><i class="fa-solid fa-arrow-left"></i> Quay lại Dashboard</NuxtLink>

@@ -1,5 +1,5 @@
 <template>
-  <div class="edit-price-page container">
+  <div class="edit-price-page">
     <div class="admin-card">
       <div class="header-back">
         <button class="back-btn" @click="$router.push('/admin')"><i class="fa-solid fa-arrow-left"></i> Trang quản trị</button>
@@ -149,8 +149,7 @@ const formatPrice = (p: number) => {
 }
 
 .admin-card {
-  max-width: 850px;
-  margin: 0 auto;
+  width: 100%;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);

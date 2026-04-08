@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-page container">
+  <div class="admin-page">
     <div v-if="!isAdmin" class="login-wrapper">
       <div class="login-box">
         <h2>Bạn cần đăng nhập quản trị</h2>
@@ -182,8 +182,6 @@ const handleImageError = (e) => {
 
 .admin-dashboard {
   width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
 }
 
 .admin-header {
