@@ -21,7 +21,11 @@ export const useCart = () => {
     const savedCart = localStorage.getItem('tuanminh_cart')
     if (savedCart) {
       try {
-        cart.value = JSON.parse(savedCart)
+        const parsed = JSON.parse(savedCart)
+        cart.value = parsed.map((item: any) => ({
+          ...item,
+          selected: item.selected !== undefined ? item.selected : true
+        }))
       } catch (e) {
         console.error('Không thể đọc giỏ hàng từ bộ nhớ cục bộ')
       }
@@ -103,16 +107,18 @@ export const useCart = () => {
       itemToSync = newItem
     }
 
-    // Call Abaha API for cart sync if user is logged in
-    if (userPhone.value && itemToSync) {
-      console.log('[Cart Sync] Syncing to Abaha...', itemToSync.title)
-      $fetch('/api/order/create', {
+    // Call Abaha API for cart sync if user identity is known
+    const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
+    if (phone && itemToSync) {
+      console.log(`[Cart Sync] ${existingIndex !== -1 ? 'Updating' : 'Adding'} item:`, itemToSync.title, 'Qty:', itemToSync.quantity)
+      
+      return $fetch('/api/order/create', {
         method: 'POST',
         body: {
           id: abahaOrderId.value, // Continue current session order if available
           receiver: {
             fullName: userName.value || 'Khách hàng',
-            phone: userPhone.value,
+            phone: phone,
             address: 'Chưa có địa chỉ'
           },
           items: cart.value, // Pass all items to ensure cart is synced correctly
@@ -125,10 +131,14 @@ export const useCart = () => {
           if (resp && resp.data && resp.data.id) {
               abahaOrderId.value = resp.data.id;
           }
+          return resp
       }).catch(err => {
         console.error('[Cart Sync] Error syncing to Abaha:', err)
+        throw err
       })
     }
+    
+    return Promise.resolve(null)
   }
 
   const removeFromCart = (id: string) => {

@@ -592,16 +592,16 @@ const pushToViewed = (item: HomeProduct) => {
   })
 }
 
-const handleAddToCart = () => {
+const handleAddToCart = async () => {
   if (!product.value) return
 
   for (let i = 0; i < quantity.value; i += 1) {
-    addToCart(product.value)
+    await addToCart(product.value)
   }
 }
 
-const handleBuyNow = () => {
-  handleAddToCart()
+const handleBuyNow = async () => {
+  await handleAddToCart()
   router.push('/checkout')
 }
 

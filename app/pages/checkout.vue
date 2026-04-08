@@ -147,7 +147,7 @@ const {
 } = useCart()
 const { createOrder, submitOrderToBackend } = useOrder()
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
-const { isUser, isAdmin, userName, userPhone, initAuth } = useAdminAuth()
+const { isUser, isAdmin, userName, userPhone, initAuth, setUser } = useAdminAuth()
 const { request } = useAbahaApi()
 const router = useRouter()
 const route = useRoute()
@@ -170,6 +170,9 @@ onMounted(async () => {
   
   if (authData?.authenticated && authData.user) {
     const u = authData.user
+    
+    // Synchronize global auth state so submitOrder doesn't redirect
+    setUser(u.name || u.full_name || u.phone, u.phone, !!u.isAdmin, u.premium_name || '')
     
     form.fullName = u.name || u.full_name || form.fullName
     form.phone = u.phone || form.phone
@@ -380,6 +383,7 @@ watch(totalPrice, (newVal) => {
 })
 
 const submitOrder = async () => {
+  console.log('[Checkout] submitOrder called', { cartLength: cart.value.length, selectedCount: selectedItems.value.length, isUser: isUser.value, isAdmin: isAdmin.value })
   if (selectedItems.value.length === 0) {
     errorMsg.value = 'Vui lòng chọn sản phẩm'
     return
@@ -397,7 +401,11 @@ const submitOrder = async () => {
   }
 
   if (!form.fullName || !form.phone || !form.address) {
-    errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng'
+    errorMsg.value = 'Vui lòng nhập đầy đủ thông tin nhận hàng (Họ tên, SĐT và Địa chỉ chi tiết)'
+    // Scroll to error
+    setTimeout(() => {
+      document.querySelector('.error-text')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
     return
   }
 
@@ -443,7 +451,10 @@ const submitOrder = async () => {
 
     if (isUser.value || isAdmin.value) {
       // Logged in: Directly submit and go to success
-      await submitOrderToBackend()
+      await submitOrderToBackend({
+        discountAmount: discountValue.value,
+        voucherCode: appliedVoucher.value?.code || ''
+      })
       clearCart()
       router.push('/order/success')
     } else {

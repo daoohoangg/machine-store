@@ -63,22 +63,37 @@ export const useOrder = () => {
     return currentOrder.value
   }
 
-  const submitOrderToBackend = async () => {
+  const submitOrderToBackend = async (extra?: { discountAmount?: number, voucherCode?: string }) => {
     if (!currentOrder.value) return null
     
     isLoading.value = true
     try {
-      const response: any = await $fetch('/api/order/update', {
+      console.log('[useOrder] Submitting order payload:', {
+        id: abahaOrderId.value,
+        receiver: currentOrder.value.receiver,
+        itemsCount: currentOrder.value.items.length,
+        status: 5
+      })
+
+      const response: any = await $fetch('/api/order/create', {
         method: 'POST',
         body: {
-          id: abahaOrderId.value, // Pass mandatory ID for update
+          id: abahaOrderId.value, // Pass ID if it exists; backend will handle create vs update
           receiver: currentOrder.value.receiver,
           items: currentOrder.value.items,
           note: currentOrder.value.meta.note,
           paymentMethod: currentOrder.value.meta.paymentMethod,
+          discount: extra?.discountAmount || 0,
+          voucher_code: extra?.voucherCode || '',
           status: 5 // As requested: status 5 for final submit (Đặt hàng)
         }
       })
+      
+      console.log('[useOrder] Submit response:', response)
+      
+      if (response.success && response.data?.id) {
+        abahaOrderId.value = response.data.id
+      }
       
       isLoading.value = false
       return response
