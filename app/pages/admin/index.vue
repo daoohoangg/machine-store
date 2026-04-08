@@ -27,6 +27,7 @@
           <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý Bài viết</NuxtLink>
           <NuxtLink to="/admin/accounts" class="btn-outline account-mgr-btn"><i class="fa-solid fa-users-gear"></i> Quản lý Tài khoản</NuxtLink>
           <NuxtLink to="/admin/edit-price" class="btn-outline price-mgr-btn"><i class="fa-solid fa-tags"></i> Cấu hình Giá</NuxtLink>
+          <NuxtLink to="/admin/vouchers" class="btn-outline voucher-mgr-btn"><i class="fa-solid fa-ticket"></i> Quản lý Voucher</NuxtLink>
           <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
         </div>
       </div>
@@ -58,6 +59,13 @@
           <div class="stat-info">
             <div class="stat-value">%</div>
             <div class="stat-label">Cấu hình chiết khấu</div>
+          </div>
+        </div>
+        <div class="stat-card" @click="$router.push('/admin/vouchers')">
+          <div class="stat-icon voucher"><i class="fa-solid fa-ticket"></i></div>
+          <div class="stat-info">
+            <div class="stat-value">{{ voucherCount }}</div>
+            <div class="stat-label">Mã giảm giá</div>
           </div>
         </div>
       </div>
@@ -151,6 +159,7 @@ const phoneInput = ref('')
 const loginError = ref('')
 const saveSuccess = ref(false)
 const isLoading = ref(false)
+const voucherCount = ref(0)
 
 const formSettings = ref({
   hotline: '',
@@ -167,12 +176,22 @@ onMounted(() => {
   initAuth()
   fetchManualGroups()
   loadNews()
+  fetchVoucherCount()
   
   // Sync initial form settings
   setTimeout(() => {
     formSettings.value = JSON.parse(JSON.stringify(settings.value))
   }, 100)
 })
+
+const fetchVoucherCount = async () => {
+  try {
+    const res = await $fetch('/api/admin/vouchers')
+    if (res.success) {
+      voucherCount.value = res.data.length
+    }
+  } catch (e) {}
+}
 
 const handleLogin = async () => {
   if (!phoneInput.value) return;
@@ -459,6 +478,7 @@ const saveSettings = () => {
 .stat-icon.new { background: linear-gradient(135deg, #4D96FF, #0061FF); }
 .stat-icon.news { background: linear-gradient(135deg, #6BCB77, #1B9C85); }
 .stat-icon.price { background: linear-gradient(135deg, #F273E6, #9D3CFF); }
+.stat-icon.voucher { background: linear-gradient(135deg, #FF6B6B, #EE5253); }
 
 .stat-value {
   font-size: 24px;
