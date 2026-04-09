@@ -16,19 +16,23 @@ export default defineEventHandler(async (event) => {
   const productItems = body.items?.map((item: any) => {
     const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
     return {
+      price: Number(item.price) || 0,
       product_code: productCode,
-      quantity: Number(item.quantity || 1),
-      price: Number(item.price) || 0
+      quantity: Number(item.quantity || 1)
     }
   }).filter((i: any) => i.product_code) || []
 
-  // Construct payload according to your provided JSON schema
+  // Get current date in YYYY-MM-DD format as per example "2021-09-09"
+  const now = new Date()
+  const dateStr = now.toISOString().split('T')[0]
+
+  // Construct payload according to the EXACT example provided
   const payload: any = {
-    id: String(orderId),
+    id: Number(orderId), // Convert to Number if it looks like one, Abaha usually likes integers
     product_items: productItems,
     discount: {
       price: Number(body.discount) || 0,
-      name: "Giảm giá"
+      name: body.voucher_code ? "giảm giá sản phẩm" : "không"
     },
     fee: {
       price: Number(body.fee) || 0,
@@ -36,15 +40,16 @@ export default defineEventHandler(async (event) => {
     },
     tel: body.receiver?.phone || body.tel || '',
     address_receiver: {
+      address_default: null,
       name: body.receiver?.fullName || body.name || '',
       tel: body.receiver?.phone || body.tel || '',
       address: body.receiver?.address || body.address || ''
     },
     user_note: body.note || "",
-    orders_time: Math.floor(Date.now() / 1000), // integer (seconds)
-    status: Number(body.status || 5), // status là 5
+    orders_time: dateStr, // String date "YYYY-MM-DD"
+    status: 5, // Status is 5 for Final Submit
     pos_id: body.pos_id || `DH${orderId}`,
-    pos_type: body.pos_type || 1, // Kiotviet (example)
+    pos_type: "kiotviet",
     check_product_inventory: false,
     check_product_status: false
   }
@@ -62,6 +67,8 @@ export default defineEventHandler(async (event) => {
       body: payload
     });
 
+    console.log('[Abaha Order Update API] Response:', JSON.stringify(response, null, 2));
+
     if (response.status === 0 || response.error || response.statusCode) {
       throw createError({
         statusCode: 400,
@@ -72,6 +79,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: response.data || { id: orderId },
+      sentPayload: payload,
       message: 'Cập nhật đơn hàng thành công'
     }
   } catch (error: any) {

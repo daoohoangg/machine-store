@@ -64,6 +64,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: response.data || response,
+      sentPayload: payload,
       message: 'Gửi đơn hàng thành công'
     }
 

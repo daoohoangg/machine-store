@@ -79,8 +79,8 @@ export const useOrder = () => {
   const submitOrderToBackend = async (extra?: { discountAmount?: number, voucherCode?: string }) => {
     if (!currentOrder.value) return null
     
-    // Always use the create endpoint as requested by the user
-    const endpoint = '/api/order/create'
+    // Use Update if we have an existing ID from cart sync, otherwise Create a new one
+    const endpoint = abahaOrderId.value ? '/api/order/update' : '/api/order/create'
     
     isLoading.value = true
     try {
@@ -95,7 +95,7 @@ export const useOrder = () => {
         status: 5 // Final submit
       }
 
-      console.log(`[useOrder] Payload for ${endpoint}:`, JSON.stringify(body, null, 2))
+      console.log(`[useOrder] FINAL SUBMISSION JSON for ${endpoint}:`, JSON.stringify(body, null, 2))
 
       const response: any = await $fetch(endpoint, {
         method: 'POST',

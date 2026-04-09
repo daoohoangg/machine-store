@@ -1,0 +1,52 @@
+{
+    "allow_status_update": [
+        {
+            "name": "Giỏ hàng",
+            "value": 1,
+            "is_active": true,
+            "selected": true
+        },
+        {
+            "name": "Đặt hàng",
+            "value": 5,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Duyệt",
+            "value": 10,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Đóng gói",
+            "value": 15,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Xuất kho",
+            "value": 20,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Hoàn thành",
+            "value": 25,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Hủy",
+            "value": 0,
+            "is_active": true,
+            "selected": false
+        },
+        {
+            "name": "Hoàn hàng",
+            "value": -2,
+            "is_active": true,
+            "selected": false
+        }
+    ]
+}
