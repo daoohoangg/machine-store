@@ -63,63 +63,73 @@
 
       <p v-if="errorMsg" class="error-text">{{ errorMsg }}</p>
 
-      <button class="submit-btn" :disabled="selectedItems.length === 0 || isSendingOtp" @click="submitOrder">
-        <span v-if="isSendingOtp">Đang xử lý...</span>
-        <span v-else>🛒 Gửi đơn hàng</span>
-      </button>
+      <ClientOnly>
+        <button class="submit-btn" :disabled="selectedItems.length === 0 || isSendingOtp" @click="submitOrder">
+          <span v-if="isSendingOtp">Đang xử lý...</span>
+          <span v-else>🛒 Gửi đơn hàng</span>
+        </button>
+      </ClientOnly>
     </section>
 
     <section class="checkout-cart-card">
       <h3 class="card-title">🛒 Danh sách sản phẩm</h3>
 
-      <label class="check-row select-all"><input type="checkbox" v-model="isAllSelected" /> Chọn tất cả</label>
-
-      <div v-if="cart.length === 0" class="empty">Giỏ hàng đang trống.</div>
-
-      <div v-else class="items">
-        <div v-for="item in cart" :key="item.id" class="item-row">
-          <input type="checkbox" :checked="item.selected" @change="toggleSelection(item.id)" />
-
-          <img :src="item.image" :alt="item.title" class="thumb" />
-
-          <div class="item-main">
-            <p class="name">{{ item.title }}</p>
-            <p class="gift" v-if="item.gift">🎁 Tặng áo thun (cho miền Nam)</p>
+      <ClientOnly>
+        <template #fallback>
+          <div class="loading-state-cart">
+            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải giỏ hàng...
           </div>
+        </template>
 
-          <div class="item-price">
-            <p>{{ formatPrice(item.price) }}đ</p>
-            <p v-if="item.oldPrice" class="old">{{ formatPrice(item.oldPrice) }}đ</p>
+        <label class="check-row select-all"><input type="checkbox" v-model="isAllSelected" /> Chọn tất cả</label>
+
+        <div v-if="cart.length === 0" class="empty">Giỏ hàng đang trống.</div>
+
+        <div v-else class="items">
+          <div v-for="item in cart" :key="item.id" class="item-row">
+            <input type="checkbox" :checked="item.selected" @change="toggleSelection(item.id)" />
+
+            <img :src="item.image" :alt="item.title" class="thumb" />
+
+            <div class="item-main">
+              <p class="name">{{ item.title }}</p>
+              <p class="gift" v-if="item.gift">🎁 Tặng áo thun (cho miền Nam)</p>
+            </div>
+
+            <div class="item-price">
+              <p>{{ formatPrice(item.price) }}đ</p>
+              <p v-if="item.oldPrice" class="old">{{ formatPrice(item.oldPrice) }}đ</p>
+            </div>
+
+            <div class="qty">
+              <button @click="updateQuantity(item.id, item.quantity - 1)" :disabled="item.quantity <= 1">-</button>
+              <span>{{ item.quantity }}</span>
+              <button @click="updateQuantity(item.id, item.quantity + 1)">+</button>
+            </div>
+
+            <button class="remove" @click="removeFromCart(item.id)">🗑 Xóa</button>
           </div>
-
-          <div class="qty">
-            <button @click="updateQuantity(item.id, item.quantity - 1)" :disabled="item.quantity <= 1">-</button>
-            <span>{{ item.quantity }}</span>
-            <button @click="updateQuantity(item.id, item.quantity + 1)">+</button>
-          </div>
-
-          <button class="remove" @click="removeFromCart(item.id)">🗑 Xóa</button>
         </div>
-      </div>
 
-      <div class="summary" v-if="cart.length > 0">
-        <div class="voucher-input-group">
-          <input v-model="voucherCode" type="text" placeholder="Nhập mã giảm giá..." :disabled="isApplyingVoucher" @keyup.enter="applyVoucher" />
-          <button @click="applyVoucher" :disabled="isApplyingVoucher || !voucherCode">
-            <i class="fa-solid fa-ticket"></i> Áp dụng
-          </button>
+        <div class="summary" v-if="cart.length > 0">
+          <div class="voucher-input-group">
+            <input v-model="voucherCode" type="text" placeholder="Nhập mã giảm giá..." :disabled="isApplyingVoucher" @keyup.enter="applyVoucher" />
+            <button @click="applyVoucher" :disabled="isApplyingVoucher || !voucherCode">
+              <i class="fa-solid fa-ticket"></i> Áp dụng
+            </button>
+          </div>
+          <p v-if="voucherStatus" :class="['voucher-status', voucherStatus.type]">{{ voucherStatus.text }}</p>
+
+          <p><span>Tiền hàng:</span> <strong>{{ formatPrice(totalPrice) }}đ</strong></p>
+          <p v-if="discountValue > 0" class="discount-row">
+            <span>Giảm giá ({{ appliedVoucher?.code }}):</span> 
+            <strong>-{{ formatPrice(discountValue) }}đ</strong>
+            <button class="remove-voucher" title="Gỡ mã" @click="resetVoucher">✕</button>
+          </p>
+          <p><span>Vận chuyển:</span> <strong>Chưa rõ</strong></p>
+          <p class="total"><span>Tổng thanh toán:</span> <strong>{{ formatPrice(finalTotal) }}đ</strong></p>
         </div>
-        <p v-if="voucherStatus" :class="['voucher-status', voucherStatus.type]">{{ voucherStatus.text }}</p>
-
-        <p><span>Tiền hàng:</span> <strong>{{ formatPrice(totalPrice) }}đ</strong></p>
-        <p v-if="discountValue > 0" class="discount-row">
-          <span>Giảm giá ({{ appliedVoucher?.code }}):</span> 
-          <strong>-{{ formatPrice(discountValue) }}đ</strong>
-          <button class="remove-voucher" title="Gỡ mã" @click="resetVoucher">✕</button>
-        </p>
-        <p><span>Vận chuyển:</span> <strong>Chưa rõ</strong></p>
-        <p class="total"><span>Tổng thanh toán:</span> <strong>{{ formatPrice(finalTotal) }}đ</strong></p>
-      </div>
+      </ClientOnly>
     </section>
   </div>
 </template>
@@ -784,5 +794,11 @@ textarea {
   .summary {
     width: 100%;
   }
+}
+
+.loading-state-cart {
+  padding: 30px;
+  text-align: center;
+  color: #888;
 }
 </style>

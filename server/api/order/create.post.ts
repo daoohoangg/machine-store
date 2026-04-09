@@ -1,112 +1,70 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const runtimeConfig = useRuntimeConfig()
-  const abahaToken = runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN
+  const abahaToken = runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN || '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA'
   const abahaCreateUrl = "https://publicapi.abaha.vn/order/create";
-  const abahaUpdateUrl = "https://publicapi.abaha.vn/order/update";
 
-  if (!abahaToken) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "ABAHA_TOKEN not configured"
-    })
-  }
-
-  // 1. Map incoming body to generic structure
+  // 1. Map incoming body to products structure
   const productItems = body.items?.map((item: any) => {
     const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
-    const quantity = Number(item.quantity || item.qty || 1)
-    const price = Number(item.price) || 0
-
     if (!productCode || productCode === 'null' || productCode === 'undefined') return null
 
     return {
       product_code: productCode,
-      quantity: quantity,
-      price: price
+      quantity: Number(item.quantity || 1),
+      price: Number(item.price) || 0
     }
   }).filter(Boolean) || []
 
-  const addressReceiver = {
-    name: body.receiver?.fullName || body.name || "Khách hàng",
-    tel: body.receiver?.phone || body.tel || "",
-    address: body.receiver?.address || body.address || ""
+  // 2. Build the payload according to your request (URL: .../order/create, orders_time: now)
+  const payload: any = {
+    product_items: productItems,
+    discount: { price: Number(body.discount) || 0, name: "Giảm giá" },
+    fee: { price: Number(body.fee) || 0, name: "Phí ship" },
+    tel: body.tel || body.receiver?.phone || "",
+    address_receiver: {
+      name: body.receiver?.fullName || body.name || "Khách hàng",
+      tel: body.receiver?.phone || body.tel || "",
+      address: body.receiver?.address || body.address || ""
+    },
+    user_note: body.note || "",
+    orders_time: Math.floor(Date.now() / 1000), // set Thời gian đặt là now
+    status: Number(body.status || 1)
   }
 
-  // Helper to build payload according to JSON schema
-  const buildPayload = (orderId?: string | number) => {
-    const payload: any = {
-      product_items: productItems,
-      discount: { price: Number(body.discount) || 0, name: "Giảm giá" },
-      fee: { price: Number(body.fee) || 0, name: "Phí ship" },
-      tel: body.tel || body.receiver?.phone || "",
-      address_receiver: addressReceiver,
-      user_note: body.note || "", // Keeping as string despite 'integer' label in user doc, as it's common sense
-      orders_time: Math.floor(Date.now() / 1000),
-      status: Number(body.status || 1)
-    }
-
-    if (orderId) {
-      payload.id = Number(orderId)
-      payload.pos_id = body.pos_id || `DH${orderId}`
-      payload.pos_type = "kiotviet"
-      payload.check_product_inventory = false
-      payload.check_product_status = false
-    }
-
-    return payload
+  // If an ID exists, we still include it in the payload but we call the CREATE endpoint as requested
+  if (body.id) {
+    payload.id = String(body.id)
+    payload.pos_id = body.pos_id || `DH${body.id}`
+    payload.pos_type = body.pos_type || 1
+    payload.check_product_inventory = false
+    payload.check_product_status = false
   }
+
+  console.log('[Abaha Order API] Calling CREATE API...');
+  console.log('[Abaha Order API] Payload:', JSON.stringify(payload, null, 2));
 
   try {
-    let response: any = null
+    const response: any = await $fetch(abahaCreateUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      query: { token: abahaToken },
+      body: payload
+    })
 
-    if (body.id) {
-      // Update Flow (JSON)
-      response = await $fetch(abahaUpdateUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        query: { token: abahaToken },
-        body: buildPayload(body.id)
+    console.log('[Abaha Order API] Response:', JSON.stringify(response, null, 2));
+
+    if (response.status === 0 || response.error || response.statusCode) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: response.message || response.statusMessage || "Lỗi khi tạo đơn hàng trên Abaha"
       })
-    } else {
-      // Create Flow (JSON)
-      console.log('[Abaha Order API] Creating order with payload:', buildPayload())
-      response = await $fetch(abahaCreateUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        query: { token: abahaToken },
-        body: buildPayload()
-      })
-
-      console.log('[Abaha Order API] Create Response:', response)
-
-      if (response.status === 0 || response.error || response.statusCode) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: response.message || response.statusMessage || "Lỗi khi tạo đơn hàng trên Abaha"
-        })
-      }
-
-      // If we need an immediate status update (e.g. to status 5)
-      const newOrderId = response.data?.id
-      if (newOrderId && !body.skipUpdate) {
-        try {
-          await $fetch(abahaUpdateUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            query: { token: abahaToken },
-            body: buildPayload(newOrderId)
-          })
-        } catch (updateError: any) {
-          console.error('[Abaha Order API] Final Update Error:', updateError.message)
-        }
-      }
     }
 
     return {
       success: true,
       data: response.data || response,
-      message: body.id ? 'Cập nhật đơn hàng thành công' : 'Tạo đơn hàng thành công'
+      message: 'Gửi đơn hàng thành công'
     }
 
   } catch (error: any) {

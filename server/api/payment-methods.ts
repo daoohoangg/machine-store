@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
         .order('order', { ascending: true })
 
       if (error) {
-        // If table doesn't exist yet, return a helpful error or empty array
-        // In a real migration we might check for table existence
+        // If the table doesn't exist, this will throw
+        // The user MUST create the table in Supabase dashboard
         throw error
       }
       return methods || []
@@ -26,13 +26,13 @@ export default defineEventHandler(async (event) => {
 
   if (method === 'POST') {
     try {
-      const body = await readBody(event) // This is an array of payment method items
+      const body = await readBody(event) // array of methods
       
-      // Delete all existing methods first to keep it simple (upsert matching is complex via client)
+      // Delete all existing and insert new
       const { error: deleteError } = await supabase
         .from('payment_methods')
         .delete()
-        .neq('id', -1) // Delete all
+        .neq('id', -1)
 
       if (deleteError) throw deleteError
 
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
         title: item.title || '',
         description: item.description || '',
         icon: item.icon || 'fa-credit-card',
-        is_active: item.is_active !== undefined ? item.is_active : true,
+        is_active: !!item.is_active,
         order: item.order || 0
       }))
 

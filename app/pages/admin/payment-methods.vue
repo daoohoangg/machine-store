@@ -126,8 +126,12 @@ const fetchMethods = async () => {
   try {
     const data = await $fetch('/api/payment-methods')
     if (data.error) throw new Error(data.error)
-    // Add temp_id for vuedraggable
-    methods.value = (data || []).map(m => ({ ...m, temp_id: Math.random() }))
+    // Add temp_id and ensure is_active is boolean (SQLite returns 1/0)
+    methods.value = (data || []).map(m => ({ 
+      ...m, 
+      temp_id: Math.random(),
+      is_active: !!m.is_active
+    }))
   } catch (e) {
     console.error(e)
     errorMsg.value = 'Lỗi khi tải dữ liệu. Bạn đã chạy SQL chưa?'

@@ -1,6 +1,6 @@
 <template>
   <header class="app-header">
-    <div class="top-banner">
+    <div class="top-banner" v-if="showPromo">
       <NuxtLink to="/">
         <img src="~/assets/img/banner/top-banner.jpg" alt="Khuyến mãi" class="top-banner-img" />
       </NuxtLink>
@@ -138,6 +138,10 @@ defineProps({
   alignWithMain: {
     type: Boolean,
     default: false
+  },
+  showPromo: {
+    type: Boolean,
+    default: true
   }
 })
 

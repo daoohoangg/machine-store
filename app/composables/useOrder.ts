@@ -34,7 +34,20 @@ const generateOrderId = () => {
 
 export const useOrder = () => {
   const currentOrder = useState<OrderData | null>('current_order', () => null)
-  const abahaOrderId = useState<number | string | null>('abaha_order_id', () => null)
+  const abahaOrderId = useState<number | string | null>('abaha_order_id', () => {
+    if (process.client) {
+      return localStorage.getItem('abaha_order_id')
+    }
+    return null
+  })
+  
+  if (process.client) {
+    watch(abahaOrderId, (newId) => {
+      if (newId) localStorage.setItem('abaha_order_id', String(newId))
+      else localStorage.removeItem('abaha_order_id')
+    })
+  }
+
   const hasOrder = computed(() => !!currentOrder.value)
   const isLoading = useState<boolean>('order_loading', () => false)
 
@@ -66,27 +79,27 @@ export const useOrder = () => {
   const submitOrderToBackend = async (extra?: { discountAmount?: number, voucherCode?: string }) => {
     if (!currentOrder.value) return null
     
+    // Always use the create endpoint as requested by the user
+    const endpoint = '/api/order/create'
+    
     isLoading.value = true
     try {
-      console.log('[useOrder] Submitting order payload:', {
+      const body = {
         id: abahaOrderId.value,
         receiver: currentOrder.value.receiver,
-        itemsCount: currentOrder.value.items.length,
-        status: 5
-      })
+        items: currentOrder.value.items,
+        note: currentOrder.value.meta.note,
+        paymentMethod: currentOrder.value.meta.paymentMethod,
+        discount: extra?.discountAmount || 0,
+        voucher_code: extra?.voucherCode || '',
+        status: 5 // Final submit
+      }
 
-      const response: any = await $fetch('/api/order/create', {
+      console.log(`[useOrder] Payload for ${endpoint}:`, JSON.stringify(body, null, 2))
+
+      const response: any = await $fetch(endpoint, {
         method: 'POST',
-        body: {
-          id: abahaOrderId.value, // Pass ID if it exists; backend will handle create vs update
-          receiver: currentOrder.value.receiver,
-          items: currentOrder.value.items,
-          note: currentOrder.value.meta.note,
-          paymentMethod: currentOrder.value.meta.paymentMethod,
-          discount: extra?.discountAmount || 0,
-          voucher_code: extra?.voucherCode || '',
-          status: 5 // As requested: status 5 for final submit (Đặt hàng)
-        }
+        body: body
       })
       
       console.log('[useOrder] Submit response:', response)
