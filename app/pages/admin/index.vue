@@ -28,6 +28,7 @@
           <NuxtLink to="/admin/accounts" class="btn-outline account-mgr-btn"><i class="fa-solid fa-users-gear"></i> Quản lý Tài khoản</NuxtLink>
           <NuxtLink to="/admin/edit-price" class="btn-outline price-mgr-btn"><i class="fa-solid fa-tags"></i> Cấu hình Giá</NuxtLink>
           <NuxtLink to="/admin/vouchers" class="btn-outline voucher-mgr-btn"><i class="fa-solid fa-ticket"></i> Quản lý Voucher</NuxtLink>
+          <NuxtLink to="/admin/payment-methods" class="btn-outline payment-mgr-btn"><i class="fa-solid fa-credit-card"></i> Quản lý Thanh toán</NuxtLink>
           <button class="btn-outline logout-btn" @click="handleLogout">Đăng xuất</button>
         </div>
       </div>

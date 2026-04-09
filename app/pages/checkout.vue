@@ -47,13 +47,13 @@
       <h3 class="card-title">🧾 Hình thức thanh toán (Nhấn để chọn) <em>*</em></h3>
 
       <div class="payment-box">
-        <label class="radio-row">
-          <input v-model="form.payment" type="radio" value="cod" /> 
-          <i class="fa-solid fa-truck-fast"></i> Nhận hàng thanh toán tại nhà ( Khách chịu phí ship bên vận chuyển )
-        </label>
-        <label class="radio-row">
-          <input v-model="form.payment" type="radio" value="bank" /> 
-          <i class="fa-solid fa-qrcode"></i> Thanh toán bằng Mã QR
+        <div v-if="paymentMethods.length === 0" class="loading-payments">
+          <i class="fa-solid fa-spinner fa-spin"></i> Đang tải hình thức thanh toán...
+        </div>
+        <label v-for="method in paymentMethods" :key="method.key" class="radio-row">
+          <input v-model="form.payment" type="radio" :value="method.key" /> 
+          <i :class="'fa-solid ' + (method.icon || 'fa-credit-card')"></i> {{ method.title }}
+          <span v-if="method.description" class="method-desc">({{ method.description }})</span>
         </label>
       </div>
 
@@ -156,6 +156,8 @@ const selectedProvinceCode = ref('')
 const selectedDistrictCode = ref('')
 const selectedWardCode = ref('')
 
+const paymentMethods = ref<any[]>([])
+
 const normalizeLocation = (val: string) => {
   if (!val) return ''
   return val.toLowerCase()
@@ -166,6 +168,24 @@ const normalizeLocation = (val: string) => {
 onMounted(async () => {
   await fetchProvinces()
   
+  // Fetch dynamic payment methods
+  try {
+    const pms: any = await $fetch('/api/payment-methods')
+    if (Array.isArray(pms)) {
+      paymentMethods.value = pms.filter(m => m.is_active)
+      if (paymentMethods.value.length > 0 && !form.payment) {
+        form.payment = paymentMethods.value[0].key
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load payment methods', e)
+    // Fallback to defaults if API fails
+    paymentMethods.value = [
+      { key: 'cod', title: 'Nhận hàng thanh toán tại nhà', icon: 'fa-truck-fast', description: 'Khách chịu phí ship' },
+      { key: 'bank', title: 'Thanh toán bằng Mã QR', icon: 'fa-qrcode' }
+    ]
+  }
+
   const authData: any = await $fetch('/api/auth/me')
   
   if (authData?.authenticated && authData.user) {
@@ -582,6 +602,18 @@ textarea {
   font-size: 14px;
   margin-bottom: 10px;
   font-weight: 600;
+}
+
+.loading-payments {
+  font-size: 13px;
+  color: #666;
+  padding: 5px 0;
+}
+
+.method-desc {
+  font-weight: normal;
+  color: #666;
+  margin-left: 5px;
 }
 
 .items {
