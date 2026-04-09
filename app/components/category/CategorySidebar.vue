@@ -13,7 +13,7 @@
     </div>
 
     <!-- Sorting Block -->
-    <div class="filter-block">
+    <div class="filter-block sort-filter-block">
       <h3 class="filter-title">SẮP XẾP SẢN PHẨM</h3>
       <div class="filter-content">
         <div class="product-count-sidebar">{{ productCount }} Sản phẩm</div>
@@ -351,5 +351,10 @@ const priceRanges = [
 
 .sort-radio-item input:checked ~ .radio-mark:after {
   display: block;
+}
+@media (max-width: 992px) {
+  .sort-filter-block {
+    display: none;
+  }
 }
 </style>

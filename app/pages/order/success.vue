@@ -94,7 +94,7 @@
       <div class="panel">
         <h4>Chat với chúng tôi</h4>
         <p>tuanminh.vn</p>
-        <p>Chat Zalo</p>
+        <p><a :href="settings.zalo" target="_blank" style="color: #0d6dc4; text-decoration: none;">Chat Zalo</a></p>
       </div>
 
       <div class="panel">
