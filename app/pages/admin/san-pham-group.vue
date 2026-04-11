@@ -175,7 +175,14 @@ onMounted(async () => {
 })
 
 const searchResults = computed(() => {
-  return searchResultsRaw.value || []
+  const raw = searchResultsRaw.value || []
+  if (!searchQuery.value) return raw
+  
+  const q = searchQuery.value.toLowerCase().trim()
+  return raw.filter(p => 
+    (p.title && p.title.toLowerCase().includes(q)) || 
+    (p.productCode && p.productCode.toLowerCase().includes(q))
+  )
 })
 
 const currentGroupProductsLocal = ref([]) // Not needed anymore as we use computed directly from manualGroups

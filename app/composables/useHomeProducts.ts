@@ -163,8 +163,9 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         }
       }
     } else {
-      // Standard global fetch if no category (fetch more pages by default)
-      for (let i = 1; i <= 8; i++) {
+      // If searching, fetch only the first 2 pages for speed
+      const pagesToFetch = filters.search ? 2 : 8
+      for (let i = 1; i <= pagesToFetch; i++) {
         promises.push(fetchCoreItems({ ...filters, page: i, limit: 100 }))
       }
     }
@@ -268,12 +269,20 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       const body: any = {}
       const queryParams: any = { limit, page }
       
-      if (f.search) queryParams.search = f.search
+      if (f.search) {
+        queryParams.search = f.search
+        queryParams.keyword = f.search // Reliability: some Abaha versions use keyword
+        body.search = f.search
+        body.keyword = f.search
+      }
       if (f.categoryId) {
         body.category_id = Number(f.categoryId)
         body.cat_id = Number(f.categoryId)
       }
-      if (f.group_id) body.group_id = f.group_id
+      if (f.group_id) {
+        body.group_id = f.group_id
+        queryParams.group_id = f.group_id
+      }
 
       const response = await request<any>('product/index', { method: 'POST', body, query: queryParams })
       return response?.data?.products || response?.products || (Array.isArray(response?.data) ? response.data : [])
