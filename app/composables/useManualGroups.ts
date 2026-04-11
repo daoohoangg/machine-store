@@ -5,13 +5,13 @@ import { useAdminAuth } from './useAdminAuth'
 import { useMembershipPrices } from './useMembershipPrices'
 
 export interface ManualGroups {
-  'flash-sale': HomeProduct[]
+  'outlet-shop': HomeProduct[]
   'new-products': HomeProduct[]
 }
 
 export const useManualGroups = () => {
   const rawManualGroups = useState<ManualGroups>('manual-groups-raw', () => ({
-    'flash-sale': [],
+    'outlet-shop': [],
     'new-products': []
   }))
   const { userTier } = useAdminAuth()
@@ -25,7 +25,7 @@ export const useManualGroups = () => {
       const data = await $fetch<ManualGroups>('/api/manual-groups')
       if (data) {
         rawManualGroups.value = {
-          'flash-sale': (data['flash-sale'] || []).filter(p => typeof p === 'object' && p !== null),
+          'outlet-shop': (data['outlet-shop'] || []).filter(p => typeof p === 'object' && p !== null),
           'new-products': (data['new-products'] || []).filter(p => typeof p === 'object' && p !== null)
         }
       }
@@ -90,7 +90,7 @@ export const useManualGroups = () => {
     }
 
     return {
-      'flash-sale': applyPrices(rawManualGroups.value['flash-sale']),
+      'outlet-shop': applyPrices(rawManualGroups.value['outlet-shop']),
       'new-products': applyPrices(rawManualGroups.value['new-products'])
     }
   })

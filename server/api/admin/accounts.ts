@@ -1,6 +1,8 @@
 import { useSupabase } from '../../utils/supabase'
+import { requireAdmin } from '../../utils/adminAuth'
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
   const method = getMethod(event)
   const supabase = useSupabase()
 

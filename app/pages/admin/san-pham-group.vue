@@ -134,11 +134,11 @@ const { isAdmin, initAuth } = useAdminAuth()
 const { manualGroups, fetchManualGroups, saveManualGroups, addToGroup, removeFromGroup, clearGroup } = useManualGroups()
 
 const groupOptions = [
-  { id: 'flash-sale', name: 'Flash Sale (⚡)' },
+  { id: 'outlet-shop', name: 'OUTLET SHOP (⚡)' },
   { id: 'new-products', name: 'Sản phẩm mới (🆕)' }
 ]
 
-const activeGroup = ref('flash-sale')
+const activeGroup = ref('outlet-shop')
 const searchQuery = ref('')
 const groupSearchQuery = ref('')
 const isSaving = ref(false)

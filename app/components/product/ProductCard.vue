@@ -1,6 +1,6 @@
 <template>
   <article class="product-card">
-    <div v-if="isFlashSale && discountPercent" class="discount-ribbon">{{ discountPercent }}</div>
+    <div v-if="isOutletShop && discountPercent" class="discount-ribbon">{{ discountPercent }}</div>
 
     <NuxtLink v-if="detailPath" :to="detailPath" class="card-link" :aria-label="product.title">
       <div class="thumb-wrap">
@@ -25,7 +25,7 @@
         <div class="price-rating-row">
           <div class="price-col">
             <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="isFlashSale && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="old-price" v-if="isOutletShop && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -60,7 +60,7 @@
         <div class="price-rating-row">
           <div class="price-col">
             <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="isFlashSale && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="old-price" v-if="isOutletShop && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -93,9 +93,9 @@ const props = withDefaults(defineProps<{
     brand?: string
     reviews?: number
   }
-  isFlashSale?: boolean
+  isOutletShop?: boolean
 }>(), {
-  isFlashSale: false
+  isOutletShop: false
 })
 
 const emit = defineEmits(['image-error'])

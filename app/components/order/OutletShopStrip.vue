@@ -1,19 +1,19 @@
 <template>
-  <section class="flash-sale">
-    <div class="flash-head">
-      <h3>⚡ FLASH SALE</h3>
+  <section class="outlet-shop">
+    <div class="outlet-head">
+      <h3>⚡ OUTLET SHOP</h3>
       <div class="head-actions">
         <div class="nav-buttons" v-if="items.length > 4">
           <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">‹</button>
           <button class="nav-btn next" @click="scroll('right')" aria-label="Next">›</button>
         </div>
-        <NuxtLink to="/nhom-san-pham/flash-sale">Xem tất cả ›</NuxtLink>
+        <NuxtLink to="/nhom-san-pham/outlet-shop">Xem tất cả ›</NuxtLink>
       </div>
     </div>
 
-    <div class="flash-grid-wrapper">
-      <div class="flash-grid" ref="scrollContainer">
-        <NuxtLink v-for="item in items" :key="item.title" :to="`/san-pham/${item.slug}`" class="flash-card">
+    <div class="outlet-grid-wrapper">
+      <div class="outlet-grid" ref="scrollContainer">
+        <NuxtLink v-for="item in items" :key="item.title" :to="`/san-pham/${item.slug}`" class="outlet-card">
           <div v-if="item.discountPercent" class="discount-ribbon">{{ item.discountPercent }}</div>
 
           <div class="thumb">
@@ -54,12 +54,13 @@ import { computed, ref, onMounted } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useGroups } from '~/composables/useGroups'
 import { useManualGroups } from '~/composables/useManualGroups'
+import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
 
 const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
 
 const manualProducts = computed(() => {
-  return manualGroups.value['flash-sale'] || []
+  return manualGroups.value['outlet-shop'] || []
 })
 
 onMounted(() => {
@@ -69,18 +70,23 @@ onMounted(() => {
   fetchManualGroups()
 })
 
-const flashSaleGroupId = computed(() => {
+const outletGroupId = computed(() => {
   if (!groups.value) return null
-  const group = groups.value.find(g => g.slug === 'flas-sale' || g.name?.toUpperCase().includes('FLASH SALE') || g.name?.toUpperCase().includes('FLAS SALE'))
+  const group = groups.value.find(g => 
+    g.slug === 'outlet-shop' || 
+    g.slug === 'flash-sale' || 
+    g.name?.toUpperCase().includes('OUTLET SHOP') || 
+    g.name?.toUpperCase().includes('FLASH SALE')
+  )
   return group?.id || null
 })
 
 const fetchOptions = computed<FetchOptions>(() => {
-  if (flashSaleGroupId.value) {
-    return { group_id: flashSaleGroupId.value, limit: 100 }
+  if (outletGroupId.value) {
+    return { group_id: outletGroupId.value, limit: 100 }
   }
   // Fallback if not found yet
-  return { search: 'Flash Sale', limit: 100 }
+  return { search: 'Outlet Shop', limit: 100 }
 })
 
 const { products } = useHomeProducts(fetchOptions)
@@ -138,8 +144,7 @@ const items = computed(() => {
   return unique
     .filter((item) => !isImageFailed(item.image))
     .sort((a, b) => {
-      // Prioritize manual products if they have priority in the list
-      const manualIds = manualGroups.value['flash-sale'].map(p => String(p.id))
+      const manualIds = manualGroups.value['outlet-shop'].map(p => String(p.id))
       const aManualIdx = manualIds.indexOf(String(a.id))
       const bManualIdx = manualIds.indexOf(String(b.id))
       
@@ -180,13 +185,13 @@ const formatPrice = (value: number | null) => {
 </script>
 
 <style scoped>
-.flash-sale {
+.outlet-shop {
   margin-top: 12px;
   background: #4d90e0;
   border-radius: 4px;
 }
 
-.flash-head {
+.outlet-head {
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -194,13 +199,13 @@ const formatPrice = (value: number | null) => {
   padding: 10px 12px;
 }
 
-.flash-head h3 {
+.outlet-head h3 {
   margin: 0;
   font-size: 24px;
   color: #fff;
 }
 
-.flash-head a {
+.outlet-head a {
   color: #fff;
   text-decoration: none;
   font-weight: 500;
@@ -239,31 +244,30 @@ const formatPrice = (value: number | null) => {
   background: #f1f1f1;
 }
 
-.flash-grid-wrapper {
+.outlet-grid-wrapper {
   position: relative;
   width: 100%;
 }
 
-.flash-grid {
+.outlet-grid {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
   gap: 12px;
   padding: 0 4px 8px;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.flash-grid::-webkit-scrollbar {
+.outlet-grid::-webkit-scrollbar {
   display: none;
 }
 
-.flash-card {
-  flex: 0 0 calc(20% - 9.6px); /* 5 items per view */
+.outlet-card {
+  flex: 0 0 calc(20% - 9.6px);
   min-width: 200px;
   background: #fff;
-  border: 2px solid #3b82f6; /* Blue border */
+  border: 2px solid #3b82f6;
   border-radius: 4px;
   overflow: hidden;
   position: relative;
@@ -273,7 +277,7 @@ const formatPrice = (value: number | null) => {
   color: inherit;
 }
 
-.flash-card:hover {
+.outlet-card:hover {
   border-color: #2563eb;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
@@ -329,9 +333,9 @@ const formatPrice = (value: number | null) => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-size: 14px;
-  color: #da251d; /* Red title */
+  color: #da251d;
   line-height: 1.4;
-  height: 39.2px; /* 2 lines of text */
+  height: 39.2px;
   margin: 0 0 6px;
   font-weight: 400;
 }
@@ -343,13 +347,13 @@ const formatPrice = (value: number | null) => {
 }
 
 .price-box {
-  background: #da251d; /* Red box */
+  background: #da251d;
   color: #fff;
   padding: 8px 10px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin: 0 4px 4px; /* Small gap from border */
+  margin: 0 4px 4px;
   border-radius: 2px;
 }
 
@@ -401,8 +405,8 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 1200px) {
-  .flash-card {
-    flex: 0 0 calc(25% - 9px); /* 4 items per view */
+  .outlet-card {
+    flex: 0 0 calc(25% - 9px);
   }
 
   .thumb {
@@ -411,7 +415,7 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 768px) {
-  .flash-card {
+  .outlet-card {
     flex: 0 0 calc(60% - 6px);
     min-width: 180px;
   }
@@ -425,4 +429,3 @@ const formatPrice = (value: number | null) => {
   }
 }
 </style>
-

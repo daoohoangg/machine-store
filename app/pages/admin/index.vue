@@ -37,8 +37,8 @@
         <div class="stat-card" @click="$router.push('/admin/san-pham-group')">
           <div class="stat-icon flash"><i class="fa-solid fa-bolt"></i></div>
           <div class="stat-info">
-            <div class="stat-value">{{ manualGroups['flash-sale']?.length || 0 }}</div>
-            <div class="stat-label">Sản phẩm Flash Sale</div>
+            <div class="stat-value">{{ manualGroups['outlet-shop']?.length || 0 }}</div>
+            <div class="stat-label">Sản phẩm OUTLET SHOP</div>
           </div>
         </div>
         <div class="stat-card" @click="$router.push('/admin/san-pham-group')">

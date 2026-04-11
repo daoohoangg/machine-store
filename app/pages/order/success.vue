@@ -106,14 +106,14 @@
     </aside>
 
     <section class="full-width">
-      <OrderFlashSaleStrip />
+      <OrderOutletShopStrip />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import OrderFlashSaleStrip from '~/components/order/FlashSaleStrip.vue'
+import OrderOutletShopStrip from '~/components/order/OutletShopStrip.vue'
 import { useOrder } from '~/composables/useOrder'
 import { useSiteSettings } from '~/composables/useSiteSettings'
 

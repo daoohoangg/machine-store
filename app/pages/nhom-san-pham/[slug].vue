@@ -25,7 +25,7 @@
         v-for="p in products" 
         :key="p.id" 
         :product="p" 
-        :is-flash-sale="slug === 'flash-sale'"
+        :is-outlet-shop="slug === 'outlet-shop' || slug === 'flash-sale'"
       />
     </div>
   </div>
@@ -46,13 +46,13 @@ const { groups, fetchGroups } = useGroups()
 const { isImageFailed } = useImageGuard()
 
 const groupName = computed(() => {
-  if (slug === 'flash-sale') return 'Flash Sale (⚡)'
+  if (slug === 'outlet-shop' || slug === 'flash-sale') return 'OUTLET SHOP (⚡)'
   if (slug === 'new-products' || slug === 'san-pham-moi') return 'Sản phẩm mới (🆕)'
   return 'Nhóm sản phẩm'
 })
 
 const manualKey = computed(() => {
-  if (slug === 'flash-sale') return 'flash-sale'
+  if (slug === 'outlet-shop' || slug === 'flash-sale') return 'outlet-shop'
   if (slug === 'new-products' || slug === 'san-pham-moi') return 'new-products'
   return null
 })
@@ -66,9 +66,10 @@ const manualPending = computed(() => false)
 
 const apiGroupId = computed(() => {
   if (!groups.value) return null
-  const searchName = slug === 'flash-sale' ? 'FLASH SALE' : 'SẢN PHẨM MỚI'
+  const searchName = (slug === 'outlet-shop' || slug === 'flash-sale') ? 'OUTLET SHOP' : 'SẢN PHẨM MỚI'
   const group = groups.value.find(g => 
     g.name?.toUpperCase().includes(searchName) || 
+    g.name?.toUpperCase().includes('FLASH SALE') || 
     g.slug?.toLowerCase().includes(slug.toLowerCase())
   )
   return group?.id || null

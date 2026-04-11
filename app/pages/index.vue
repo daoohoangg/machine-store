@@ -16,7 +16,7 @@
     <div class="full-width-section">
       <HomePromoRow class="hide-on-mobile" />
       <div class="container">
-        <OrderFlashSaleStrip class="mt-section" />
+        <OrderOutletShopStrip class="mt-section" />
         <HomeCategoryRow class="mt-section" />
         <ProductSuggestion />
         

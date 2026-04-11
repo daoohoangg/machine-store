@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
         
         if (error) throw error
 
-        const result: any = { "flash-sale": [], "new-products": [] }
+        const result: any = { "outlet-shop": [], "new-products": [] }
         if (rows) {
           for (const row of rows) {
             if (!result[row.group_key]) result[row.group_key] = []
