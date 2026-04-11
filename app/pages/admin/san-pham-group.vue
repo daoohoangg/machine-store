@@ -35,7 +35,7 @@
           <div class="section-title-row">
             <h3>Sản phẩm trong nhóm ({{ currentGroupProducts.length }})</h3>
             <div class="clear-all-controls">
-              <button v-if="currentGroupProducts.length > 0 && !showConfirmClear" class="btn-clear-all" @click="showConfirmClear = true">
+              <button v-if="manualGroups[activeGroup]?.length > 0 && !showConfirmClear" class="btn-clear-all" @click="showConfirmClear = true">
                 <i class="fa-solid fa-broom"></i> Xóa tất cả
               </button>
               <div v-if="showConfirmClear" class="confirm-box">
@@ -45,9 +45,20 @@
               </div>
             </div>
           </div>
+
+          <!-- Group Filter -->
+          <div class="search-box-mini">
+            <input 
+              type="text" 
+              v-model="groupSearchQuery" 
+              placeholder="Lọc sản phẩm trong nhóm theo tên..." 
+            />
+            <i class="fa-solid fa-filter search-icon"></i>
+          </div>
+
           <div v-if="loadingManual" class="loading">Đang tải...</div>
           <div v-else-if="currentGroupProducts.length === 0" class="empty-state">
-            Chưa có sản phẩm nào trong nhóm này.
+            {{ groupSearchQuery ? 'Không tìm thấy sản phẩm nào khớp với từ khóa.' : 'Chưa có sản phẩm nào trong nhóm này.' }}
           </div>
           <div v-else class="product-list-mini">
             <div v-for="p in currentGroupProducts" :key="p.id" class="product-item-mini">
@@ -69,13 +80,14 @@
             <input 
               type="text" 
               v-model="searchQuery" 
-              placeholder="Tìm kiếm sản phẩm theo tên..." 
-              @input="onSearchInput"
+              placeholder="Tìm kiếm sản phẩm toàn hệ thống..." 
             />
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
           </div>
 
-          <div v-if="isSearching" class="loading">Đang tìm kiếm...</div>
+          <div v-if="searchPending" class="loading">
+            <div class="spinner"></div> Đang tìm kiếm...
+          </div>
           <div v-else-if="searchResults.length === 0 && searchQuery" class="empty-state">
             Không tìm thấy sản phẩm nào.
           </div>
@@ -128,7 +140,7 @@ const groupOptions = [
 
 const activeGroup = ref('flash-sale')
 const searchQuery = ref('')
-const isSearching = ref(false)
+const groupSearchQuery = ref('')
 const isSaving = ref(false)
 const showSuccess = ref(false)
 const loadingManual = ref(true)
@@ -145,7 +157,15 @@ const searchOptions = computed(() => {
 const { products: searchResultsRaw, pending: searchPending } = useHomeProducts(searchOptions)
 
 const currentGroupProducts = computed(() => {
-  return manualGroups.value[activeGroup.value] || []
+  const baseList = manualGroups.value[activeGroup.value] || []
+  if (!groupSearchQuery.value) return baseList
+  
+  const query = groupSearchQuery.value.toLowerCase()
+  return baseList.filter(p => 
+    p.title?.toLowerCase().includes(query) || 
+    p.id?.toString().includes(query) ||
+    p.productCode?.toLowerCase().includes(query)
+  )
 })
 
 onMounted(async () => {
@@ -163,13 +183,6 @@ const currentGroupProductsLocal = ref([]) // Not needed anymore as we use comput
 // and just map it to the store.
 
 const formatPrice = (p) => p?.toLocaleString('vi-VN') || '0'
-
-const onSearchInput = () => {
-  isSearching.value = true
-  setTimeout(() => {
-    isSearching.value = false
-  }, 500)
-}
 
 const isInActiveGroup = (id) => {
   return manualGroups.value[activeGroup.value].some(p => String(p.id) === String(id))
@@ -263,9 +276,10 @@ watch(activeGroup, () => {
 }
 
 .management-layout {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 30px;
+  align-items: start;
 }
 
 h3 {
@@ -361,6 +375,25 @@ h3 {
   top: 50%;
   transform: translateY(-50%);
   color: #888;
+}
+
+.search-box-mini {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-box-mini input {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fdfdfd;
+}
+
+.search-box-mini .search-icon {
+  font-size: 14px;
+  color: #aaa;
 }
 
 .product-list-mini, .search-results {
@@ -462,6 +495,24 @@ h3 {
   text-align: center;
   padding: 20px;
   color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-top: 2px solid #e31b1b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .notification-toast {
