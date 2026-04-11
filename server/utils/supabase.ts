@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
 export const useSupabase = () => {
-  const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_KEY
+  const config = useRuntimeConfig()
+  const url = config.public.supabaseUrl
+  const key = config.public.supabaseKey
 
   if (!url || !key) {
-    throw new Error('SUPABASE_URL and SUPABASE_KEY must be set in .env')
+    throw new Error('Supabase configuration missing in runtimeConfig (SUPABASE_URL/SUPABASE_KEY)')
   }
 
   return createClient(url, key)

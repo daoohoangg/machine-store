@@ -66,17 +66,14 @@ export const useAdminAuth = () => {
   }
 
   const login = async (phone: string) => {
-    // Legacy backdoor for admin login UI
-    if (phone === '0123' || phone === 'Admin 0123') {
-      setUser('Admin', '0123', true)
-      return { success: true }
-    }
+    // Normalize: strip 'Admin ' prefix if present from old UI
+    const normalizedPhone = phone.replace(/^Admin\s+/i, '').trim()
 
     try {
-      // Still allow checking for admin specifically via this endpoint if needed
+      // Always call server to ensure the admin_token httpOnly cookie is set
       const { data, error } = await useFetch('/api/admin/login', {
         method: 'POST',
-        body: { phone }
+        body: { phone: normalizedPhone }
       })
 
       if (error.value) throw error.value
