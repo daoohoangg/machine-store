@@ -54,6 +54,9 @@
               placeholder="Lọc sản phẩm trong nhóm theo tên..." 
             />
             <i class="fa-solid fa-filter search-icon"></i>
+            <button v-if="groupSearchQuery" class="clear-btn" @click="groupSearchQuery = ''" title="Xóa tìm kiếm">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
 
           <div v-if="loadingManual" class="loading">Đang tải...</div>
@@ -82,7 +85,11 @@
               v-model="searchQuery" 
               placeholder="Tìm kiếm sản phẩm toàn hệ thống..." 
             />
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <i v-if="!searchPending" class="fa-solid fa-magnifying-glass search-icon"></i>
+            <i v-else class="fa-solid fa-spinner fa-spin search-icon"></i>
+            <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''" title="Xóa tìm kiếm">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
 
           <div v-if="searchPending" class="loading">
@@ -146,11 +153,30 @@ const showSuccess = ref(false)
 const loadingManual = ref(true)
 const showConfirmClear = ref(false)
 
+const debouncedSearchQuery = ref('')
+const debouncedGroupSearchQuery = ref('')
+
+let searchTimer: any = null
+watch(searchQuery, (q) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    debouncedSearchQuery.value = q
+  }, 500)
+})
+
+let groupSearchTimer: any = null
+watch(groupSearchQuery, (q) => {
+  if (groupSearchTimer) clearTimeout(groupSearchTimer)
+  groupSearchTimer = setTimeout(() => {
+    debouncedGroupSearchQuery.value = q
+  }, 300)
+})
+
 // For searching products
 const searchOptions = computed(() => {
   const options = { limit: 100 } // Fetch more for selection
-  if (searchQuery.value) {
-    (options as any).search = searchQuery.value
+  if (debouncedSearchQuery.value) {
+    (options as any).search = debouncedSearchQuery.value
   }
   return options
 })
@@ -158,9 +184,9 @@ const { products: searchResultsRaw, pending: searchPending } = useHomeProducts(s
 
 const currentGroupProducts = computed(() => {
   const baseList = manualGroups.value[activeGroup.value] || []
-  if (!groupSearchQuery.value) return baseList
+  if (!debouncedGroupSearchQuery.value) return baseList
   
-  const query = groupSearchQuery.value.toLowerCase()
+  const query = debouncedGroupSearchQuery.value.toLowerCase()
   return baseList.filter(p => 
     p.title?.toLowerCase().includes(query) || 
     p.id?.toString().includes(query) ||
@@ -401,6 +427,26 @@ h3 {
 .search-box-mini .search-icon {
   font-size: 14px;
   color: #aaa;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: #e31b1b;
 }
 
 .product-list-mini, .search-results {
