@@ -1,7 +1,7 @@
 <template>
   <section class="outlet-shop">
     <div class="outlet-head">
-      <h3>⚡ OUTLET SHOP</h3>
+      <h3>OUTLET SHOP</h3>
       <div class="head-actions">
         <div class="nav-buttons" v-if="items.length > 4">
           <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">‹</button>

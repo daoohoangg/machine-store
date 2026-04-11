@@ -207,6 +207,7 @@ const fetchVouchers = async () => {
     }
   } catch (err) {
     console.error('Fetch error:', err)
+    alert('Không thể tải danh sách voucher. Vui lòng kiểm tra kết nối DB hoặc đăng nhập lại.')
   } finally {
     isLoading.value = false
   }

@@ -78,52 +78,41 @@ const displayVouchers = computed(() => {
 const fetchVouchers = async () => {
   try {
     isLoading.value = true
-    let res = null
+    // 1. Fetch from Abaha API
+    let abahaItems = []
     try {
-      res = await request<any>('voucher_campaign/index', {
+      const res = await request<any>('voucher_campaign/index', {
         method: 'POST',
         body: {}
       })
+      const rawData = res?.data?.data || res?.data || res || []
+      abahaItems = Array.isArray(rawData) ? rawData : []
     } catch (apiError) {
-      console.warn('API trả về lỗi, sẽ dùng mock data:', apiError)
+      console.warn('Abaha API error:', apiError)
+    }
+
+    // 2. Fetch from local DB API
+    let dbItems = []
+    try {
+      const dbRes = await $fetch<any>('/api/vouchers/list')
+      if (dbRes.success) {
+        dbItems = dbRes.data
+      }
+    } catch (dbError) {
+      console.warn('Local DB API error:', dbError)
     }
     
-    // Xử lý response theo định dạng API Abaha
-    const rawData = res?.data?.data || res?.data || res || []
-    let items = Array.isArray(rawData) ? rawData : []
-    
-    // Mock data always appended for testing
-    const mockVouchers = [
-      {
-        id: 9991,
-        name: 'Mã giảm giá 50K',
-        description: 'Giảm 50K cho đơn hàng từ 500K.',
-        end_date: '31/12/2026',
-        code: 'GIAM50K'
-      },
-      {
-        id: 9992,
-        name: 'Miễn phí vận chuyển',
-        description: 'Giảm tối đa 30K phí vận chuyển.',
-        end_date: '31/12/2026',
-        code: 'FREESHIP'
-      }
-    ]
-    items = [...mockVouchers, ...items]
-
-    vouchers.value = items.map((v: any, index: number) => {
-      // Định dạng ngày hết hạn
+    // Process Abaha items
+    const processedAbaha = abahaItems.map((v: any, index: number) => {
       let expiry = 'Không giới hạn'
       if (v.end_time) {
-        // Phụ thuộc API trả về timestamp s hay ms
         const ts = String(v.end_time).length === 10 ? v.end_time * 1000 : v.end_time
         expiry = new Date(ts).toLocaleDateString('vi-VN')
       } else if (v.end_date) {
         expiry = String(v.end_date)
       }
-
       return {
-        id: v.id || index,
+        id: v.id || `abaha-${index}`,
         title: v.name || v.title || 'Mã giảm giá',
         description: v.description || v.content || 'Áp dụng cho đơn hàng thỏa điều kiện.',
         expiryDate: expiry,
@@ -131,6 +120,19 @@ const fetchVouchers = async () => {
         code: v.code || ''
       }
     })
+
+    // Process DB items (they are already mostly formatted by the API)
+    const processedDb = dbItems.map((v: any) => ({
+      id: `db-${v.id}`,
+      title: v.title,
+      description: v.description,
+      expiryDate: v.expiryDate,
+      saved: false,
+      code: v.code
+    }))
+
+    // Merge and set
+    vouchers.value = [...processedDb, ...processedAbaha]
   } catch (error) {
     console.error('Failed to fetch vouchers:', error)
   } finally {

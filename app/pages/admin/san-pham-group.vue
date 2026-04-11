@@ -141,8 +141,8 @@ const { isAdmin, initAuth } = useAdminAuth()
 const { manualGroups, fetchManualGroups, saveManualGroups, addToGroup, removeFromGroup, clearGroup } = useManualGroups()
 
 const groupOptions = [
-  { id: 'outlet-shop', name: 'OUTLET SHOP (⚡)' },
-  { id: 'new-products', name: 'Sản phẩm mới (🆕)' }
+  { id: 'outlet-shop', name: 'OUTLET SHOP' },
+  { id: 'new-products', name: 'Sản phẩm mới' }
 ]
 
 const activeGroup = ref('outlet-shop')

@@ -46,8 +46,8 @@ const { groups, fetchGroups } = useGroups()
 const { isImageFailed } = useImageGuard()
 
 const groupName = computed(() => {
-  if (slug === 'outlet-shop' || slug === 'flash-sale') return 'OUTLET SHOP (⚡)'
-  if (slug === 'new-products' || slug === 'san-pham-moi') return 'Sản phẩm mới (🆕)'
+  if (slug === 'outlet-shop' || slug === 'flash-sale') return 'OUTLET SHOP'
+  if (slug === 'new-products' || slug === 'san-pham-moi') return 'Sản phẩm mới'
   return 'Nhóm sản phẩm'
 })
 

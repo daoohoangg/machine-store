@@ -4,9 +4,9 @@
       <!-- Header -->
       <div class="cart-header">
         <div class="cart-title">
-          <span class="cart-icon">🛒</span> Giỏ hàng (Có {{ totalItems }} sản phẩm)
+          <span class="cart-icon"><i class="fa-solid fa-cart-shopping"></i></span> Giỏ hàng (Có {{ totalItems }} sản phẩm)
         </div>
-        <button class="close-btn" @click="$emit('close')">✖ Đóng</button>
+        <button class="close-btn" @click="$emit('close')"><i class="fa-solid fa-xmark"></i> Đóng</button>
       </div>
 
       <!-- Body -->
@@ -31,7 +31,7 @@
             <div class="item-details">
               <h4 class="item-title">{{ item.title }}</h4>
               <div v-if="item.gift" class="item-gift">
-                🎁 Tặng áo thun (cho miền Nam)
+                <i class="fa-solid fa-gift"></i> Tặng áo thun (cho miền Nam)
               </div>
               
               <div class="item-price-row">
@@ -47,7 +47,7 @@
                 <button @click="updateQuantity(item.id, item.quantity + 1)">+</button>
               </div>
               <button class="remove-btn" @click="removeFromCart(item.id)">
-                🗑 Xóa
+                <i class="fa-solid fa-trash-can"></i> Xóa
               </button>
             </div>
           </div>

@@ -10,7 +10,9 @@
         :to="`/homepage?categoryId=${item.id}&categoryName=${encodeURIComponent(item.name)}`"
         class="cat-item"
       >
-        <div class="icon-wrap">{{ item.icon }}</div>
+        <div class="icon-wrap">
+          <i :class="item.icon"></i>
+        </div>
         <div class="cat-info">
           <p class="cat-name">{{ item.name }}</p>
         </div>
@@ -44,29 +46,29 @@ onMounted(() => {
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
-  if (key.includes('máy phát điện') || key.includes('may phat dien')) return '⚡'
-  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return '🚿'
-  if (key.includes('nén khí') || key.includes('nen khi')) return '💨'
-  if (key.includes('cưa xăng') || key.includes('cua xang')) return '🪚'
-  if (key.includes('cắt cỏ') || key.includes('cat co')) return '✂️'
-  if (key.includes('xới đất') || key.includes('xoi dat')) return '🚜'
-  if (key.includes('bơm nước') || key.includes('bom nuoc')) return '🌊'
-  if (key.includes('đầm') || key.includes('dam')) return '🏗️'
-  if (key.includes('động cơ') || key.includes('dong co')) return '⚙️'
-  if (key.includes('khoan đất') || key.includes('khoan dat')) return '🕳️'
-  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return '🧪'
-  if (key.includes('tỉa cành') || key.includes('tia canh')) return '🪴'
-  if (key.includes('hút bụi') || key.includes('hut bui')) return '🧹'
-  if (key.includes('cầm tay') || key.includes('cam tay')) return '🔧'
-  if (key.includes('xịt') || key.includes('xit')) return '🔫'
-  if (key.includes('tivi')) return '📺'
-  if (key.includes('quat')) return '🌀'
-  if (key.includes('hut am')) return '💧'
-  if (key.includes('tu lanh') || key.includes('tủ lạnh')) return '🧊'
-  if (key.includes('giat')) return '🧺'
-  if (key.includes('dieu hoa') || key.includes('điều hòa')) return '❄️'
-  if (key.includes('say')) return '👕'
-  return '🛍️'
+  if (key.includes('máy phát điện') || key.includes('may phat dien')) return 'fa-solid fa-bolt'
+  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return 'fa-solid fa-faucet-drip'
+  if (key.includes('nén khí') || key.includes('nen khi')) return 'fa-solid fa-wind'
+  if (key.includes('cưa xăng') || key.includes('cua xang')) return 'fa-solid fa-wrench' // Placeholder if no specific icon
+  if (key.includes('cắt cỏ') || key.includes('cat co')) return 'fa-solid fa-scissors'
+  if (key.includes('xới đất') || key.includes('xoi dat')) return 'fa-solid fa-tractor'
+  if (key.includes('bơm nước') || key.includes('bom nuoc')) return 'fa-solid fa-water'
+  if (key.includes('đầm') || key.includes('dam')) return 'fa-solid fa-building'
+  if (key.includes('động cơ') || key.includes('dong co')) return 'fa-solid fa-gear'
+  if (key.includes('khoan đất') || key.includes('khoan dat')) return 'fa-solid fa-bore-hole'
+  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return 'fa-solid fa-flask-vial'
+  if (key.includes('tỉa cành') || key.includes('tia canh')) return 'fa-solid fa-leaf'
+  if (key.includes('hút bụi') || key.includes('hut bui')) return 'fa-solid fa-broom'
+  if (key.includes('cầm tay') || key.includes('cam tay')) return 'fa-solid fa-wrench'
+  if (key.includes('xịt') || key.includes('xit')) return 'fa-solid fa-spray-can'
+  if (key.includes('tivi')) return 'fa-solid fa-tv'
+  if (key.includes('quat')) return 'fa-solid fa-fan'
+  if (key.includes('hut am')) return 'fa-solid fa-droplet-slash'
+  if (key.includes('tu lanh') || key.includes('tủ lạnh')) return 'fa-solid fa-refrigerator'
+  if (key.includes('giat')) return 'fa-solid fa-shirt'
+  if (key.includes('dieu hoa') || key.includes('điều hòa')) return 'fa-solid fa-snowflake'
+  if (key.includes('say')) return 'fa-solid fa-shirt'
+  return 'fa-solid fa-bag-shopping'
 }
 
 const parseDiscount = (text: string | null) => {

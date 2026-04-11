@@ -2,7 +2,7 @@
   <aside class="app-sidebar" :class="{ 'is-mobile-open': isMobileMenuOpen }">
     <div class="sidebar-title">
       <div class="title-left">
-        <span class="menu-icon">☰</span>
+        <span class="menu-icon"><i class="fa-solid fa-bars"></i></span>
         <h3>Danh mục sản phẩm</h3>
       </div>
       <button class="close-btn" @click="closeMobileMenu" aria-label="Đóng">
@@ -75,21 +75,21 @@ const route = useRoute()
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
   if (key.includes('máy phát điện') || key.includes('may phat dien')) return 'fa-solid fa-bolt'
-  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return 'fa-solid fa-car-wash'
+  if (key.includes('máy rửa xe') || key.includes('may rua xe')) return 'fa-solid fa-faucet-drip'
   if (key.includes('nén khí') || key.includes('nen khi')) return 'fa-solid fa-wind'
-  if (key.includes('cưa xăng') || key.includes('cua xang')) return 'fa-solid fa-lines-leaning'
+  if (key.includes('cưa xăng') || key.includes('cua xang')) return 'fa-solid fa-wrench'
   if (key.includes('cắt cỏ') || key.includes('cat co')) return 'fa-solid fa-scissors'
   if (key.includes('xới đất') || key.includes('xoi dat')) return 'fa-solid fa-tractor'
-  if (key.includes('bơm nước') || key.includes('bom nuoc')) return 'fa-solid fa-droplet'
-  if (key.includes('đầm') || key.includes('dam')) return 'fa-solid fa-hammer'
+  if (key.includes('bơm nước') || key.includes('bom nuoc')) return 'fa-solid fa-water'
+  if (key.includes('đầm') || key.includes('dam')) return 'fa-solid fa-building'
   if (key.includes('động cơ') || key.includes('dong co')) return 'fa-solid fa-gear'
   if (key.includes('khoan đất') || key.includes('khoan dat')) return 'fa-solid fa-bore-hole'
-  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return 'fa-solid fa-spray-can'
+  if (key.includes('phun thuốc') || key.includes('phun thuoc')) return 'fa-solid fa-flask-vial'
   if (key.includes('tỉa cành') || key.includes('tia canh')) return 'fa-solid fa-leaf'
   if (key.includes('hút bụi') || key.includes('hut bui')) return 'fa-solid fa-broom'
   if (key.includes('cầm tay') || key.includes('cam tay')) return 'fa-solid fa-wrench'
-  if (key.includes('xịt') || key.includes('xit')) return 'fa-solid fa-spray-can-sparkles'
-  return 'fa-solid fa-box-open'
+  if (key.includes('xịt') || key.includes('xit')) return 'fa-solid fa-spray-can'
+  return 'fa-solid fa-bag-shopping'
 }
 
 const normalizeCategoryName = (value: string | null | undefined) => {

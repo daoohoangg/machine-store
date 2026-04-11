@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
   } catch (err: any) {
     console.error('[Admin Vouchers API Error]:', err)
     
-    // Check for table not found
+    // Check for specific error types
     if (err.code === '42P01') {
       throw createError({
         statusCode: 500,
@@ -91,9 +91,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    if (err.statusCode === 401) {
+      throw err // Preserve 401 Unauthorized
+    }
+
     throw createError({
-      statusCode: 500,
-      statusMessage: `Lỗi API: ${err.message}`
+      statusCode: err.statusCode || 500,
+      statusMessage: `Lỗi API Vouchers: ${err.message || 'Lỗi không xác định'}`
     })
   }
 })

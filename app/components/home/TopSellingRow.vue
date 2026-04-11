@@ -9,7 +9,7 @@
       >
         <div class="icon-circle" :style="{ background: item.imageUrl ? 'transparent' : item.color }">
           <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" class="deal-img" />
-          <span v-else>{{ item.icon }}</span>
+          <i v-else :class="item.icon"></i>
         </div>
         <div class="deal-info">
           <p class="deal-label">
@@ -47,15 +47,15 @@ const formatPrice = (price: number) => `${price.toString().replace(/\B(?=(\d{3})
 
 const iconByName = (name: string) => {
   const key = name.toLowerCase()
-  if (key.includes('tivi')) return '📺'
-  if (key.includes('tủ') || key.includes('tu')) return '🧊'
-  if (key.includes('giặt') || key.includes('giat')) return '🧺'
-  if (key.includes('lọc') || key.includes('loc')) return '🫧'
-  if (key.includes('nóng') || key.includes('nuoc')) return '🚰'
-  if (key.includes('bụi') || key.includes('bui')) return '🧹'
-  if (key.includes('cà phê') || key.includes('ca phe') || key.includes('coffee') || key.includes('pha')) return '☕'
-  if (key.includes('điều hòa')) return '❄️'
-  return '🛍️'
+  if (key.includes('tivi')) return 'fa-solid fa-tv'
+  if (key.includes('tủ') || key.includes('tu')) return 'fa-solid fa-warehouse' // Fridge/Cabinet
+  if (key.includes('giặt') || key.includes('giat')) return 'fa-solid fa-shirt'
+  if (key.includes('lọc') || key.includes('loc')) return 'fa-solid fa-faucet-drip'
+  if (key.includes('nóng') || key.includes('nuoc')) return 'fa-solid fa-temperature-high'
+  if (key.includes('bụi') || key.includes('bui')) return 'fa-solid fa-broom'
+  if (key.includes('cà phê') || key.includes('ca phe') || key.includes('coffee') || key.includes('pha')) return 'fa-solid fa-mug-hot'
+  if (key.includes('điều hòa')) return 'fa-solid fa-snowflake'
+  return 'fa-solid fa-bag-shopping'
 }
 
 const bgColorByName = (name: string) => {

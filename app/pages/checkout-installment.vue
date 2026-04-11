@@ -76,11 +76,11 @@
 
       <textarea v-model="form.note" rows="2" placeholder="Để lại lời nhắn cho Tuấn Minh (nếu có)"></textarea>
 
-      <button class="submit-btn" :disabled="selectedItems.length === 0" @click="submitOrder">🛒 Gửi đơn hàng</button>
+      <button class="submit-btn" :disabled="selectedItems.length === 0" @click="submitOrder"><i class="fa-solid fa-cart-shopping"></i> Gửi đơn hàng</button>
     </section>
 
     <section class="checkout-cart-card">
-      <h3 class="card-title">🛒 Danh sách sản phẩm</h3>
+      <h3 class="card-title"><i class="fa-solid fa-cart-shopping"></i> Danh sách sản phẩm</h3>
 
       <label class="check-row select-all"><input type="checkbox" v-model="isAllSelected" /> Chọn tất cả</label>
 
@@ -94,7 +94,7 @@
 
           <div class="item-main">
             <p class="name">{{ item.title }}</p>
-            <p class="gift" v-if="item.gift">🎁 Tặng áo thun (cho miền Nam)</p>
+            <p class="gift" v-if="item.gift"><i class="fa-solid fa-gift"></i> Tặng áo thun (cho miền Nam)</p>
           </div>
 
           <div class="item-price">
@@ -108,7 +108,7 @@
             <button @click="updateQuantity(item.id, item.quantity + 1)">+</button>
           </div>
 
-          <button class="remove" @click="removeFromCart(item.id)">🗑 Xóa</button>
+          <button class="remove" @click="removeFromCart(item.id)"><i class="fa-solid fa-trash-can"></i> Xóa</button>
         </div>
       </div>
 

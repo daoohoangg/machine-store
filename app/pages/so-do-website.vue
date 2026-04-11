@@ -40,7 +40,7 @@
 
       <div v-else-if="viewMode === 'group'" class="panel">
         <div class="group-header">
-          <span>🛒</span>
+          <i class="fa-solid fa-cart-shopping"></i>
           <strong>Điện máy</strong>
         </div>
 
@@ -53,7 +53,7 @@
           >
               <div class="item-icon">
                 <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
-                <span v-else>{{ item.icon }}</span>
+                <i v-else :class="item.icon"></i>
               </div>
               <span class="item-name">{{ item.name }}</span>
           </NuxtLink>
@@ -72,7 +72,7 @@
             >
               <div class="item-icon">
                 <img v-if="item.image && !isImageFailed(item.image)" :src="item.image" :alt="item.name" @error="markImageAsFailed(item.image)" class="item-icon-img" />
-                <span v-else>{{ item.icon }}</span>
+                <i v-else :class="item.icon"></i>
               </div>
               <span class="item-name">{{ item.name }}</span>
             </NuxtLink>
@@ -118,22 +118,22 @@ const textKey = (value: string) => {
 
 const iconByName = (name: string) => {
   const key = textKey(name)
-  if (key.includes('may phat dien')) return '⚡'
-  if (key.includes('may rua xe')) return '🚿'
-  if (key.includes('nen khi')) return '💨'
-  if (key.includes('cua xang')) return '🪚'
-  if (key.includes('cat co')) return '✂️'
-  if (key.includes('xoi dat')) return '🚜'
-  if (key.includes('bom nuoc')) return '🌊'
-  if (key.includes('dam')) return '🏗️'
-  if (key.includes('dong co')) return '⚙️'
-  if (key.includes('khoan dat')) return '🕳️'
-  if (key.includes('phun thuoc')) return '🧪'
-  if (key.includes('tia canh')) return '🪴'
-  if (key.includes('hut bui')) return '🧹'
-  if (key.includes('cam tay')) return '🔧'
-  if (key.includes('xit')) return '🔫'
-  return '🛍️'
+  if (key.includes('may phat dien')) return 'fa-solid fa-bolt'
+  if (key.includes('may rua xe')) return 'fa-solid fa-faucet-drip'
+  if (key.includes('nen khi')) return 'fa-solid fa-wind'
+  if (key.includes('cua xang')) return 'fa-solid fa-wrench'
+  if (key.includes('cat co')) return 'fa-solid fa-scissors'
+  if (key.includes('xoi dat')) return 'fa-solid fa-tractor'
+  if (key.includes('bom nuoc')) return 'fa-solid fa-water'
+  if (key.includes('dam')) return 'fa-solid fa-building'
+  if (key.includes('dong co')) return 'fa-solid fa-gear'
+  if (key.includes('khoan dat')) return 'fa-solid fa-bore-hole'
+  if (key.includes('phun thuoc')) return 'fa-solid fa-flask-vial'
+  if (key.includes('tia canh')) return 'fa-solid fa-leaf'
+  if (key.includes('hut bui')) return 'fa-solid fa-broom'
+  if (key.includes('cam tay')) return 'fa-solid fa-wrench'
+  if (key.includes('xit')) return 'fa-solid fa-spray-can'
+  return 'fa-solid fa-bag-shopping'
 }
 
 // Get all categories including subcategories for A-Z sorting
