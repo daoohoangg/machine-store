@@ -22,9 +22,8 @@ export default defineEventHandler(async (event) => {
     }
   }).filter((i: any) => i.product_code) || []
 
-  // Get current date in YYYY-MM-DD format as per example "2021-09-09"
-  const now = new Date()
-  const dateStr = now.toISOString().split('T')[0]
+  // Unix timestamp (seconds) - same format as create.post.ts
+  const ordersTime = Math.floor(Date.now() / 1000)
 
   // Construct payload according to the EXACT example provided
   const payload: any = {
@@ -46,7 +45,7 @@ export default defineEventHandler(async (event) => {
       address: body.receiver?.address || body.address || ''
     },
     user_note: body.note || "",
-    orders_time: dateStr, // String date "YYYY-MM-DD"
+    orders_time: ordersTime, // Unix timestamp (seconds) - now
     status: 5, // Status is 5 for Final Submit
     pos_id: body.pos_id || `DH${orderId}`,
     pos_type: "kiotviet",
