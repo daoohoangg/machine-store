@@ -12,24 +12,53 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Chỉ cho phép hủy khi đơn hàng còn ở trạng thái Giỏ hàng (1) hoặc Đặt hàng (5)
-  const cancellableStatuses = [1, 5]
-  if (body.current_status !== undefined && !cancellableStatuses.includes(Number(body.current_status))) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Đơn hàng không thể hủy ở trạng thái hiện tại'
-    })
+  // Map lại danh sách sản phẩm theo đúng cấu trúc Abaha yêu cầu
+  const productItems = body.product_items?.map((item: any) => ({
+    price: Number(item.price) || 0,
+    product_code: item.product_code || item.code || String(item.id),
+    quantity: Number(item.quantity) || 1
+  })) || []
+
+  // Lấy ngày hiện tại theo định dạng YYYY-MM-DD nếu không có orders_time cũ
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return new Date().toISOString().split('T')[0]
+    try {
+      const d = new Date(dateInput)
+      return d.toISOString().split('T')[0]
+    } catch (e) {
+      return String(dateInput).split(' ')[0]
+    }
   }
 
+  // Xây dựng payload GIỐNG HỆT mẫu khách hàng cung cấp
   const payload: any = {
     id: Number(orderId),
-    status: 0, // Trạng thái Hủy theo Abaha
-    orders_time: Math.floor(Date.now() / 1000),
-    pos_id: null,
-    pos_type: null
+    product_items: productItems,
+    discount: {
+      price: Number(body.discount?.price) || 0,
+      name: body.discount?.name || "không"
+    },
+    fee: {
+      price: Number(body.fee?.price) || 0,
+      name: body.fee?.name || "Phí ship"
+    },
+    tel: body.address_receiver?.tel || body.tel || "",
+    address_receiver: {
+      address_default: body.address_receiver?.address_default || null,
+      name: body.address_receiver?.name || body.name || "",
+      tel: body.address_receiver?.tel || body.tel || "",
+      address: body.address_receiver?.address || body.address || ""
+    },
+    user_note: body.user_note || "",
+    orders_time: formatDate(body.orders_time || body.created_at),
+    status: 0, // Trạng thái Hủy
+    pos_id: "",
+    pos_type: "",
+    check_product_inventory: false,
+    check_product_status: false
   }
 
-  console.log('[Abaha Cancel Order API] Cancelling order ID:', orderId)
+  console.log('[Abaha Cancel Order API] Sending EXACT payload for ID:', orderId)
   console.log('[Abaha Cancel Order API] Payload:', JSON.stringify(payload, null, 2))
 
   try {
@@ -42,7 +71,7 @@ export default defineEventHandler(async (event) => {
 
     console.log('[Abaha Cancel Order API] Response:', JSON.stringify(response, null, 2))
 
-    if (response.status === 0 && response.error) {
+    if (response.status === 0 || response.error) {
       throw createError({
         statusCode: 400,
         statusMessage: response.message || 'Lỗi khi hủy đơn hàng trên Abaha'

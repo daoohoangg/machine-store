@@ -268,10 +268,7 @@ const executeCancel = async () => {
   try {
     await $fetch('/api/order/cancel', {
       method: 'POST',
-      body: {
-        id: cancelTarget.value.id,
-        current_status: cancelTarget.value.status
-      }
+      body: cancelTarget.value
     })
     // Cập nhật trạng thái trong danh sách
     const idx = orders.value.findIndex(o => o.id === cancelTarget.value.id)
