@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     },
     user_note: body.note || "",
     orders_time: Math.floor(Date.now() / 1000), // set Thời gian đặt là now
-    status: Number(body.status || 1)
+    status: 1 // Luôn là 1 (Giỏ hàng) khi tạo mới
   }
 
   // If an ID exists, we still include it in the payload but we call the CREATE endpoint as requested
