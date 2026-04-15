@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     },
     user_note: body.note || "",
     orders_time: ordersTime, // Unix timestamp (seconds) - now
-    status: 5, // Status is 5 for Final Submit
+    status: Number(body.status || 5), // Sử dụng status từ client hoặc mặc định là 5 (Đặt hàng)
     pos_id: null,
     pos_type: null,
     check_product_inventory: false,
