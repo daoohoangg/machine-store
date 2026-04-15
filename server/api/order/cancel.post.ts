@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
   const payload: any = {
     id: Number(orderId),
     status: 0, // Trạng thái Hủy theo Abaha
-    orders_time: Math.floor(Date.now() / 1000)
+    orders_time: Math.floor(Date.now() / 1000),
+    pos_id: null,
+    pos_type: null
   }
 
   console.log('[Abaha Cancel Order API] Cancelling order ID:', orderId)

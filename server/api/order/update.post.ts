@@ -47,8 +47,8 @@ export default defineEventHandler(async (event) => {
     user_note: body.note || "",
     orders_time: ordersTime, // Unix timestamp (seconds) - now
     status: 5, // Status is 5 for Final Submit
-    pos_id: body.pos_id || `DH${orderId}`,
-    pos_type: "kiotviet",
+    pos_id: null,
+    pos_type: null,
     check_product_inventory: false,
     check_product_status: false
   }
