@@ -97,12 +97,16 @@ export const useAdminAuth = () => {
     userPhone.value = ''
     userTier.value = ''
     if (import.meta.client) {
+      // Xóa thông tin xác thực
       localStorage.removeItem('admin_auth')
       localStorage.removeItem('admin_name')
       localStorage.removeItem('admin_auth_expires_at')
       localStorage.removeItem('user_auth')
       localStorage.removeItem('user_name')
       localStorage.removeItem('user_phone')
+      // Xóa dữ liệu đơn hàng & giỏ hàng của user
+      localStorage.removeItem('abaha_order_id')
+      localStorage.removeItem('tuanminh_cart')
     }
   }
 

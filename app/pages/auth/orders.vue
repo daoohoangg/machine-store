@@ -51,6 +51,13 @@
             </div>
             <div class="order-actions">
               <button class="btn-detail" @click="viewDetail(order)">Chi tiết</button>
+              <button 
+                v-if="isCancellable(order.status)" 
+                class="btn-cancel" 
+                @click="confirmCancel(order)"
+              >
+                <i class="fa-solid fa-xmark"></i> Hủy đơn
+              </button>
             </div>
           </div>
         </div>
@@ -105,6 +112,31 @@
               <span>{{ formatPrice(selectedOrder.total_final || selectedOrder.total_price || selectedOrder.amount || selectedOrder.total || 0) }}đ</span>
             </div>
           </div>
+
+          <!-- Cancel button in detail modal -->
+          <div v-if="isCancellable(selectedOrder.status)" class="modal-cancel-action">
+            <button class="btn-cancel-modal" @click="confirmCancel(selectedOrder); selectedOrder = null" :disabled="cancellingId === selectedOrder.id">
+              <i class="fa-solid fa-ban"></i> Hủy đơn hàng này
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel Confirmation Dialog -->
+    <div v-if="cancelTarget" class="modal-overlay" @click="cancelTarget = null">
+      <div class="confirm-dialog" @click.stop>
+        <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>Xác nhận hủy đơn hàng</h3>
+        <p>Bạn có chắc muốn hủy đơn hàng <strong>#{{ cancelTarget.id }}</strong> không?</p>
+        <p class="confirm-note">Hành động này không thể hoàn tác sau khi xác nhận.</p>
+        <div class="confirm-actions">
+          <button class="btn-keep" @click="cancelTarget = null">Không, giữ lại</button>
+          <button class="btn-confirm-cancel" @click="executeCancel" :disabled="cancellingId !== null">
+            <i v-if="cancellingId !== null" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-xmark"></i>
+            {{ cancellingId !== null ? 'Đang hủy...' : 'Xác nhận hủy' }}
+          </button>
         </div>
       </div>
     </div>
@@ -117,6 +149,9 @@ import { ref, onMounted } from 'vue'
 const orders = ref<any[]>([])
 const loading = ref(true)
 const selectedOrder = ref<any>(null)
+const cancelTarget = ref<any>(null)
+const cancellingId = ref<number | null>(null)
+const cancelError = ref('')
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
@@ -215,6 +250,40 @@ onMounted(async () => {
 
 const viewDetail = (order: any) => {
   selectedOrder.value = order
+}
+
+const isCancellable = (status: number) => {
+  return status === 1 || status === 5
+}
+
+const confirmCancel = (order: any) => {
+  cancelError.value = ''
+  cancelTarget.value = order
+}
+
+const executeCancel = async () => {
+  if (!cancelTarget.value || cancellingId.value !== null) return
+  cancellingId.value = cancelTarget.value.id
+  cancelError.value = ''
+  try {
+    await $fetch('/api/order/cancel', {
+      method: 'POST',
+      body: {
+        id: cancelTarget.value.id,
+        current_status: cancelTarget.value.status
+      }
+    })
+    // Cập nhật trạng thái trong danh sách
+    const idx = orders.value.findIndex(o => o.id === cancelTarget.value.id)
+    if (idx !== -1) {
+      orders.value[idx] = { ...orders.value[idx], status: 0 }
+    }
+    cancelTarget.value = null
+  } catch (err: any) {
+    cancelError.value = err?.statusMessage || err?.message || 'Có lỗi xảy ra, vui lòng thử lại.'
+  } finally {
+    cancellingId.value = null
+  }
 }
 </script>
 
@@ -417,6 +486,32 @@ h1 {
   border-color: #ccc;
 }
 
+.btn-cancel {
+  background: #fff0f0;
+  border: 1px solid #ffb3b3;
+  color: #d4161c;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-cancel:hover {
+  background: #ffe0e0;
+  border-color: #f44336;
+}
+
+.order-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -534,6 +629,123 @@ h1 {
 
 .detail-summary .total span:last-child {
   color: #d4161c;
+}
+
+/* Cancel confirmation dialog */
+.confirm-dialog {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 28px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.confirm-icon {
+  font-size: 48px;
+  color: #f59e0b;
+  margin-bottom: 16px;
+}
+
+.confirm-dialog h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #333;
+}
+
+.confirm-dialog p {
+  color: #555;
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.confirm-note {
+  font-size: 13px !important;
+  color: #999 !important;
+  font-style: italic;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.btn-keep {
+  padding: 10px 22px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.btn-keep:hover {
+  background: #eee;
+}
+
+.btn-confirm-cancel {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-confirm-cancel:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c53030, #9b2c2c);
+  transform: translateY(-1px);
+}
+
+.btn-confirm-cancel:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Cancel button in detail modal */
+.modal-cancel-action {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #fee;
+  text-align: center;
+}
+
+.btn-cancel-modal {
+  background: linear-gradient(135deg, #fff0f0, #ffe0e0);
+  border: 1.5px solid #ffb3b3;
+  color: #d4161c;
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-cancel-modal:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffe0e0, #ffcccc);
+  border-color: #f44336;
+  transform: translateY(-1px);
+}
+
+.btn-cancel-modal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 600px) {
