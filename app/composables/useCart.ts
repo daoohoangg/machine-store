@@ -66,66 +66,27 @@ export const useCart = () => {
   const { abahaOrderId } = useOrder()
   const { calculateAdjustedPrice } = useMembershipPrices()
 
-  // 4. Actions
-  const addToCart = (product: any) => {
-    // Determine the real ID (numeric ID from CRM preferred over title)
-    const realId = String(product.id || product.item_id || product.title)
-    
-    // Parse strings to numbers for cart calculation
-    // Note: product.price is already adjusted in useHomeProducts if it came from there
-    const priceNum = product.price ? Number(product.price.toString().replace(/\./g, '')) : 0
-    const oldPriceNum = product.oldPrice ? Number(product.oldPrice.toString().replace(/\./g, '')) : null
-    
-    // Check if exists
-    const existingIndex = cart.value.findIndex(item => item.id === realId || item.title === product.title)
-    
-    let itemToSync: CartItem | null = null
+    // Sync helper
+    const syncCartToBackend = () => {
+      const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
+      if (!phone) return Promise.resolve(null)
 
-    if (existingIndex !== -1) {
-      const item = cart.value[existingIndex]
-      if (item) {
-        item.quantity += 1
-        // Update metadata if it was missing
-        if (!item.raw && product) {
-          item.raw = product
-        }
-        itemToSync = item
-      }
-    } else {
-      const newItem: CartItem = {
-        id: realId,
-        title: product.title,
-        price: priceNum,
-        oldPrice: oldPriceNum,
-        gift: product.gift || false,
-        image: product.image || 'https://placehold.co/100x100?text=S%E1%BA%A3n+ph%E1%BA%A9m',
-        quantity: 1,
-        selected: true,
-        raw: product // Store entire object
-      }
-      cart.value.push(newItem)
-      itemToSync = newItem
-    }
-
-    // Call Abaha API for cart sync if user identity is known
-    const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
-    if (phone && itemToSync) {
-      console.log(`[Cart Sync] ${existingIndex !== -1 ? 'Updating' : 'Adding'} item:`, itemToSync.title, 'Qty:', itemToSync.quantity)
+      const endpoint = abahaOrderId.value ? '/api/order/update' : '/api/order/create'
       
-      return $fetch('/api/order/create', {
+      return $fetch(endpoint, {
         method: 'POST',
         body: {
-          id: abahaOrderId.value, // Continue current session order if available
+          id: abahaOrderId.value,
           receiver: {
             fullName: userName.value || 'Khách hàng',
             phone: phone,
             address: 'Chưa có địa chỉ'
           },
-          items: cart.value, // Pass all items to ensure cart is synced correctly
+          items: cart.value,
           note: `Đang xem giỏ hàng`,
           paymentMethod: 'cod',
-          status: 1, // Created
-          skipUpdate: true // Don't push to KiotViet/final status yet
+          status: 1,
+          skipUpdate: true
         }
       }).then((resp: any) => {
           if (resp && resp.data && resp.data.id) {
@@ -137,20 +98,52 @@ export const useCart = () => {
         throw err
       })
     }
-    
-    return Promise.resolve(null)
-  }
 
-  const removeFromCart = (id: string) => {
-    cart.value = cart.value.filter(item => item.id !== id)
-  }
+    // 4. Actions
+    const addToCart = (product: any) => {
+      const realId = String(product.id || product.item_id || product.title)
+      const priceNum = product.price ? Number(product.price.toString().replace(/\./g, '')) : 0
+      const oldPriceNum = product.oldPrice ? Number(product.oldPrice.toString().replace(/\./g, '')) : null
+      
+      const existingIndex = cart.value.findIndex(item => item.id === realId || item.title === product.title)
+      
+      if (existingIndex !== -1) {
+        const item = cart.value[existingIndex]
+        if (item) {
+          item.quantity += 1
+          if (!item.raw && product) item.raw = product
+        }
+      } else {
+        const newItem: CartItem = {
+          id: realId,
+          title: product.title,
+          price: priceNum,
+          oldPrice: oldPriceNum,
+          gift: product.gift || false,
+          image: product.image || 'https://placehold.co/100x100?text=S%E1%BA%A3n+ph%E1%BA%A9m',
+          quantity: 1,
+          selected: true,
+          raw: product
+        }
+        cart.value.push(newItem)
+      }
 
-  const updateQuantity = (id: string, newQty: number) => {
-    const item = cart.value.find(item => item.id === id)
-    if (item && newQty > 0) {
-      item.quantity = newQty
+      return syncCartToBackend()
     }
-  }
+
+    const removeFromCart = (id: string) => {
+      cart.value = cart.value.filter(item => item.id !== id)
+      return syncCartToBackend()
+    }
+
+    const updateQuantity = (id: string, newQty: number) => {
+      const item = cart.value.find(item => item.id === id)
+      if (item && newQty > 0) {
+        item.quantity = newQty
+        return syncCartToBackend()
+      }
+      return Promise.resolve(null)
+    }
 
   const toggleSelection = (id: string) => {
     const item = cart.value.find(item => item.id === id)
