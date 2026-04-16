@@ -87,14 +87,12 @@
       <div class="panel">
         <h4>Hỗ trợ khách hàng</h4>
         <p>☎ Hotline: {{ settings.hotline }}</p>
-        <p><strong>Hà Nội:</strong> Số 04/202 Cổ Linh, Phường Long Biên</p>
-        <p><strong>TP.HCM:</strong> 350 Quốc lộ 1A, Bình Hưng Hòa B, Bình Tân</p>
+        <p><strong>Địa chỉ:</strong> {{ settings.address }}</p>
       </div>
 
       <div class="panel">
         <h4>Chat với chúng tôi</h4>
-        <p>tuanminh.vn</p>
-        <p><a :href="settings.zalo" target="_blank" style="color: #0d6dc4; text-decoration: none;">Chat Zalo</a></p>
+        <p><a href="https://huspanda.vn/" target="_blank" style="color: #0d6dc4; text-decoration: none;">huspanda.vn</a></p>
       </div>
 
       <div class="panel">

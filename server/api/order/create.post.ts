@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig()
   const abahaToken = String(runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN || '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA')
   const abahaCreateUrl = "https://publicapi.abaha.vn/order/create";
-  
+
   const formatDate = (dateInput: any) => {
     if (!dateInput) return new Date().toISOString().split('T')[0]
     try {
@@ -35,13 +35,13 @@ export default defineEventHandler(async (event) => {
     // Some integrations might pass a temporary or external ID
     ...(body.id ? { id: Number(body.id) } : {}),
     product_items: productItems,
-    discount: { 
-      price: Number(body.discountAmount || body.discount?.price || body.discount) || 0, 
-      name: body.discount?.name || (body.voucher_code || body.discountAmount ? "giảm giá sản phẩm" : "không") 
+    discount: {
+      price: Number(body.discountAmount || body.discount?.price || body.discount) || 0,
+      name: body.discount?.name || (body.voucher_code || body.discountAmount ? "giảm giá sản phẩm" : "không")
     },
-    fee: { 
-      price: Number(body.fee?.price || body.fee || body.shippingFee) || 0, 
-      name: body.fee?.name || "Phí ship" 
+    fee: {
+      price: Number(body.fee?.price || body.fee || body.shippingFee) || 0,
+      name: body.fee?.name || "Phí ship"
     },
     tel: body.tel || body.receiver?.phone || body.address_receiver?.tel || "",
     address_receiver: {
@@ -53,8 +53,8 @@ export default defineEventHandler(async (event) => {
     user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
     status: Number(body.status !== undefined ? body.status : 5),
-    pos_id: "DH981",
-    pos_type: "kiotviet",
+    pos_id: "",
+    pos_type: "",
     check_product_inventory: false,
     check_product_status: false
   }
@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     const errorDetail = error.data || error.response?._data || error.message;
     console.error('[Abaha Order API] Exception Detail:', JSON.stringify(errorDetail, null, 2));
-    
+
     throw createError({
       statusCode: error.statusCode || 500,
       statusMessage: (errorDetail?.message || errorDetail?.statusMessage || error.message || "Internal Server Error"),
