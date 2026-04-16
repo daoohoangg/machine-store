@@ -67,16 +67,23 @@ export const useCart = () => {
   const { calculateAdjustedPrice } = useMembershipPrices()
 
     // Sync helper
-    const syncCartToBackend = () => {
+    const syncCartToBackend = (forceCreate = false) => {
       const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
       if (!phone) return Promise.resolve(null)
 
-      const endpoint = abahaOrderId.value ? '/api/order/update' : '/api/order/create'
+      // Quyết định endpoint: 
+      // - Nếu forceCreate = true -> Chắc chắn gọi create.
+      // - Nếu đã có abahaOrderId -> Gọi update.
+      // - Còn lại -> Gọi create.
+      const endpoint = (forceCreate || !abahaOrderId.value) ? '/api/order/create' : '/api/order/update'
+      const isCreate = endpoint.includes('create')
+      
+      console.log(`[Cart Sync] Mode: ${isCreate ? 'CREATE' : 'UPDATE'}. Order ID:`, abahaOrderId.value)
       
       return $fetch(endpoint, {
         method: 'POST',
         body: {
-          id: abahaOrderId.value,
+          id: isCreate ? null : abahaOrderId.value,
           receiver: {
             fullName: userName.value || 'Khách hàng',
             phone: phone,
@@ -101,6 +108,9 @@ export const useCart = () => {
 
     // 4. Actions
     const addToCart = (product: any) => {
+      // Kiểm tra giỏ hàng có trống TRƯỚC KHI thêm không
+      const wasEmpty = cart.value.length === 0
+      
       const realId = String(product.id || product.item_id || product.title)
       const priceNum = product.price ? Number(product.price.toString().replace(/\./g, '')) : 0
       const oldPriceNum = product.oldPrice ? Number(product.oldPrice.toString().replace(/\./g, '')) : null
@@ -128,19 +138,29 @@ export const useCart = () => {
         cart.value.push(newItem)
       }
 
-      return syncCartToBackend()
+      // Chỉ ép gọi create nếu ban đầu giỏ hàng trống
+      return syncCartToBackend(wasEmpty)
     }
 
     const removeFromCart = (id: string) => {
       cart.value = cart.value.filter(item => item.id !== id)
-      return syncCartToBackend()
+      
+      // Sau khi xóa, nếu giỏ hàng trống, ta vẫn gọi UPDATE để xóa sạch items trên server (nếu đã có ID)
+      // Sau đó mới cân nhắc việc reset ID cho lần sau
+      const syncPromise = syncCartToBackend(false)
+      
+      if (cart.value.length === 0) {
+        abahaOrderId.value = null
+      }
+      
+      return syncPromise
     }
 
     const updateQuantity = (id: string, newQty: number) => {
       const item = cart.value.find(item => item.id === id)
       if (item && newQty > 0) {
         item.quantity = newQty
-        return syncCartToBackend()
+        return syncCartToBackend(false) // Luôn dùng update nếu có thể
       }
       return Promise.resolve(null)
     }

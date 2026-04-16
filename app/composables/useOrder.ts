@@ -34,14 +34,14 @@ const generateOrderId = () => {
 
 export const useOrder = () => {
   const currentOrder = useState<OrderData | null>('current_order', () => null)
-  const abahaOrderId = useState<number | string | null>('abaha_order_id', () => {
-    if (process.client) {
-      return localStorage.getItem('abaha_order_id')
-    }
-    return null
-  })
+  const abahaOrderId = useState<number | string | null>('abaha_order_id', () => null)
   
   if (process.client) {
+    const savedId = localStorage.getItem('abaha_order_id')
+    if (savedId && !abahaOrderId.value) {
+      abahaOrderId.value = savedId
+    }
+    
     watch(abahaOrderId, (newId) => {
       if (newId) localStorage.setItem('abaha_order_id', String(newId))
       else localStorage.removeItem('abaha_order_id')

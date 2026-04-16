@@ -22,8 +22,17 @@ export default defineEventHandler(async (event) => {
     }
   }).filter((i: any) => i.product_code) || []
 
-  // Unix timestamp (seconds) - same format as create.post.ts
-  const ordersTime = Math.floor(Date.now() / 1000)
+  // Lấy ngày hiện tại theo định dạng YYYY-MM-DD
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return new Date().toISOString().split('T')[0]
+    try {
+      const d = new Date(dateInput)
+      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0]
+      return d.toISOString().split('T')[0]
+    } catch (e) {
+      return new Date().toISOString().split('T')[0]
+    }
+  }
 
   // Construct payload according to the EXACT example provided
   const payload: any = {
@@ -45,10 +54,10 @@ export default defineEventHandler(async (event) => {
       address: body.receiver?.address || body.address || ''
     },
     user_note: body.note || "",
-    orders_time: ordersTime, // Unix timestamp (seconds) - now
+    orders_time: formatDate(body.orders_time), // YYYY-MM-DD
     status: Number(body.status || 5), // Sử dụng status từ client hoặc mặc định là 5 (Đặt hàng)
-    pos_id: null,
-    pos_type: null,
+    pos_id: "",
+    pos_type: "",
     check_product_inventory: false,
     check_product_status: false
   }

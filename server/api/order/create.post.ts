@@ -16,6 +16,18 @@ export default defineEventHandler(async (event) => {
     }
   }).filter(Boolean) || []
 
+  // Lấy ngày hiện tại theo định dạng YYYY-MM-DD
+  const formatDate = (dateInput: any) => {
+    if (!dateInput) return new Date().toISOString().split('T')[0]
+    try {
+      const d = new Date(dateInput)
+      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0]
+      return d.toISOString().split('T')[0]
+    } catch (e) {
+      return new Date().toISOString().split('T')[0]
+    }
+  }
+
   // 2. Build the payload according to your request (URL: .../order/create, orders_time: now)
   const payload: any = {
     product_items: productItems,
@@ -28,15 +40,15 @@ export default defineEventHandler(async (event) => {
       address: body.receiver?.address || body.address || ""
     },
     user_note: body.note || "",
-    orders_time: Math.floor(Date.now() / 1000), // set Thời gian đặt là now
+    orders_time: formatDate(body.orders_time), // YYYY-MM-DD
     status: 1 // Luôn là 1 (Giỏ hàng) khi tạo mới
   }
 
   // If an ID exists, we still include it in the payload but we call the CREATE endpoint as requested
   if (body.id) {
     payload.id = String(body.id)
-    payload.pos_id = body.pos_id || `DH${body.id}`
-    payload.pos_type = body.pos_type || 1
+    payload.pos_id = ""
+    payload.pos_type = ""
     payload.check_product_inventory = false
     payload.check_product_status = false
   }
