@@ -86,13 +86,33 @@ export const useOrder = () => {
     try {
       const body = {
         id: abahaOrderId.value,
-        receiver: currentOrder.value.receiver,
-        items: currentOrder.value.items,
-        note: currentOrder.value.meta.note,
-        paymentMethod: currentOrder.value.meta.paymentMethod,
-        discount: extra?.discountAmount || 0,
-        voucher_code: extra?.voucherCode || '',
-        status: 5 // Final submit
+        product_items: currentOrder.value.items.map(item => ({
+          price: Number(item.price) || 0,
+          product_code: String(item.raw?.productCode || item.raw?.product_code || ''),
+          quantity: Number(item.quantity) || 1
+        })),
+        discount: {
+          price: extra?.discountAmount || 0,
+          name: extra?.voucherCode ? "giảm giá sản phẩm" : "không"
+        },
+        fee: {
+          price: 0,
+          name: "Phí ship"
+        },
+        tel: currentOrder.value.receiver.phone,
+        address_receiver: {
+          address_default: null,
+          name: currentOrder.value.receiver.fullName,
+          tel: currentOrder.value.receiver.phone,
+          address: currentOrder.value.receiver.address
+        },
+        user_note: currentOrder.value.meta.note,
+        orders_time: currentOrder.value.createdAt.split('T')[0],
+        status: 5,
+        pos_id: "DH981",
+        pos_type: "kiotviet",
+        check_product_inventory: false,
+        check_product_status: false
       }
 
       console.log(`[useOrder] FINAL SUBMISSION JSON for ${endpoint}:`, JSON.stringify(body, null, 2))

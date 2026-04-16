@@ -99,15 +99,28 @@ export const useCart = () => {
       body: {
         id: isCreate ? null : orderId,
         product_items: formattedProductItems,
-        items: cart.value,
-        receiver: {
-          fullName: userName.value || 'Khách hàng',
-          phone: phone,
+        discount: {
+          price: 0,
+          name: "không"
+        },
+        fee: {
+          price: 0,
+          name: "Phí ship"
+        },
+        tel: phone,
+        address_receiver: {
+          address_default: null,
+          name: userName.value || 'Khách hàng',
+          tel: phone,
           address: 'Chưa có địa chỉ'
         },
-        note: `Đang xem giỏ hàng`,
-        paymentMethod: 'cod',
+        user_note: "Đang xem giỏ hàng",
+        orders_time: new Date().toISOString().split('T')[0],
         status: 1,
+        pos_id: "DH981",
+        pos_type: "kiotviet",
+        check_product_inventory: false,
+        check_product_status: false,
         skipUpdate: true
       }
     }).then((resp: any) => {

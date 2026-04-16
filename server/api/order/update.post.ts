@@ -14,13 +14,13 @@ export default defineEventHandler(async (event) => {
 
   // Mảng chứa các sản phẩm
   const productItems = body.product_items || body.items?.map((item: any) => {
-    const productCode = item.raw?.product_code
+    const productCode = item.raw?.productCode || item.raw?.product_code
     return {
       price: Number(item.price) || 0,
-      product_code: productCode,
+      product_code: String(productCode || ""),
       quantity: Number(item.quantity || 1)
     }
-  }).filter((i: any) => i.product_code) || []
+  }).filter((i: any) => i.product_code && i.product_code !== "" && i.product_code !== "null") || []
 
   // Lấy ngày hiện tại theo định dạng YYYY-MM-DD
   const formatDate = (dateInput: any) => {

@@ -87,8 +87,8 @@
       <div class="panel">
         <h4>Hỗ trợ khách hàng</h4>
         <p>☎ Hotline: {{ settings.hotline }}</p>
-        <p><strong>Hà Nội:</strong> 56 Duy Tân, Phường Cầu Giấy</p>
-        <p><strong>TP.HCM:</strong> 716-718 Điện Biên Phủ, Phường Vườn Lài</p>
+        <p><strong>Hà Nội:</strong> Số 04/202 Cổ Linh, Phường Long Biên</p>
+        <p><strong>TP.HCM:</strong> 350 Quốc lộ 1A, Bình Hưng Hòa B, Bình Tân</p>
       </div>
 
       <div class="panel">
@@ -101,7 +101,7 @@
         <h4>Chăm sóc khách hàng</h4>
         <p>Góp ý, khiếu nại: (8h00 - 17h30)</p>
         <p>Toàn quốc: {{ settings.hotline }}</p>
-        <p>Email: care@tuanminh.vn</p>
+        <p>Email: {{ settings.email }}</p>
       </div>
     </aside>
 
@@ -124,45 +124,46 @@ definePageMeta({
 const { currentOrder, subtotal, total } = useOrder()
 const { settings } = useSiteSettings()
 
-const fallbackDate = '10/03/2026'
-
-const orderId = computed(() => currentOrder.value?.id || '207585284')
-const fallbackItems = [
-  { id: '1', title: 'Máy cắt cỏ 2 thì Honda UMK435T', quantity: 1, price: 3440000 },
-  { id: '2', title: 'Áo thun', quantity: 1, price: 0 }
-]
+const orderId = computed(() => currentOrder.value?.id || 'TM-' + Date.now().toString().slice(-6))
 
 const orderItems = computed(() => {
   if (currentOrder.value?.items?.length) return currentOrder.value.items
-  return fallbackItems
+  return []
 })
 
-const receiverName = computed(() => currentOrder.value?.receiver.fullName || 'Đào Trung Hoàng')
-const phoneRaw = computed(() => currentOrder.value?.receiver.phone || '0********8')
+const receiverName = computed(() => currentOrder.value?.receiver.fullName || 'Khách hàng')
+const phoneRaw = computed(() => currentOrder.value?.receiver.phone || '')
 const fullAddress = computed(() => {
-  if (!currentOrder.value) return 'fpt.edu.vn, Phường Đông Ngạc, Quận Bắc Từ Liêm, Hà Nội'
+  if (!currentOrder.value) return 'Đang cập nhật...'
 
   const r = currentOrder.value.receiver
-  return [r.address, r.ward, r.district, r.city].filter(Boolean).join(', ')
+  return r.address
 })
 
 const orderDate = computed(() => {
-  if (!currentOrder.value) return `${fallbackDate} (23:31)`
-
-  const d = new Date(currentOrder.value.createdAt)
+  const d = currentOrder.value ? new Date(currentOrder.value.createdAt) : new Date()
   return `${d.toLocaleDateString('vi-VN')} (${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})`
 })
 
-const deliveryEstimate = computed(() => '11/03/2026 - 15/03/2026')
+const deliveryEstimate = computed(() => {
+  const d = currentOrder.value ? new Date(currentOrder.value.createdAt) : new Date()
+  const start = new Date(d)
+  start.setDate(d.getDate() + 1)
+  const end = new Date(d)
+  end.setDate(d.getDate() + 3)
+  
+  return `${start.toLocaleDateString('vi-VN')} - ${end.toLocaleDateString('vi-VN')}`
+})
 
 const maskedPhone = computed(() => {
   const phone = phoneRaw.value
+  if (!phone) return '...'
   if (phone.length < 4) return phone
-  return `${phone.slice(0, 2)}******${phone.slice(-2)}`
+  return `${phone.slice(0, 3)}****${phone.slice(-3)}`
 })
 
-const displaySubtotal = computed(() => subtotal.value || 3440000)
-const displayTotal = computed(() => total.value || 3440000)
+const displaySubtotal = computed(() => subtotal.value || 0)
+const displayTotal = computed(() => total.value || 0)
 
 const formatPrice = (value: number) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 </script>
