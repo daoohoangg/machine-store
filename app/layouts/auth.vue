@@ -7,6 +7,7 @@
     </main>
 
     <AppFooter />
+    <FloatingContact />
 
     <div class="search-overlay" v-if="isSearchOpen" @click="closeSearch"></div>
   </div>

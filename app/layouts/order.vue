@@ -4,6 +4,7 @@
     <main class="order-main">
       <slot />
     </main>
+    <FloatingContact />
   </div>
 </template>
 

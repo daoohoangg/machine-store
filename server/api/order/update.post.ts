@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     },
     user_note: body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
-    status: Number(body.status || 5), // Sử dụng status từ client hoặc mặc định là 5 (Đặt hàng)
+    status: Number(body.status !== undefined ? body.status : 5), // Sử dụng status từ client hoặc mặc định là 5 (Đặt hàng)
     pos_id: "",
     pos_type: "",
     check_product_inventory: false,
