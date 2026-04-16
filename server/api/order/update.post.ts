@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   // Mảng chứa các sản phẩm
   const productItems = body.product_items || body.items?.map((item: any) => {
-    const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
+    const productCode = item.raw?.product_code
     return {
       price: Number(item.price) || 0,
       product_code: productCode,

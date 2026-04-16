@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   // 1. Map incoming body to products structure
   const productItems = body.product_items || body.items?.map((item: any) => {
-    const productCode = item.raw?.productCode || item.raw?.product_code || item.raw?.code || String(item.id)
+    const productCode = item.raw?.product_code
     if (!productCode || productCode === 'null' || productCode === 'undefined') return null
 
     return {

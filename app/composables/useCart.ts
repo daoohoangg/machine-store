@@ -88,7 +88,7 @@ export const useCart = () => {
 
     const formattedProductItems = cart.value.map(item => ({
       price: Number(item.price) || 0,
-      product_code: String(item.raw?.product_code || item.raw?.code || ''),
+      product_code: String(item.raw?.product_code || ''),
       quantity: Number(item.quantity) || 1
     }))
 
