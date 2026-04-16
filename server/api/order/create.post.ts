@@ -35,22 +35,23 @@ export default defineEventHandler(async (event) => {
     fee: { price: Number(body.fee) || 0, name: "Phí ship" },
     tel: body.tel || body.receiver?.phone || "",
     address_receiver: {
+      address_default: null,
       name: body.receiver?.fullName || body.name || "Khách hàng",
       tel: body.receiver?.phone || body.tel || "",
       address: body.receiver?.address || body.address || ""
     },
     user_note: body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
-    status: 1 // Luôn là 1 (Giỏ hàng) khi tạo mới
+    status: 1, // Luôn là 1 (Giỏ hàng) khi tạo mới
+    pos_id: "",
+    pos_type: "",
+    check_product_inventory: false,
+    check_product_status: false
   }
 
   // If an ID exists, we still include it in the payload but we call the CREATE endpoint as requested
   if (body.id) {
     payload.id = String(body.id)
-    payload.pos_id = ""
-    payload.pos_type = ""
-    payload.check_product_inventory = false
-    payload.check_product_status = false
   }
 
   console.log('[Abaha Order API] Calling CREATE API...');
