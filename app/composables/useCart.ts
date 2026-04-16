@@ -66,24 +66,29 @@ export const useCart = () => {
   const { abahaOrderId } = useOrder()
   const { calculateAdjustedPrice } = useMembershipPrices()
 
-    // Sync helper
-    const syncCartToBackend = (forceCreate = false) => {
+    // Sync helper - nhận snapshot ID để tránh bị ảnh hưởng bởi thay đổi reactive async
+    const syncCartToBackend = (forceCreate = false, snapshotOrderId?: string | number | null) => {
       const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
       if (!phone) return Promise.resolve(null)
 
+      // Ưu tiên snapshotOrderId -> reactive state -> localStorage (fallback khi chưa hydrate)
+      const orderId = snapshotOrderId !== undefined
+        ? snapshotOrderId
+        : (abahaOrderId.value || (process.client ? localStorage.getItem('abaha_order_id') : null))
+
       // Quyết định endpoint: 
       // - Nếu forceCreate = true -> Chắc chắn gọi create.
-      // - Nếu đã có abahaOrderId -> Gọi update.
+      // - Nếu đã có orderId -> Gọi update.
       // - Còn lại -> Gọi create.
-      const endpoint = (forceCreate || !abahaOrderId.value) ? '/api/order/create' : '/api/order/update'
+      const endpoint = (forceCreate || !orderId) ? '/api/order/create' : '/api/order/update'
       const isCreate = endpoint.includes('create')
       
-      console.log(`[Cart Sync] Mode: ${isCreate ? 'CREATE' : 'UPDATE'}. Order ID:`, abahaOrderId.value)
+      console.log(`[Cart Sync] Mode: ${isCreate ? 'CREATE' : 'UPDATE'}. Order ID:`, orderId)
       
       return $fetch(endpoint, {
         method: 'POST',
         body: {
-          id: isCreate ? null : abahaOrderId.value,
+          id: isCreate ? null : orderId,
           receiver: {
             fullName: userName.value || 'Khách hàng',
             phone: phone,
@@ -143,17 +148,18 @@ export const useCart = () => {
     }
 
     const removeFromCart = (id: string) => {
+      // Lưu snapshot ID TRƯỚC KHI xóa và reset
+      const currentOrderId = abahaOrderId.value
+      
       cart.value = cart.value.filter(item => item.id !== id)
       
-      // Sau khi xóa, nếu giỏ hàng trống, ta vẫn gọi UPDATE để xóa sạch items trên server (nếu đã có ID)
-      // Sau đó mới cân nhắc việc reset ID cho lần sau
-      const syncPromise = syncCartToBackend(false)
-      
+      // Nếu xóa hết, reset ID để lần sau tạo mới
       if (cart.value.length === 0) {
         abahaOrderId.value = null
       }
       
-      return syncPromise
+      // Truyền snapshot ID vào để đảm bảo gọi UPDATE dù abahaOrderId có thể đã bị reset
+      return syncCartToBackend(false, currentOrderId)
     }
 
     const updateQuantity = (id: string, newQty: number) => {
