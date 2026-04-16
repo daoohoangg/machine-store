@@ -68,8 +68,7 @@ export const useCart = () => {
 
     // Sync helper - nhận snapshot ID để tránh bị ảnh hưởng bởi thay đổi reactive async
     const syncCartToBackend = (forceCreate = false, snapshotOrderId?: string | number | null) => {
-      const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : null)
-      if (!phone) return Promise.resolve(null)
+      const phone = userPhone.value || (process.client ? localStorage.getItem('user_phone') : '')
 
       // Ưu tiên snapshotOrderId -> reactive state -> localStorage (fallback khi chưa hydrate)
       let orderId = snapshotOrderId || abahaOrderId.value
