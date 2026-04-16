@@ -86,18 +86,25 @@ export const useCart = () => {
       const endpoint = (forceCreate || !orderId) ? '/api/order/create' : '/api/order/update'
       const isCreate = endpoint.includes('create')
       
+      const formattedProductItems = cart.value.map(item => ({
+        price: Number(item.price) || 0,
+        product_code: String(item.id || item.raw?.product_code || item.raw?.code || ''),
+        quantity: Number(item.quantity) || 1
+      }))
+      
       console.log(`[Cart Sync] Mode: ${isCreate ? 'CREATE' : 'UPDATE'}. Order ID:`, orderId)
       
       return $fetch(endpoint, {
         method: 'POST',
         body: {
           id: isCreate ? null : orderId,
+          product_items: formattedProductItems,
+          items: cart.value,
           receiver: {
             fullName: userName.value || 'Khách hàng',
             phone: phone,
             address: 'Chưa có địa chỉ'
           },
-          items: cart.value,
           note: `Đang xem giỏ hàng`,
           paymentMethod: 'cod',
           status: 1,
