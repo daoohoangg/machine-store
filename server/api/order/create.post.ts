@@ -30,20 +30,22 @@ export default defineEventHandler(async (event) => {
   // Ensure all items have a product_code (safety filter)
   productItems = productItems.filter((item: any) => item.product_code && item.product_code !== '');
 
-  // 2. Build the payload according to the EXACT structure used in update/cancel
+  // 2. Build the payload according to the EXACT structure requested
   const payload: any = {
+    // Some integrations might pass a temporary or external ID
+    ...(body.id ? { id: Number(body.id) } : {}),
     product_items: productItems,
     discount: { 
-      price: Number(body.discount?.price || body.discount) || 0, 
-      name: body.discount?.name || "không" 
+      price: Number(body.discountAmount || body.discount?.price || body.discount) || 0, 
+      name: body.discount?.name || (body.voucher_code || body.discountAmount ? "giảm giá sản phẩm" : "không") 
     },
     fee: { 
-      price: Number(body.fee?.price || body.fee) || 0, 
+      price: Number(body.fee?.price || body.fee || body.shippingFee) || 0, 
       name: body.fee?.name || "Phí ship" 
     },
-    tel: body.tel || body.address_receiver?.tel || body.receiver?.phone || "",
+    tel: body.tel || body.receiver?.phone || body.address_receiver?.tel || "",
     address_receiver: {
-      address_default: body.address_receiver?.address_default || null,
+      address_default: null,
       name: body.address_receiver?.name || body.receiver?.fullName || body.name || "Khách hàng",
       tel: body.address_receiver?.tel || body.receiver?.phone || body.tel || "",
       address: body.address_receiver?.address || body.receiver?.address || body.address || ""
@@ -51,8 +53,8 @@ export default defineEventHandler(async (event) => {
     user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
     status: Number(body.status !== undefined ? body.status : 5),
-    pos_id: "",
-    pos_type: "",
+    pos_id: "DH981",
+    pos_type: "kiotviet",
     check_product_inventory: false,
     check_product_status: false
   }

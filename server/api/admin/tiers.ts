@@ -2,7 +2,6 @@ import { useSupabase } from '../../utils/supabase'
 import { requireAdmin } from '../../utils/adminAuth'
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
   const method = getMethod(event)
   const supabase = useSupabase()
 
@@ -19,6 +18,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (method === 'POST') {
+      await requireAdmin(event)
       const body = await readBody(event)
       const { tiers } = body
 

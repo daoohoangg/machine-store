@@ -461,6 +461,7 @@ const submitOrder = async () => {
     if (detail.endsWith(',')) detail = detail.slice(0, -1).trim()
 
     const fullAddress = [detail, form.ward, form.district, form.city].filter(Boolean).join(', ')
+    console.log('[Checkout] Final Address for Abaha:', fullAddress)
     
     createOrder({
       receiver: {

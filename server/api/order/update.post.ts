@@ -34,30 +34,30 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Construct payload according to the EXACT example provided
+  // Construct payload according to the EXACT structure requested
   const payload: any = {
-    id: Number(orderId), // Convert to Number if it looks like one, Abaha usually likes integers
+    id: Number(orderId),
     product_items: productItems,
     discount: {
-      price: Number(body.discount?.price || body.discount) || 0,
-      name: body.discount?.name || (body.voucher_code ? "giảm giá sản phẩm" : "không")
+      price: Number(body.discountAmount || body.discount?.price || body.discount) || 0,
+      name: body.discount?.name || (body.voucher_code || body.discountAmount ? "giảm giá sản phẩm" : "không")
     },
     fee: {
-      price: Number(body.fee?.price || body.fee) || 0,
+      price: Number(body.fee?.price || body.fee || body.shippingFee) || 0,
       name: body.fee?.name || "Phí ship"
     },
-    tel: body.receiver?.phone || body.tel || '',
+    tel: body.tel || body.receiver?.phone || body.address_receiver?.tel || "",
     address_receiver: {
       address_default: null,
-      name: body.receiver?.fullName || body.name || '',
-      tel: body.receiver?.phone || body.tel || '',
-      address: body.receiver?.address || body.address || ''
+      name: body.address_receiver?.name || body.receiver?.fullName || body.name || "Khách hàng",
+      tel: body.address_receiver?.tel || body.receiver?.phone || body.tel || "",
+      address: body.address_receiver?.address || body.receiver?.address || body.address || ""
     },
-    user_note: body.note || "",
+    user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
-    status: Number(body.status !== undefined ? body.status : 5), // Sử dụng status từ client hoặc mặc định là 5 (Đặt hàng)
-    pos_id: "",
-    pos_type: "",
+    status: Number(body.status !== undefined ? body.status : 5),
+    pos_id: "DH981",
+    pos_type: "kiotviet",
     check_product_inventory: false,
     check_product_status: false
   }
