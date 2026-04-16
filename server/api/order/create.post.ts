@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const runtimeConfig = useRuntimeConfig()
-  const abahaToken = runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN || '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA'
+  const abahaToken = String(runtimeConfig.public.abahaToken || process.env.ABAHA_TOKEN || '107A1B44043CE8C882430CB354B09BF6BC3DCF10ECBE1B7DC2385BD38E49EC7DAEBAA01926F8C6C271712F5BA1A43116CDB9220E75B9AFC685860DCD2E1AE10DFC865F8485E8286420B8D6514AEB58FA')
   const abahaCreateUrl = "https://publicapi.abaha.vn/order/create";
   
   const formatDate = (dateInput: any) => {
@@ -16,18 +16,21 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1. Map incoming body to products structure
-  const productItems = body.product_items || body.items?.map((item: any) => {
+  let productItems = body.product_items || body.items?.map((item: any) => {
     const productCode = item.raw?.productCode || item.raw?.product_code
     if (!productCode || productCode === 'null' || productCode === 'undefined') return null
 
     return {
       price: Number(item.price) || 0,
-      product_code: productCode,
+      product_code: String(productCode),
       quantity: Number(item.quantity || 1)
     }
   }).filter(Boolean) || []
 
-  // 2. Build the payload according to your request (URL: .../order/create, orders_time: now)
+  // Ensure all items have a product_code (safety filter)
+  productItems = productItems.filter((item: any) => item.product_code && item.product_code !== '');
+
+  // 2. Build the payload according to the EXACT structure used in update/cancel
   const payload: any = {
     product_items: productItems,
     discount: { 
@@ -47,7 +50,11 @@ export default defineEventHandler(async (event) => {
     },
     user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
-    status: Number(body.status !== undefined ? body.status : 5)
+    status: Number(body.status !== undefined ? body.status : 5),
+    pos_id: "",
+    pos_type: "",
+    check_product_inventory: false,
+    check_product_status: false
   }
 
   console.log('[Abaha Order API] Calling CREATE API...', abahaCreateUrl);
@@ -81,9 +88,14 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     const errorDetail = error.data || error.response?._data || error.message;
     console.error('[Abaha Order API] Exception Detail:', JSON.stringify(errorDetail, null, 2));
+    
     throw createError({
       statusCode: error.statusCode || 500,
-      statusMessage: (errorDetail?.message || errorDetail?.statusMessage || error.message || "Internal Server Error")
+      statusMessage: (errorDetail?.message || errorDetail?.statusMessage || error.message || "Internal Server Error"),
+      data: {
+        error: errorDetail,
+        payload_sent: payload
+      }
     })
   }
 })
