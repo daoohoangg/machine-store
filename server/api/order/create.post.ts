@@ -56,7 +56,8 @@ export default defineEventHandler(async (event) => {
     payload.id = String(body.id)
   }
 
-  console.log('[Abaha Order API] Calling CREATE API...');
+  console.log('[Abaha Order API] Calling CREATE API...', abahaCreateUrl);
+  console.log('[Abaha Order API] Token used (first 10 chars):', abahaToken.substring(0, 10) + '...');
   console.log('[Abaha Order API] Payload:', JSON.stringify(payload, null, 2));
 
   try {
@@ -84,10 +85,11 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error: any) {
-    console.error('[Abaha Order API] Exception:', error.data || error.message)
+    const errorDetail = error.data || error.response?._data || error.message;
+    console.error('[Abaha Order API] Exception Detail:', JSON.stringify(errorDetail, null, 2));
     throw createError({
       statusCode: error.statusCode || 500,
-      statusMessage: error.statusMessage || error.message || "Internal Server Error"
+      statusMessage: (errorDetail?.message || errorDetail?.statusMessage || error.message || "Internal Server Error")
     })
   }
 })

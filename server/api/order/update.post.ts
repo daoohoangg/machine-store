@@ -62,7 +62,8 @@ export default defineEventHandler(async (event) => {
     check_product_status: false
   }
 
-  console.log('[Abaha Order Update API] Sending JSON payload for ID:', orderId);
+  console.log('[Abaha Order Update API] Calling UPDATE API...', abahaUpdateUrl);
+  console.log('[Abaha Order Update API] Token used (first 10 chars):', abahaToken.substring(0, 10) + '...');
   console.log('[Abaha Order Update API] Payload:', JSON.stringify(payload, null, 2));
 
   try {
@@ -91,10 +92,11 @@ export default defineEventHandler(async (event) => {
       message: 'Cập nhật đơn hàng thành công'
     }
   } catch (error: any) {
-    console.error('[Abaha Order Update API] Exception:', error.data || error.message);
+    const errorDetail = error.data || error.response?._data || error.message;
+    console.error('[Abaha Order Update API] Exception Detail:', JSON.stringify(errorDetail, null, 2));
     throw createError({
       statusCode: error.statusCode || 500,
-      statusMessage: error.statusMessage || error.message || "Internal Server Error"
+      statusMessage: (errorDetail?.message || errorDetail?.statusMessage || error.message || "Internal Server Error")
     })
   }
 })
