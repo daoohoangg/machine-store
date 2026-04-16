@@ -39,12 +39,12 @@ export default defineEventHandler(async (event) => {
     id: Number(orderId), // Convert to Number if it looks like one, Abaha usually likes integers
     product_items: productItems,
     discount: {
-      price: Number(body.discount) || 0,
-      name: body.voucher_code ? "giảm giá sản phẩm" : "không"
+      price: Number(body.discount?.price || body.discount) || 0,
+      name: body.discount?.name || (body.voucher_code ? "giảm giá sản phẩm" : "không")
     },
     fee: {
-      price: Number(body.fee) || 0,
-      name: "Phí ship"
+      price: Number(body.fee?.price || body.fee) || 0,
+      name: body.fee?.name || "Phí ship"
     },
     tel: body.receiver?.phone || body.tel || '',
     address_receiver: {
@@ -68,8 +68,8 @@ export default defineEventHandler(async (event) => {
   try {
     const response: any = await $fetch(abahaUpdateUrl, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
+      headers: {
+        'Content-Type': 'application/json'
       },
       query: { token: abahaToken },
       body: payload
