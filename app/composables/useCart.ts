@@ -72,9 +72,13 @@ export const useCart = () => {
       if (!phone) return Promise.resolve(null)
 
       // Ưu tiên snapshotOrderId -> reactive state -> localStorage (fallback khi chưa hydrate)
-      const orderId = snapshotOrderId !== undefined
-        ? snapshotOrderId
-        : (abahaOrderId.value || (process.client ? localStorage.getItem('abaha_order_id') : null))
+      let orderId = snapshotOrderId || abahaOrderId.value
+      if (!orderId && process.client) {
+        const localId = localStorage.getItem('abaha_order_id')
+        if (localId && localId !== 'null') {
+          orderId = localId
+        }
+      }
 
       // Quyết định endpoint: 
       // - Nếu forceCreate = true -> Chắc chắn gọi create.
@@ -101,7 +105,7 @@ export const useCart = () => {
           skipUpdate: true
         }
       }).then((resp: any) => {
-          if (resp && resp.data && resp.data.id) {
+          if (resp && resp.data && resp.data.id && cart.value.length > 0) {
               abahaOrderId.value = resp.data.id;
           }
           return resp
@@ -148,8 +152,12 @@ export const useCart = () => {
     }
 
     const removeFromCart = (id: string) => {
-      // Lưu snapshot ID TRƯỚC KHI xóa và reset
-      const currentOrderId = abahaOrderId.value
+      // Lưu snapshot ID TRƯỚC KHI xóa và reset (lấy cả từ localStorage nếu cần)
+      let currentOrderId = abahaOrderId.value
+      if (!currentOrderId && process.client) {
+        const localId = localStorage.getItem('abaha_order_id')
+        if (localId && localId !== 'null') currentOrderId = localId
+      }
       
       cart.value = cart.value.filter(item => item.id !== id)
       
