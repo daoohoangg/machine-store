@@ -6,38 +6,26 @@ export default defineEventHandler(async (event) => {
 
   // 1. Map incoming body to products structure
   const productItems = body.product_items || body.items?.map((item: any) => {
-    const productCode = item.raw?.product_code
+    const productCode = item.raw?.productCode || item.raw?.product_code
     if (!productCode || productCode === 'null' || productCode === 'undefined') return null
 
     return {
+      price: Number(item.price) || 0,
       product_code: productCode,
-      quantity: Number(item.quantity || 1),
-      price: Number(item.price) || 0
+      quantity: Number(item.quantity || 1)
     }
   }).filter(Boolean) || []
-
-  // Lấy ngày hiện tại theo định dạng YYYY-MM-DD
-  const formatDate = (dateInput: any) => {
-    if (!dateInput) return new Date().toISOString().split('T')[0]
-    try {
-      const d = new Date(dateInput)
-      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0]
-      return d.toISOString().split('T')[0]
-    } catch (e) {
-      return new Date().toISOString().split('T')[0]
-    }
-  }
 
   // 2. Build the payload according to your request (URL: .../order/create, orders_time: now)
   const payload: any = {
     product_items: productItems,
-    discount: {
-      price: Number(body.discount?.price || body.discount) || 0,
-      name: body.discount?.name || "không"
+    discount: { 
+      price: Number(body.discount?.price || body.discount) || 0, 
+      name: body.discount?.name || "không" 
     },
-    fee: {
-      price: Number(body.fee?.price || body.fee) || 0,
-      name: body.fee?.name || "Phí ship"
+    fee: { 
+      price: Number(body.fee?.price || body.fee) || 0, 
+      name: body.fee?.name || "Phí ship" 
     },
     tel: body.tel || body.address_receiver?.tel || body.receiver?.phone || "",
     address_receiver: {
@@ -48,12 +36,7 @@ export default defineEventHandler(async (event) => {
     },
     user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
-    status: 1
-  }
-
-  // If an ID exists, we still include it in the payload but we call the CREATE endpoint as requested
-  if (body.id) {
-    payload.id = String(body.id)
+    status: Number(body.status !== undefined ? body.status : 5)
   }
 
   console.log('[Abaha Order API] Calling CREATE API...', abahaCreateUrl);
