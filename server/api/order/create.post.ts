@@ -5,13 +5,23 @@ export default defineEventHandler(async (event) => {
   const abahaCreateUrl = "https://publicapi.abaha.vn/order/create";
 
   const formatDate = (dateInput: any) => {
-    if (!dateInput) return new Date().toISOString().split('T')[0]
+    const format = (d: Date) => {
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const hours = String(d.getHours()).padStart(2, '0')
+      const minutes = String(d.getMinutes()).padStart(2, '0')
+      const seconds = String(d.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    }
+
+    if (!dateInput) return format(new Date())
     try {
       const d = new Date(dateInput)
-      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0]
-      return d.toISOString().split('T')[0]
+      if (isNaN(d.getTime())) return format(new Date())
+      return format(d)
     } catch (e) {
-      return new Date().toISOString().split('T')[0]
+      return format(new Date())
     }
   }
 
