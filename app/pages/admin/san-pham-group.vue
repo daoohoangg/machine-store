@@ -78,14 +78,14 @@
         </div>
 
         <div class="search-section">
-          <h3>Thêm sản phẩm mới</h3>
+          <h3>Thêm sản phẩm mới ({{ searchResults.length }})</h3>
           <div class="search-box">
             <input 
               type="text" 
               v-model="searchQuery" 
               placeholder="Tìm kiếm sản phẩm toàn hệ thống..." 
             />
-            <i v-if="!searchPending" class="fa-solid fa-magnifying-glass search-icon"></i>
+            <i v-if="!searchPending && !isTyping" class="fa-solid fa-magnifying-glass search-icon"></i>
             <i v-else class="fa-solid fa-spinner fa-spin search-icon"></i>
             <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''" title="Xóa tìm kiếm">
               <i class="fa-solid fa-xmark"></i>
@@ -116,6 +116,12 @@
               </button>
             </div>
           </div>
+          <div v-if="searchResults.length > 0 && searchResults.length % 100 === 0" class="load-more-results">
+            <button class="btn-load-more" :disabled="isLoadingMore" @click="handleLoadMore">
+              <i v-if="isLoadingMore" class="fa-solid fa-spinner fa-spin"></i>
+              {{ isLoadingMore ? 'Đang tải thêm...' : 'Tải thêm sản phẩm' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -133,7 +139,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useManualGroups } from '~/composables/useManualGroups'
-import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useHomeProducts, normalizeText } from '~/composables/useHomeProducts'
 
 useHead({ title: 'Quản lý Nhóm Sản phẩm - Admin' })
 
@@ -156,12 +162,15 @@ const showConfirmClear = ref(false)
 const debouncedSearchQuery = ref('')
 const debouncedGroupSearchQuery = ref('')
 
+const isTyping = ref(false)
 let searchTimer: any = null
 watch(searchQuery, (q) => {
+  isTyping.value = true
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     debouncedSearchQuery.value = q
-  }, 500)
+    isTyping.value = false
+  }, 300)
 })
 
 let groupSearchTimer: any = null
@@ -180,17 +189,30 @@ const searchOptions = computed(() => {
   }
   return options
 })
-const { products: searchResultsRaw, pending: searchPending } = useHomeProducts(searchOptions)
+const { products: searchResultsRaw, pending: searchPending, loadMore } = useHomeProducts(searchOptions)
+const currentSearchPage = ref(10)
+const isLoadingMore = ref(false)
+
+watch(debouncedSearchQuery, () => {
+  currentSearchPage.value = 10
+})
+
+const handleLoadMore = async () => {
+  isLoadingMore.value = true
+  currentSearchPage.value++
+  await loadMore(currentSearchPage.value)
+  isLoadingMore.value = false
+}
 
 const currentGroupProducts = computed(() => {
   const baseList = manualGroups.value[activeGroup.value] || []
-  if (!debouncedGroupSearchQuery.value) return baseList
+  if (!groupSearchQuery.value) return baseList
   
-  const query = debouncedGroupSearchQuery.value.toLowerCase()
+  const query = normalizeText(groupSearchQuery.value)
   return baseList.filter(p => 
-    p.title?.toLowerCase().includes(query) || 
+    normalizeText(p.title).includes(query) || 
     p.id?.toString().includes(query) ||
-    p.productCode?.toLowerCase().includes(query)
+    normalizeText(p.productCode || '').includes(query)
   )
 })
 
@@ -204,10 +226,11 @@ const searchResults = computed(() => {
   const raw = searchResultsRaw.value || []
   if (!searchQuery.value) return raw
   
-  const q = searchQuery.value.toLowerCase().trim()
+  const q = normalizeText(searchQuery.value)
   return raw.filter(p => 
-    (p.title && p.title.toLowerCase().includes(q)) || 
-    (p.productCode && p.productCode.toLowerCase().includes(q))
+    normalizeText(p.title).includes(q) || 
+    normalizeText(p.productCode || '').includes(q) ||
+    p.id?.toString().includes(q)
   )
 })
 
@@ -594,6 +617,41 @@ h3 {
   cursor: pointer;
 }
 .btn-primary:disabled { opacity: 0.7; cursor: wait; }
+
+.load-more-results {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #ddd;
+}
+
+.btn-load-more {
+  padding: 10px 25px;
+  background: #fff;
+  color: #e31b1b;
+  border: 2px solid #e31b1b;
+  border-radius: 30px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.btn-load-more:hover:not(:disabled) {
+  background: #e31b1b;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(227, 27, 27, 0.2);
+}
+
+.btn-load-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-outline {
   padding: 8px 16px;

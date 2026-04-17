@@ -68,17 +68,23 @@ const extractSpecs = (html: string | undefined | null): string[] => {
   return blocks
 }
 
-export const slugifyProduct = (value: string) => {
-  const normalized = value
+export const normalizeText = (text: string) => {
+  if (!text) return ''
+  return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[đĐ]/g, 'd')
     .toLowerCase()
+    .trim()
+}
 
+export const slugifyProduct = (value: string) => {
+  const normalized = normalizeText(value)
   return normalized
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
+
 
 import { toValue, type MaybeRefOrGetter } from 'vue'
 import { useCategories } from './useCategories'
@@ -163,8 +169,8 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         }
       }
     } else {
-      // If searching, fetch only the first 2 pages for speed
-      const pagesToFetch = filters.search ? 2 : 8
+      // If searching, fetch more pages to ensure better coverage (10 pages = 1000 items)
+      const pagesToFetch = filters.search ? 10 : 8
       for (let i = 1; i <= pagesToFetch; i++) {
         promises.push(fetchCoreItems({ ...filters, page: i, limit: 100 }))
       }
