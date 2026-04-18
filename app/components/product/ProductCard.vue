@@ -24,8 +24,8 @@
 
         <div class="price-rating-row">
           <div class="price-col">
-            <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="isOutletShop && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="current-price">{{ formatPriceObj(membershipPrice) }} đ</span>
+            <span class="old-price" v-if="showOriginalPrice">{{ formatPriceObj(basePrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -59,8 +59,8 @@
 
         <div class="price-rating-row">
           <div class="price-col">
-            <span class="current-price">{{ formatPriceObj(product.price) }} đ</span>
-            <span class="old-price" v-if="isOutletShop && displayOldPrice">{{ formatPriceObj(displayOldPrice) }} đ</span>
+            <span class="current-price">{{ formatPriceObj(membershipPrice) }} đ</span>
+            <span class="old-price" v-if="showOriginalPrice">{{ formatPriceObj(basePrice) }} đ</span>
           </div>
           <div class="rating-col">
             <div class="stars">
@@ -77,6 +77,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
+import { useMembershipPrices } from '~/composables/useMembershipPrices'
+import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const props = withDefaults(defineProps<{
   product: {
@@ -100,6 +102,8 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits(['image-error'])
 const { markImageAsFailed } = useImageGuard()
+const { calculateAdjustedPrice } = useMembershipPrices()
+const { userTier } = useAdminAuth()
 
 const handleImageError = () => {
   if (props.product.image) {
@@ -158,6 +162,24 @@ const displayOldPrice = computed(() => {
     return Math.round((priceNum / factor) / 1000) * 1000;
   }
   return null;
+})
+
+// Giá gốc của sản phẩm (chưa trừ chiết khấu thành viên)
+const basePrice = computed(() => {
+  const priceNum = typeof props.product.price === 'number'
+    ? props.product.price
+    : Number(String(props.product.price).replace(/[^\d]/g, ''))
+  return priceNum
+})
+
+// Giá đã trừ chiết khấu theo cấp thành viên
+const membershipPrice = computed(() => {
+  return calculateAdjustedPrice(basePrice.value, userTier.value)
+})
+
+// Chỉ hiển thị giá gốc bị gạch khi giá thành viên khác giá gốc
+const showOriginalPrice = computed(() => {
+  return membershipPrice.value < basePrice.value && basePrice.value > 0
 })
 
 const reviewCount = computed(() => {

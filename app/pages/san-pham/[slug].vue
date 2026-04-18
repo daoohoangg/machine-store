@@ -54,10 +54,10 @@
 
         <div class="price-box-red">
           <div class="price-main">
-            <p class="current-price">{{ formatPrice(product.price) }} đ</p>
+            <p class="current-price">{{ formatPrice(productMembershipPrice) }} đ</p>
             <div class="price-sub">
               <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
-              <span v-if="product.oldPrice" class="old-price">{{ formatPrice(product.oldPrice) }}đ</span>
+              <span v-if="showProductOriginalPrice" class="old-price">{{ formatPrice(product.price) }}đ</span>
               <small>(Đã gồm VAT)</small>
             </div>
           </div>
@@ -273,6 +273,8 @@ import { useCategories } from '~/composables/useCategories'
 import { useCart } from '~/composables/useCart'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useViewedProducts } from '~/composables/useViewedProducts'
+import { useMembershipPrices } from '~/composables/useMembershipPrices'
+import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const route = useRoute()
 const router = useRouter()
@@ -281,6 +283,8 @@ const { categories, fetchCategories } = useCategories()
 const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
+const { calculateAdjustedPrice } = useMembershipPrices()
+const { userTier } = useAdminAuth()
 
 // Load all images from the logo directory dynamically
 const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
@@ -570,6 +574,24 @@ const formatPrice = (value: number | string) => {
   const digits = String(value || 0).replace(/[^\d]/g, '')
   return Number(digits || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
+
+// Giá theo cấp thành viên cho trang chi tiết
+const productMembershipPrice = computed(() => {
+  if (!product.value) return 0
+  const priceNum = typeof product.value.price === 'number'
+    ? product.value.price
+    : Number(String(product.value.price).replace(/[^\d]/g, ''))
+  return calculateAdjustedPrice(priceNum, userTier.value)
+})
+
+// Chỉ hiện giá gốc gạch khi có chiết khấu thành viên
+const showProductOriginalPrice = computed(() => {
+  if (!product.value) return false
+  const priceNum = typeof product.value.price === 'number'
+    ? product.value.price
+    : Number(String(product.value.price).replace(/[^\d]/g, ''))
+  return productMembershipPrice.value < priceNum && priceNum > 0
+})
 
 const decreaseQty = () => {
   quantity.value = Math.max(1, quantity.value - 1)
