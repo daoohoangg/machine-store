@@ -6,7 +6,13 @@ export const useAdminAuth = () => {
   const adminName = useState('admin-name', () => '')
   const userName = useState('user-name', () => '')
   const userPhone = useState('user-phone', () => '')
-  const userTier = useState('user-tier', () => '')
+  // Restore userTier từ localStorage ngay lập tức để giá hiển thị đúng từ lần render đầu
+  const userTier = useState('user-tier', () => {
+    if (import.meta.client) {
+      return localStorage.getItem('user_tier') || ''
+    }
+    return ''
+  })
 
   const initAuth = async () => {
     if (import.meta.client) {
@@ -30,6 +36,7 @@ export const useAdminAuth = () => {
             localStorage.setItem('user_auth', 'true')
             localStorage.setItem('user_name', userName.value)
             localStorage.setItem('user_phone', userPhone.value)
+            localStorage.setItem('user_tier', userTier.value)
           }
         } else {
           // If server says not authenticated, clear local state
@@ -61,6 +68,7 @@ export const useAdminAuth = () => {
         localStorage.setItem('user_auth', 'true')
         localStorage.setItem('user_name', userName.value)
         localStorage.setItem('user_phone', userPhone.value)
+        localStorage.setItem('user_tier', tier || '')
       }
     }
   }
@@ -104,6 +112,7 @@ export const useAdminAuth = () => {
       localStorage.removeItem('user_auth')
       localStorage.removeItem('user_name')
       localStorage.removeItem('user_phone')
+      localStorage.removeItem('user_tier')
       // Xóa dữ liệu đơn hàng & giỏ hàng của user
       localStorage.removeItem('abaha_order_id')
       localStorage.removeItem('tuanminh_cart')

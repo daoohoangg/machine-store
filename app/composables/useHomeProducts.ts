@@ -7,7 +7,8 @@ export interface HomeProduct {
   productCode?: string
   slug: string
   title: string
-  price: number
+  price: number        // giá gốc từ API (chưa áp dụng membership)
+  rawPrice: number     // alias của price gốc, dùng cho các component tính lại
   oldPrice: number | null
   discount: string | null
   image: string
@@ -221,6 +222,8 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
   // Reactive mapping of products based on current tier and loaded tiers
   const products = computed(() => {
     const rawList = rawProductsData.value || []
+    // Truy cập `tiers.value` để computed tự re-run khi tiers load xong từ Supabase
+    void tiers.value
     return rawList.map((item: any): HomeProduct => {
       const rawPriceBase = Number(item.price) || 0
       const rawOldPriceBase = (item.oldPrice || item.discount) ? Math.max(Number(item.oldPrice || 0), Number(item.discount || 0)) : null
@@ -228,7 +231,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       // Safety check for old price: must be > current price if it exists
       const finalOldPriceBase = (rawOldPriceBase && rawOldPriceBase > rawPriceBase) ? rawOldPriceBase : null
       
-      // Apply membership tier adjustment
+      // Apply membership tier adjustment - reactive với userTier và tiers
       const price = calculateAdjustedPrice(rawPriceBase, userTier.value)
       const oldPrice = finalOldPriceBase ? calculateAdjustedPrice(finalOldPriceBase, userTier.value) : null
       
@@ -246,7 +249,8 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         productCode: item.product_code || item.code || String(item.id),
         slug: item.slug || `product-${item.id}`,
         title: item.name || 'Sản phẩm',
-        price,
+        price: rawPriceBase,    // luôn là giá gốc từ API
+        rawPrice: rawPriceBase, // alias rõ ràng
         oldPrice,
         discount: discountText,
         image: mainImage,

@@ -35,6 +35,11 @@ export const useMembershipPrices = () => {
     }
   }
 
+  // Tự động load nếu đang trên client và chưa load
+  if (import.meta.client && !isLoaded.value && !isPending.value) {
+    loadTiers()
+  }
+
   const saveTiers = async (newTiers: TierAdjustment[]) => {
     isPending.value = true
     try {
