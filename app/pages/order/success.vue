@@ -1,111 +1,117 @@
 <template>
-  <div class="order-success-page">
-    <section class="left">
-      <div class="success-box">
-        <h1>☑ Đặt hàng thành công</h1>
-        <p>
-          Cảm ơn Quý khách đã mua hàng tại Tuấn Minh, đơn hàng số <strong>{{ orderId }}</strong>.
-          Nếu cần hỗ trợ Quý khách vui lòng liên hệ:
-        </p>
-        <p>
-          <strong>Hotline:</strong> <a :href="'tel:' + settings.hotline.replace(/[^0-9]/g, '')">{{ settings.hotline }}</a>
-        </p>
-        <p>
-          Thời gian giao hàng dự kiến: <strong>{{ deliveryEstimate }}</strong>
-          (Không tính ngày nghỉ & ngày lễ, không bao gồm sản phẩm đặt hàng trước)
-        </p>
-
-        <div class="app-box">
-          <div class="qr"></div>
-          <div class="store-buttons">
-            <button>Tải trên App Store</button>
-            <button>Tải trên Google Play</button>
+  <div class="order-success-wrapper">
+    <div class="success-header-card">
+      <div class="success-icon">
+        <div class="circle-outer">
+          <div class="circle-inner">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
           </div>
-        </div>
-
-        <div class="action-row">
-          <NuxtLink class="btn-link" to="/order/lookup">TRA CỨU ĐƠN HÀNG</NuxtLink>
-          <button class="btn-link">ĐĂNG KÝ THÀNH VIÊN</button>
         </div>
       </div>
+      <h1>Purchase Success!</h1>
+      <p class="subtitle">Cảm ơn bạn đã đặt hàng tại Tuấn Minh. Đơn hàng của bạn sẽ được xử lý trong thời gian sớm nhất.</p>
+      <p class="order-number-text">Vui lòng ghi nhớ mã số đơn hàng của bạn là <strong class="order-id">{{ orderId }}</strong></p>
+      <p class="email-text">Bạn sẽ sớm nhận được thông báo xác nhận đơn hàng của mình.</p>
 
-      <section class="order-info">
-        <h2>Thông tin đơn hàng</h2>
+      <div class="action-buttons">
+        <NuxtLink to="/" class="btn btn-secondary">Continue Shopping</NuxtLink>
+        <NuxtLink to="/order/lookup" class="btn btn-primary">Track your order</NuxtLink>
+      </div>
+    </div>
 
-        <div class="order-grid">
-          <div class="customer-info">
-            <p><strong>Số đơn hàng:</strong> {{ orderId }} <span class="date">Ngày: {{ orderDate }}</span></p>
-            <p><strong>Tên khách hàng:</strong> {{ receiverName }}</p>
-            <p><strong>Điện thoại:</strong> {{ maskedPhone }}</p>
-            <p><strong>Email:</strong></p>
-            <p><strong>Địa chỉ:</strong> {{ fullAddress }}</p>
+    <div class="order-success-page">
+      <section class="left">
+        <section class="order-info">
+          <h2>Thông tin đơn hàng</h2>
+
+          <div class="order-grid">
+            <div class="customer-info">
+              <p><strong>Số đơn hàng:</strong> {{ orderId }} <span class="date">Ngày: {{ orderDate }}</span></p>
+              <p><strong>Tên khách hàng:</strong> {{ receiverName }}</p>
+              <p><strong>Điện thoại:</strong> {{ maskedPhone }}</p>
+              <p><strong>Email:</strong></p>
+              <p><strong>Địa chỉ:</strong> {{ fullAddress }}</p>
+            </div>
+
+            <div class="items-info">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in orderItems" :key="item.id">
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ formatPrice(item.price * item.quantity) }}đ</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="summary">
+                <p><span>Tổng cộng:</span> <strong>{{ formatPrice(displaySubtotal) }}đ</strong></p>
+                <p><span>Phí vận chuyển:</span> <strong>-</strong></p>
+                <p><span>Thuế:</span> <strong>Đã gồm VAT</strong></p>
+                <p class="paid"><span>Thanh toán:</span> <strong>{{ formatPrice(displayTotal) }}đ</strong></p>
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div class="items-info">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tên sản phẩm</th>
-                  <th>Số lượng</th>
-                  <th>Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in orderItems" :key="item.id">
-                  <td>{{ item.title }}</td>
-                  <td>{{ item.quantity }}</td>
-                  <td>{{ formatPrice(item.price * item.quantity) }}đ</td>
-                </tr>
-              </tbody>
-            </table>
+        <section class="warning-box">
+          <h3>⚠ CẢNH BÁO LỪA ĐẢO</h3>
+          <p>Để tránh mất tiền vào tay kẻ lừa đảo mạo danh shipper (Nhân viên giao hàng), Quý khách tuyệt đối:</p>
+          <ul>
+            <li>KHÔNG chuyển khoản cho shipper khi chưa nhận hàng.</li>
+            <li>KHÔNG thanh toán bất kỳ phụ phí nào phát sinh khi chưa có xác nhận từ tổng đài Tuấn Minh.</li>
+            <li>KHÔNG nhập vào đường link lạ của shipper gửi.</li>
+          </ul>
+            Nếu cần hỗ trợ về đơn hàng <strong>{{ orderId }}</strong> Quý khách vui lòng liên hệ hotline:
+            <strong>{{ settings.hotline }}</strong>
+        </section>
 
-            <div class="summary">
-              <p><span>Tổng cộng:</span> <strong>{{ formatPrice(displaySubtotal) }}đ</strong></p>
-              <p><span>Phí vận chuyển:</span> <strong>-</strong></p>
-              <p><span>Thuế:</span> <strong>Đã gồm VAT</strong></p>
-              <p class="paid"><span>Thanh toán:</span> <strong>{{ formatPrice(displayTotal) }}đ</strong></p>
+      </section>
+
+      <aside class="right">
+        <div class="panel app-download-panel">
+          <h4>Tải ứng dụng</h4>
+          <div class="app-box">
+            <div class="qr"></div>
+            <div class="store-buttons">
+              <button>Tải trên App Store</button>
+              <button>Tải trên Google Play</button>
             </div>
           </div>
         </div>
+
+        <div class="panel">
+          <h4>Hỗ trợ khách hàng</h4>
+          <p>☎ Hotline: {{ settings.hotline }}</p>
+          <p><strong>Địa chỉ:</strong> {{ settings.address }}</p>
+        </div>
+
+        <div class="panel">
+          <h4>Chat với chúng tôi</h4>
+          <p><a href="https://huspanda.vn/" target="_blank" style="color: #0d6dc4; text-decoration: none;">huspanda.vn</a></p>
+        </div>
+
+        <div class="panel">
+          <h4>Chăm sóc khách hàng</h4>
+          <p>Góp ý, khiếu nại: (8h00 - 17h30)</p>
+          <p>Toàn quốc: {{ settings.hotline }}</p>
+          <p>Email: {{ settings.email }}</p>
+        </div>
+      </aside>
+
+      <section class="full-width">
+        <OrderOutletShopStrip />
       </section>
-
-      <section class="warning-box">
-        <h3>⚠ CẢNH BÁO LỪA ĐẢO</h3>
-        <p>Để tránh mất tiền vào tay kẻ lừa đảo mạo danh shipper (Nhân viên giao hàng), Quý khách tuyệt đối:</p>
-        <ul>
-          <li>KHÔNG chuyển khoản cho shipper khi chưa nhận hàng.</li>
-          <li>KHÔNG thanh toán bất kỳ phụ phí nào phát sinh khi chưa có xác nhận từ tổng đài Tuấn Minh.</li>
-          <li>KHÔNG nhập vào đường link lạ của shipper gửi.</li>
-        </ul>
-          Nếu cần hỗ trợ về đơn hàng <strong>{{ orderId }}</strong> Quý khách vui lòng liên hệ hotline:
-          <strong>{{ settings.hotline }}</strong>
-      </section>
-
-    </section>
-
-    <aside class="right">
-      <div class="panel">
-        <h4>Hỗ trợ khách hàng</h4>
-        <p>☎ Hotline: {{ settings.hotline }}</p>
-        <p><strong>Địa chỉ:</strong> {{ settings.address }}</p>
-      </div>
-
-      <div class="panel">
-        <h4>Chat với chúng tôi</h4>
-        <p><a href="https://huspanda.vn/" target="_blank" style="color: #0d6dc4; text-decoration: none;">huspanda.vn</a></p>
-      </div>
-
-      <div class="panel">
-        <h4>Chăm sóc khách hàng</h4>
-        <p>Góp ý, khiếu nại: (8h00 - 17h30)</p>
-        <p>Toàn quốc: {{ settings.hotline }}</p>
-        <p>Email: {{ settings.email }}</p>
-      </div>
-    </aside>
-
-    <section class="full-width">
-      <OrderOutletShopStrip />
-    </section>
+    </div>
   </div>
 </template>
 
@@ -167,6 +173,119 @@ const formatPrice = (value: number) => value.toString().replace(/\B(?=(\d{3})+(?
 </script>
 
 <style scoped>
+.order-success-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.success-header-card {
+  text-align: center;
+  padding: 50px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.success-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.circle-outer {
+  width: 90px;
+  height: 90px;
+  background-color: #f5f6fa; /* very light gray/blue */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-inner {
+  width: 60px;
+  height: 60px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  border: 3px solid #7c62e4; /* purple/blue rim */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Offset teal border/shadow effect */
+.circle-inner::after {
+  content: '';
+  position: absolute;
+  top: -3px; left: -3px; right: -3px; bottom: -3px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-bottom-color: #2dd4bf; /* teal */
+  border-right-color: #2dd4bf;
+  transform: rotate(15deg);
+  pointer-events: none;
+}
+
+.success-header-card h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.success-header-card p {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.order-id {
+  color: #111827;
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #f8f9fa;
+  color: #111827;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-primary {
+  background-color: #1a2b4c;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #111c33;
+}
+
 .order-success-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -188,39 +307,21 @@ const formatPrice = (value: number) => value.toString().replace(/\B(?=(\d{3})+(?
   min-width: 0;
 }
 
-.success-box,
 .order-info,
 .warning-box,
 .panel {
   border: 1px solid #d6d6d6;
   background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.success-box {
-  padding: 12px;
-}
-
-h1 {
-  margin: 0 0 10px;
-  font-size: 20px;
-  color: #0d6dc4;
-}
-
-.success-box p {
-  margin: 6px 0;
-  line-height: 1.5;
-}
-
-.success-box a {
-  color: #0d6dc4;
-  text-decoration: none;
-}
-
-.app-box {
-  margin: 10px 0;
+.app-download-panel .app-box {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: 14px;
+  margin-top: 10px;
 }
 
 .qr {
@@ -232,8 +333,10 @@ h1 {
 }
 
 .store-buttons {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .store-buttons button {
@@ -241,24 +344,7 @@ h1 {
   background: #fff;
   border-radius: 8px;
   padding: 8px 16px;
-}
-
-.action-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.btn-link {
-  border: none;
-  background: #4da4df;
-  color: #fff;
-  padding: 8px;
-  border-radius: 4px;
-  text-align: center;
-  text-decoration: none;
-  cursor: pointer;
-  font-weight: 600;
+  width: 100%;
 }
 
 .order-info {
