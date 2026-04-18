@@ -10,14 +10,14 @@
           </div>
         </div>
       </div>
-      <h1>Purchase Success!</h1>
+      <h1>Đặt hàng thành công!</h1>
       <p class="subtitle">Cảm ơn bạn đã đặt hàng tại Tuấn Minh. Đơn hàng của bạn sẽ được xử lý trong thời gian sớm nhất.</p>
       <p class="order-number-text">Vui lòng ghi nhớ mã số đơn hàng của bạn là <strong class="order-id">{{ orderId }}</strong></p>
       <p class="email-text">Bạn sẽ sớm nhận được thông báo xác nhận đơn hàng của mình.</p>
 
       <div class="action-buttons">
-        <NuxtLink to="/" class="btn btn-secondary">Continue Shopping</NuxtLink>
-        <NuxtLink to="/order/lookup" class="btn btn-primary">Track your order</NuxtLink>
+        <NuxtLink to="/" class="btn btn-secondary">Tiếp tục mua sắm</NuxtLink>
+        <NuxtLink to="/order/lookup" class="btn btn-primary">Tra cứu đơn hàng</NuxtLink>
       </div>
     </div>
 
