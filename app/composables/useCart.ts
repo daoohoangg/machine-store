@@ -115,7 +115,7 @@ export const useCart = () => {
           address: 'Chưa có địa chỉ'
         },
         user_note: "Đang xem giỏ hàng",
-        orders_time: new Date().toISOString().split('T')[0],
+        orders_time: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}` })(),
         status: 1,
         pos_id: "DH981",
         pos_type: "kiotviet",

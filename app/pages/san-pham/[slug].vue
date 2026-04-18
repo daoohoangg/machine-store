@@ -66,9 +66,9 @@
             <div class="countdown-mock" v-if="product.discount">
               <span class="cd-label">Kết thúc sau</span>
               <div class="cd-timer">
-                <span>00</span><i>giờ</i>
-                <span>53</span><i>phút</i>
-                <span>40</span><i>giây</i>
+                <span>{{ countdownHours }}</span><i>giờ</i>
+                <span>{{ countdownMinutes }}</span><i>phút</i>
+                <span>{{ countdownSeconds }}</span><i>giây</i>
               </div>
               <div class="cd-stock">Còn <strong>508</strong> Chiếc</div>
             </div>
@@ -265,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProductCard from '~/components/product/ProductCard.vue'
 import { slugifyProduct, useHomeProducts, type HomeProduct } from '~/composables/useHomeProducts'
@@ -303,6 +303,35 @@ const getBrandImage = (brand?: string | null) => {
 const activeImageIndex = ref(0)
 const quantity = ref(1)
 const isDescriptionExpanded = ref(false)
+
+// ── Countdown đến cuối ngày (23:59:59) ──────────────────────────
+const countdownHours   = ref('00')
+const countdownMinutes = ref('00')
+const countdownSeconds = ref('00')
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+const updateCountdown = () => {
+  const now  = new Date()
+  const end  = new Date()
+  end.setHours(23, 59, 59, 999)
+  let diff = Math.max(0, end.getTime() - now.getTime())
+  const h = Math.floor(diff / 3_600_000);          diff -= h * 3_600_000
+  const m = Math.floor(diff / 60_000);             diff -= m * 60_000
+  const s = Math.floor(diff / 1_000)
+  countdownHours.value   = String(h).padStart(2, '0')
+  countdownMinutes.value = String(m).padStart(2, '0')
+  countdownSeconds.value = String(s).padStart(2, '0')
+}
+
+onMounted(() => {
+  updateCountdown()
+  countdownTimer = setInterval(updateCountdown, 1000)
+})
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
+// ────────────────────────────────────────────────────────────────
 
 const detailedDescription = ref<{ isLoading: boolean, textBlocks: string[], error: string }>({
   isLoading: false,
