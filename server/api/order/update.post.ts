@@ -66,8 +66,8 @@ export default defineEventHandler(async (event) => {
     user_note: body.user_note || body.note || "",
     orders_time: formatDate(body.orders_time), // YYYY-MM-DD
     status: Number(body.status !== undefined ? body.status : 5),
-    pos_id: "DH981",
-    pos_type: "kiotviet",
+    pos_id: "",
+    pos_type: "",
     check_product_inventory: false,
     check_product_status: false
   }
