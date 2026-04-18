@@ -78,20 +78,8 @@ const displayVouchers = computed(() => {
 const fetchVouchers = async () => {
   try {
     isLoading.value = true
-    // 1. Fetch from Abaha API
-    let abahaItems = []
-    try {
-      const res = await request<any>('voucher_campaign/index', {
-        method: 'POST',
-        body: {}
-      })
-      const rawData = res?.data?.data || res?.data || res || []
-      abahaItems = Array.isArray(rawData) ? rawData : []
-    } catch (apiError) {
-      console.warn('Abaha API error:', apiError)
-    }
 
-    // 2. Fetch from local DB API
+    // Fetch from local DB API
     let dbItems = []
     try {
       const dbRes = await $fetch<any>('/api/vouchers/list')
@@ -101,25 +89,6 @@ const fetchVouchers = async () => {
     } catch (dbError) {
       console.warn('Local DB API error:', dbError)
     }
-    
-    // Process Abaha items
-    const processedAbaha = abahaItems.map((v: any, index: number) => {
-      let expiry = 'Không giới hạn'
-      if (v.end_time) {
-        const ts = String(v.end_time).length === 10 ? v.end_time * 1000 : v.end_time
-        expiry = new Date(ts).toLocaleDateString('vi-VN')
-      } else if (v.end_date) {
-        expiry = String(v.end_date)
-      }
-      return {
-        id: v.id || `abaha-${index}`,
-        title: v.name || v.title || 'Mã giảm giá',
-        description: v.description || v.content || 'Áp dụng cho đơn hàng thỏa điều kiện.',
-        expiryDate: expiry,
-        saved: false,
-        code: v.code || ''
-      }
-    })
 
     // Process DB items (they are already mostly formatted by the API)
     const processedDb = dbItems.map((v: any) => ({
@@ -131,8 +100,8 @@ const fetchVouchers = async () => {
       code: v.code
     }))
 
-    // Merge and set
-    vouchers.value = [...processedDb, ...processedAbaha]
+    // Set
+    vouchers.value = [...processedDb]
   } catch (error) {
     console.error('Failed to fetch vouchers:', error)
   } finally {

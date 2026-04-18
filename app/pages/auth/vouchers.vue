@@ -107,7 +107,7 @@ const fetchVouchers = async () => {
   try {
     isLoading.value = true
 
-    // 1. Fetch from local DB (Supabase)
+    // Fetch from local DB (Supabase)
     let dbItems = []
     try {
       const dbRes = await $fetch('/api/vouchers/list')
@@ -125,26 +125,7 @@ const fetchVouchers = async () => {
       console.warn('[Voucher] Local DB error:', dbErr)
     }
 
-    // 2. Fetch from Abaha API
-    let abahaItems = []
-    try {
-      const res = await request('voucher_campaign/index', { method: 'POST', body: {} })
-      const rawData = res?.data?.data || res?.data || res || []
-      const items = Array.isArray(rawData) ? rawData : []
-      abahaItems = items.map(v => ({
-        id: `abaha-${v.id}`,
-        name: v.name || 'Mã giảm giá',
-        description: v.description || 'Áp dụng cho đơn hàng thỏa điều kiện.',
-        discount: v.value ? `-${new Intl.NumberFormat('vi-VN').format(v.value)}đ` : 'GIẢM GIÁ',
-        expiry: v.end_time ? new Date(v.end_time * 1000).toLocaleDateString('vi-VN') : (v.end_date || 'Không giới hạn'),
-        code: v.code || ''
-      }))
-    } catch (apiErr) {
-      console.warn('[Voucher] Abaha API error:', apiErr)
-    }
-
-    // Merge: local DB first, then Abaha
-    vouchers.value = [...dbItems, ...abahaItems]
+    vouchers.value = [...dbItems]
   } finally {
     isLoading.value = false
   }
