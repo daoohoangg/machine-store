@@ -225,17 +225,17 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     // Truy cập `tiers.value` để computed tự re-run khi tiers load xong từ Supabase
     void tiers.value
     return rawList.map((item: any): HomeProduct => {
-      const rawPriceBase = Number(item.price) || 0
-      const rawOldPriceBase = (item.oldPrice || item.discount) ? Math.max(Number(item.oldPrice || 0), Number(item.discount || 0)) : null
-      
-      // Safety check for old price: must be > current price if it exists
-      const finalOldPriceBase = (rawOldPriceBase && rawOldPriceBase > rawPriceBase) ? rawOldPriceBase : null
+      // item.discount từ API = giá niêm yết gốc (Giá NPP / list price)
+      // Dùng làm base để tính giá theo hạng thành viên
+      const apiDiscount = Number(item.discount) || 0
+      const apiPrice    = Number(item.price)    || 0
+      // Ưu tiên discount nếu > 0, ngược lại fallback về price
+      const rawPriceBase = apiDiscount > 0 ? apiDiscount : apiPrice
       
       // Apply membership tier adjustment - reactive với userTier và tiers
       const price = calculateAdjustedPrice(rawPriceBase, userTier.value)
-      const oldPrice = finalOldPriceBase ? calculateAdjustedPrice(finalOldPriceBase, userTier.value) : null
       
-      const discountText = inferDiscount(price, oldPrice)
+      const discountText = inferDiscount(price, rawPriceBase)
       
       const gallery = (item.images || []).map((img: any) => img.src).filter(Boolean)
       const mainImage = item.image || gallery[0] || 'https://placehold.co/400x400/eeeeee/999999?text=No+Image'
@@ -249,9 +249,9 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         productCode: item.product_code || item.code || String(item.id),
         slug: item.slug || `product-${item.id}`,
         title: item.name || 'Sản phẩm',
-        price: rawPriceBase,    // luôn là giá gốc từ API
+        price: rawPriceBase,    // giá gốc (item.discount từ API) để ProductCard tính membership
         rawPrice: rawPriceBase, // alias rõ ràng
-        oldPrice,
+        oldPrice: null,         // không cần - ProductCard tự tính từ rawPriceBase vs membershipPrice
         discount: discountText,
         image: mainImage,
         images: gallery.length ? gallery : [mainImage],
