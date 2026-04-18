@@ -109,8 +109,8 @@ export const useOrder = () => {
         user_note: currentOrder.value.meta.note,
         orders_time: (() => { const d = new Date(currentOrder.value.createdAt); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}` })(),
         status: 5,
-        pos_id: "DH981",
-        pos_type: "kiotviet",
+        pos_id: "",
+        pos_type: "",
         check_product_inventory: false,
         check_product_status: false
       }
