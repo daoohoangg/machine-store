@@ -58,30 +58,72 @@ export const useMembershipPrices = () => {
     }
   }
 
+  // Normalize: strip dấu tiếng Việt, thống nhất lí/lý, đ/d, lowercase
+  const normalizeForMatch = (s: string): string => {
+    return s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // strip combining diacritics
+      .replace(/[đĐ]/g, 'd')
+      .toLowerCase()
+      .replace(/\bli\b/g, 'ly')        // thống nhất "lí" → "ly" (đại lí = đại lý)
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  // Trích xuất tất cả số từ tên tier, vd: "Cấp 1, 2" → [1, 2]
+  const extractNumbers = (s: string): number[] => {
+    return (s.match(/\d+/g) || []).map(Number)
+  }
+
   const getAdjustmentForTier = (tierName: string | null | undefined): number => {
     if (!tierName) return 0
-    
-    const normalizedId = tierName.trim().toLowerCase()
-    
-    // 1. Try to find exact match (case-insensitive)
-    const found = tiers.value.find(t => t.name.trim().toLowerCase() === normalizedId)
-    if (found) {
-      console.log(`[Pricing] Found exact match for tier "${tierName}": ${found.percent}%`)
-      return found.percent
+
+    const raw = tierName.trim()
+
+    // 1. Exact match (case-insensitive)
+    const exactMatch = tiers.value.find(t => t.name.trim().toLowerCase() === raw.toLowerCase())
+    if (exactMatch) {
+      console.log(`[Pricing] Exact match "${raw}": ${exactMatch.percent}%`)
+      return exactMatch.percent
     }
 
-    // 2. Try a more flexible match (sub-string)
-    const flexibleMatch = tiers.value.find(t => {
-      const configName = t.name.trim().toLowerCase()
-      return normalizedId.includes(configName) || configName.includes(normalizedId)
+    // 2. Substring match (case-insensitive)
+    const subMatch = tiers.value.find(t => {
+      const a = raw.toLowerCase()
+      const b = t.name.trim().toLowerCase()
+      return a.includes(b) || b.includes(a)
     })
-    
-    if (flexibleMatch) {
-      console.log(`[Pricing] Found flexible match for tier "${tierName}" via "${flexibleMatch.name}": ${flexibleMatch.percent}%`)
-      return flexibleMatch.percent
+    if (subMatch) {
+      console.log(`[Pricing] Substring match "${raw}" → "${subMatch.name}": ${subMatch.percent}%`)
+      return subMatch.percent
     }
 
-    console.log(`[Pricing] No matching configuration found for tier: "${tierName}"`)
+    // 3. Normalize accent + unify lí/lý, then substring match
+    const normId = normalizeForMatch(raw)
+    const normMatch = tiers.value.find(t => {
+      const normConfig = normalizeForMatch(t.name)
+      return normId.includes(normConfig) || normConfig.includes(normId)
+    })
+    if (normMatch) {
+      console.log(`[Pricing] Normalized match "${raw}" → "${normMatch.name}": ${normMatch.percent}%`)
+      return normMatch.percent
+    }
+
+    // 4. Fallback: so khớp theo số cấp trích xuất
+    //    vd: "ĐẠI LÍ CẤP 2" → [2], "Đại lý cấp 1, 2 (Mặc định)" → [1,2] → giao nhau → match
+    const inputNumbers = extractNumbers(raw)
+    if (inputNumbers.length > 0) {
+      const numberMatch = tiers.value.find(t => {
+        const configNumbers = extractNumbers(t.name)
+        return inputNumbers.some(n => configNumbers.includes(n))
+      })
+      if (numberMatch) {
+        console.log(`[Pricing] Number-based match "${raw}" (${inputNumbers}) → "${numberMatch.name}": ${numberMatch.percent}%`)
+        return numberMatch.percent
+      }
+    }
+
+    console.log(`[Pricing] No matching configuration found for tier: "${raw}"`)
     return 0
   }
 
