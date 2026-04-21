@@ -8,46 +8,77 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (method === 'GET') {
-      const query = getQuery(event)
-      const page = Math.max(1, parseInt(query.page as string) || 1)
-      const pageSize = parseInt(query.pageSize as string) || 20
-      const search = ((query.search as string) || '').toLowerCase().trim()
-
       const abahaToken = process.env.ABAHA_TOKEN || useRuntimeConfig().public.abahaToken
       
       if (!abahaToken) {
         throw createError({ statusCode: 500, statusMessage: 'ABAHA_TOKEN is missing' })
       }
 
-      // Fetch specific page from Abaha CRM
-      // The Abaha API typically returns ~100 items per page by default.
-      // We'll proxy the requested page.
-      const res: any = await $fetch(`https://publicapi.abaha.vn/customer/index?token=${abahaToken}&page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}`)
-      
-      const abahaCustomers = Array.isArray(res?.data?.customers) ? res.data.customers : []
-      const total = res?.data?.total || abahaCustomers.length
-      const totalPages = res?.data?.last_page || Math.ceil(total / 100)
-
-      // Map Abaha customers to our internal format (similar to what was done before)
-      const items = abahaCustomers.map((c: any) => ({
+      const mapCustomer = (c: any) => ({
         id: `abaha_${c.id}`,
         phone: c.tel || '',
         full_name: c.name || '',
-        role: 'user', // Default role since we are no longer using Supabase for permissions here
+        role: 'user',
         status: 'active',
         last_login: null,
         created_at: new Date().toISOString(),
         premium: c.premium || 0,
         premium_point: c.premium_point || 0,
         premium_name: c.premium_name || ''
-      }))
+      })
+
+      const buildUrl = (p: number) =>
+        `https://publicapi.abaha.vn/customer/index?token=${abahaToken}&page=${p}`
+
+      // Fetch first 20 pages to get a good "total" and enable local search
+      // Using batching to be polite to the API
+      const MAX_PAGES = 20
+      const BATCH_SIZE = 5
+      let allCustomers: any[] = []
+
+      // Fetch Page 1 first to check if we have data
+      try {
+        const firstPage: any = await $fetch(buildUrl(1))
+        const customers = Array.isArray(firstPage?.data?.customers) 
+          ? firstPage.data.customers 
+          : (Array.isArray(firstPage?.data) ? firstPage.data : [])
+        
+        if (customers.length === 0) {
+          return { items: [], total: 0 }
+        }
+        allCustomers = [...customers]
+
+        // Fetch remaining pages in batches
+        for (let i = 2; i <= MAX_PAGES; i += BATCH_SIZE) {
+          const batch = []
+          for (let j = i; j < i + BATCH_SIZE && j <= MAX_PAGES; j++) {
+            batch.push($fetch(buildUrl(j)).catch(e => {
+              console.error(`[Abaha API] Error fetching page ${j}:`, e.message)
+              return null
+            }))
+          }
+          const results = await Promise.all(batch)
+          for (const res of results) {
+            const batchCustomers = Array.isArray((res as any)?.data?.customers)
+              ? (res as any).data.customers
+              : (Array.isArray((res as any)?.data) ? (res as any).data : [])
+            if (batchCustomers.length > 0) {
+              allCustomers = [...allCustomers, ...batchCustomers]
+            }
+          }
+          // If the last batch didn't return full pages, we can probably stop
+          // but for simplicity and since we only do 20 pages, we'll just finish the loop or check size
+        }
+      } catch (err: any) {
+        console.error('[Abaha API] Initial fetch error:', err.message)
+        throw createError({ statusCode: 500, statusMessage: 'Không thể kết nối API Abaha' })
+      }
+
+      const items = allCustomers.map(mapCustomer)
 
       return { 
         items, 
-        total, 
-        page: res?.data?.current_page || page, 
-        pageSize: items.length, 
-        totalPages 
+        total: items.length
       }
     }
 

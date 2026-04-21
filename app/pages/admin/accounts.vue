@@ -18,8 +18,8 @@
         <div class="stat-card">
           <div class="stat-icon users"><i class="fa-solid fa-users"></i></div>
           <div class="stat-info">
-            <div class="stat-value">{{ total }}</div>
-            <div class="stat-label">Tổng khách hàng</div>
+            <div class="stat-value">{{ allAccounts.length }}</div>
+            <div class="stat-label">Tổng khách hàng (Đã tải)</div>
           </div>
         </div>
 
@@ -32,61 +32,109 @@
             <input
               type="text"
               v-model="searchQuery"
-              placeholder="Tìm theo tên, SĐT..."
-              @input="onSearch"
+              placeholder="Tìm theo tên, SĐT... (nhanh)"
             />
-            <button v-if="searchQuery" class="clear-btn" @click="clearSearch"><i class="fa-solid fa-xmark"></i></button>
+            <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <button class="btn-primary" @click="openCreateModal"><i class="fa-solid fa-plus"></i> Thêm Tài khoản</button>
         </div>
 
         <div v-if="isLoading" class="loading-state">
-          Đang tải dữ liệu...
+          <i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu từ server...
         </div>
 
-        <table v-else class="data-table">
-          <thead>
-            <tr>
-              <th>Số điện thoại</th>
-              <th>Họ tên</th>
-              <th>Hạng thành viên</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="filteredAccounts.length === 0">
-              <td colspan="6" class="empty-state">
-                <span v-if="isLoading">Đang tìm kiếm...</span>
-                <span v-else>Không tìm thấy người dùng phù hợp</span>
-              </td>
-            </tr>
-            <tr v-for="account in filteredAccounts" :key="account.phone">
-              <td><strong>{{ account.phone }}</strong></td>
-              <td>{{ account.full_name || 'Khách vãng lai' }}</td>
-              <td>
-                <span v-if="account.premium_name" class="tier-badge">
-                  {{ account.premium_name }}
-                </span>
-                <span v-else class="tier-badge tier-0">Thành viên</span>
-              </td>
-              <td class="actions">
-                <button class="btn-icon edit" @click="openEditModal(account)" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button v-if="account.phone !== currentAdminPhone" class="btn-icon delete" @click="confirmDelete(account)" title="Xoá"><i class="fa-solid fa-trash"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <template v-else>
+          <!-- Top Pagination Controls -->
+          <div class="pagination-controls top" v-if="filteredAccounts.length > 0">
+            <div class="pagination-numbers">
+              <button class="page-nav-btn" :disabled="currentPage === 1" @click="currentPage--">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              
+              <template v-for="p in visiblePages" :key="p">
+                <span v-if="p === '...'" class="page-ellipsis">...</span>
+                <button 
+                  v-else 
+                  class="page-num-btn" 
+                  :class="{ active: p === currentPage }"
+                  @click="currentPage = p as number"
+                >
+                  {{ p }}
+                </button>
+              </template>
 
-        <!-- Pagination replaced with Load More -->
-        <div class="load-more-container" v-if="hasMore">
-          <button class="btn-load-more" :disabled="isMoreLoading" @click="goToPage(currentPage + 1)">
-            <i v-if="isMoreLoading" class="fa-solid fa-spinner fa-spin"></i>
-            {{ isMoreLoading ? 'Đang tải thêm khách hàng...' : 'Xem thêm khách hàng' }}
-          </button>
-        </div>
-        <div class="page-footer-info" v-if="total > 0">
-          Hiển thị {{ accounts.length }}/{{ total }} khách hàng
-        </div>
+              <button class="page-nav-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+            
+            <div class="page-jump">
+              <span>Đến trang:</span>
+              <input type="number" v-model.number="jumpInput" @keyup.enter="handleJump" min="1" :max="totalPages" />
+              <button @click="handleJump">Đi</button>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Số điện thoại</th>
+                <th>Họ tên</th>
+                <th>Hạng thành viên</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="paginatedAccounts.length === 0">
+                <td colspan="4" class="empty-state">
+                  Không tìm thấy người dùng phù hợp
+                </td>
+              </tr>
+              <tr v-for="account in paginatedAccounts" :key="account.phone">
+                <td><strong>{{ account.phone }}</strong></td>
+                <td>{{ account.full_name || 'Khách vãng lai' }}</td>
+                <td>
+                  <span v-if="account.premium_name" class="tier-badge">
+                    {{ account.premium_name }}
+                  </span>
+                  <span v-else class="tier-badge tier-0">Thành viên</span>
+                </td>
+                <td class="actions">
+                  <button class="btn-icon edit" @click="openEditModal(account)" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <button v-if="account.phone !== currentAdminPhone" class="btn-icon delete" @click="confirmDelete(account)" title="Xoá"><i class="fa-solid fa-trash"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Bottom Pagination Controls -->
+          <div class="pagination-controls bottom" v-if="filteredAccounts.length > 0">
+            <div class="pagination-numbers">
+              <button class="page-nav-btn" :disabled="currentPage === 1" @click="currentPage--">
+                <i class="fa-solid fa-chevron-left"></i> Trước
+              </button>
+              
+              <template v-for="p in visiblePages" :key="p">
+                <span v-if="p === '...'" class="page-ellipsis">...</span>
+                <button 
+                  v-else 
+                  class="page-num-btn" 
+                  :class="{ active: p === currentPage }"
+                  @click="currentPage = p as number"
+                >
+                  {{ p }}
+                </button>
+              </template>
+
+              <button class="page-nav-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+                Sau <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+            <div class="pagination-summary">
+              Hiển thị {{ (currentPage-1)*PAGE_SIZE + 1 }} - {{ Math.min(currentPage*PAGE_SIZE, filteredAccounts.length) }} trong tổng số {{ filteredAccounts.length }} kết quả
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -145,104 +193,107 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 useHead({ title: 'Quản lý Tài khoản - Admin' })
 
 const { isAdmin, initAuth } = useAdminAuth()
-const accounts = ref([])
-const isLoading = ref(true)
-const isMoreLoading = ref(false)
+const allAccounts = ref([])
+const isLoading = ref(false)
 const isSaving = ref(false)
 const showModal = ref(false)
 const currentPage = ref(1)
-const totalPages = ref(1)
-const total = ref(0)
+const jumpInput = ref(1)
 const PAGE_SIZE = 100
 const searchQuery = ref('')
-let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-const hasMore = computed(() => currentPage.value < totalPages.value)
+// Vietnamese accent removal helper
+const removeAccents = (str: string) => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+}
 
+// Local optimized search
 const filteredAccounts = computed(() => {
-  if (!searchQuery.value) return accounts.value
-  const q = searchQuery.value.toLowerCase().trim()
-  // Local filter for instant "real-time" feel while waiting for API
-  return accounts.value.filter(a => 
-    a.phone?.toLowerCase().includes(q) || 
-    a.full_name?.toLowerCase().includes(q) ||
-    a.premium_name?.toLowerCase().includes(q)
-  )
+  const query = removeAccents(searchQuery.value.trim().toLowerCase())
+  if (!query) return allAccounts.value
+
+  return allAccounts.value.filter(acc => {
+    const phone = acc.phone || ''
+    const name = removeAccents((acc.full_name || '').toLowerCase())
+    return phone.includes(query) || name.includes(query)
+  })
 })
 
-const editingAccount = ref({
-  isNew: false,
-  phone: '',
-  full_name: '',
-  role: 'user',
-  status: 'active',
-  gender: '',
-  birth_date: '',
-  email: '',
-  address: '',
-  location_name: '',
-  invite_phone: ''
+// Pagination logic
+const totalPages = computed(() => Math.ceil(filteredAccounts.value.length / PAGE_SIZE) || 1)
+
+const paginatedAccounts = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  const end = start + PAGE_SIZE
+  return filteredAccounts.value.slice(start, end)
 })
 
-onMounted(() => {
-  initAuth()
+const visiblePages = computed(() => {
+  const tp = totalPages.value
+  const cp = currentPage.value
+  const pages: (number | string)[] = []
+
+  if (tp <= 7) {
+    for (let i = 1; i <= tp; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (cp > 3) pages.push('...')
+    
+    let start = Math.max(2, cp - 1)
+    let end = Math.min(tp - 1, cp + 1)
+    
+    if (cp <= 3) end = 4
+    if (cp >= tp - 2) start = tp - 3
+    
+    for (let i = start; i <= end; i++) pages.push(i)
+    
+    if (cp < tp - 2) pages.push('...')
+    pages.push(tp)
+  }
+  return pages
+})
+
+onMounted(async () => {
+  await initAuth()
   if (isAdmin.value) {
-    fetchAccounts()
+    fetchAllData()
+  } else {
+    const stop = watch(isAdmin, (val) => {
+      if (val) { stop(); fetchAllData() }
+    })
   }
 })
 
-const fetchAccounts = async (page = 1, search = searchQuery.value, append = false) => {
-  if (append) isMoreLoading.value = true
-  else isLoading.value = true
-
+// Fetch all data from backend
+const fetchAllData = async () => {
+  isLoading.value = true
   try {
-    const res = await $fetch('/api/admin/accounts', {
-      query: { page, pageSize: PAGE_SIZE, search: search || undefined }
-    }) as any
-    
-    const newItems = res.items || []
-    if (append) {
-      accounts.value = [...accounts.value, ...newItems]
-    } else {
-      accounts.value = newItems
-    }
-    
-    total.value = res.total || 0
-    totalPages.value = res.totalPages || 1
-    currentPage.value = res.page || page
+    const res = await $fetch('/api/admin/accounts') as any
+    allAccounts.value = res.items || []
   } catch (err) {
-    console.error('Lỗi khi tải danh sách:', err)
+    console.error('Lỗi khi tải dữ liệu:', err)
   }
   isLoading.value = false
-  isMoreLoading.value = false
 }
 
-const onSearch = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    currentPage.value = 1
-    // Clear current list to show loading state immediately for a "real-time" feel
-    accounts.value = [] 
-    fetchAccounts(1, searchQuery.value, false)
-  }, 300)
-}
-
-const clearSearch = () => {
-  searchQuery.value = ''
+// Ensure search resets page
+watch(searchQuery, () => {
   currentPage.value = 1
-  fetchAccounts(1, '')
-}
+})
 
-const goToPage = (p: number) => {
-  if (p < 1 || p > totalPages.value) return
-  // Đối với lazy loading, ta chỉ append nên page truyền vào thường là currentPage + 1
-  fetchAccounts(p, searchQuery.value, true)
+const handleJump = () => {
+  const page = Math.max(1, Math.min(jumpInput.value, totalPages.value))
+  currentPage.value = page
 }
 
 const openCreateModal = () => {
@@ -262,7 +313,7 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
-const openEditModal = (account) => {
+const openEditModal = (account: any) => {
   editingAccount.value = {
     isNew: false,
     phone: account.phone,
@@ -279,6 +330,20 @@ const openEditModal = (account) => {
   showModal.value = true
 }
 
+const editingAccount = ref({
+  isNew: false,
+  phone: '',
+  full_name: '',
+  role: 'user',
+  status: 'active',
+  gender: '',
+  birth_date: '',
+  email: '',
+  address: '',
+  location_name: '',
+  invite_phone: ''
+})
+
 const saveAccount = async () => {
   if (!editingAccount.value.phone) {
     alert('Vui lòng nhập số điện thoại')
@@ -289,31 +354,20 @@ const saveAccount = async () => {
   try {
     const { data, error } = await useFetch('/api/admin/accounts', {
       method: 'POST',
-      body: {
-        phone: editingAccount.value.phone,
-        full_name: editingAccount.value.full_name,
-        role: editingAccount.value.role,
-        status: editingAccount.value.status,
-        gender: editingAccount.value.gender,
-        birth_date: editingAccount.value.birth_date,
-        email: editingAccount.value.email,
-        address: editingAccount.value.address,
-        location_name: editingAccount.value.location_name,
-        invite_phone: editingAccount.value.invite_phone
-      }
+      body: { ...editingAccount.value }
     })
     
     if (error.value) throw error.value
     
     showModal.value = false
-    await fetchAccounts(currentPage.value) // reload current page
-  } catch (err) {
+    await fetchAllData() // reload full list
+  } catch (err: any) {
     alert(err.message || 'Lỗi khi lưu tài khoản')
   }
   isSaving.value = false
 }
 
-const confirmDelete = async (account) => {
+const confirmDelete = async (account: any) => {
   if (!confirm(`Bạn có chắc chắn muốn xoá tài khoản ${account.phone}?`)) return
   
   try {
@@ -323,8 +377,8 @@ const confirmDelete = async (account) => {
     })
     
     if (error.value) throw error.value
-    await fetchAccounts(currentPage.value)
-  } catch (err) {
+    await fetchAllData()
+  } catch (err: any) {
     alert(err.message || 'Lỗi khi xoá')
   }
 }
@@ -334,244 +388,145 @@ const confirmDelete = async (account) => {
 .admin-page {
   padding: 40px 15px;
   min-height: 70vh;
+  background: #f8f9fa;
 }
 
-.login-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-}
-
+.login-wrapper { display: flex; justify-content: center; margin-top: 40px; }
 .login-box {
-  background: #fff;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-.admin-dashboard {
-  width: 100%;
+  background: #fff; padding: 40px; border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center;
 }
 
 .admin-header {
-  margin-bottom: 30px;
-  border-bottom: 2px solid #eee;
+  margin-bottom: 25px; border-bottom: 2px solid #e9ecef;
   padding-bottom: 15px;
 }
-
 .back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #666;
-  text-decoration: none;
-  font-size: 14px;
-  margin-bottom: 10px;
-  transition: color 0.2s;
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #6c757d; text-decoration: none; font-size: 14px;
+  margin-bottom: 10px; transition: color 0.2s;
 }
-
 .back-link:hover { color: #e31b1b; }
-
-.admin-header h1 {
-  font-size: 24px;
-  color: #333;
-  margin: 0;
-}
-
-/* Dashboard Stats */
-.dashboard-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-}
+.admin-header h1 { font-size: 26px; color: #212529; font-weight: 800; margin: 0; }
 
 .stat-card {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  background: #fff; padding: 20px; border-radius: 12px;
+  display: flex; align-items: center; gap: 20px;
+  border: 1px solid #e9ecef; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  margin-bottom: 30px; max-width: 300px;
 }
-
 .stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: #fff;
+  width: 54px; height: 54px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: #fff; background: linear-gradient(135deg, #FF6B6B, #E31B1B);
 }
+.stat-value { font-size: 28px; font-weight: 800; color: #212529; line-height: 1; }
+.stat-label { font-size: 14px; color: #6c757d; margin-top: 4px; }
 
-.stat-icon.users { background: linear-gradient(135deg, #4D96FF, #0061FF); }
-
-.stat-info { flex: 1; }
-.stat-value { font-size: 24px; font-weight: 700; color: #333; line-height: 1; }
-.stat-label { font-size: 13px; color: #777; margin-top: 5px; }
-
-/* Table Container */
 .accounts-container {
-  background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  border: 1px solid #eee;
+  background: #fff; padding: 28px; border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e9ecef;
 }
 
 .table-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 20px; margin-bottom: 25px; flex-wrap: wrap;
 }
-.table-actions h3 { margin: 0; color: #333; }
+.table-actions h3 { font-size: 18px; font-weight: 700; margin:0; }
 
-/* Search bar */
 .search-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  max-width: 320px;
-  background: #f7f7f7;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 6px 12px;
+  display: flex; align-items: center; gap: 10px;
+  flex: 1; max-width: 400px; background: #f1f3f5;
+  border: 1px solid #dee2e6; border-radius: 10px; padding: 8px 16px;
+  transition: all 0.2s;
 }
-.search-bar i { color: #999; font-size: 13px; margin-right: 4px; }
-.search-loader { color: #e31b1b !important; }
-.search-bar input {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 14px;
-  width: 100%;
-}
-.clear-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #aaa;
-  padding: 0;
-  display: flex;
-  align-items: center;
-}
-.clear-btn:hover { color: #e31b1b; }
+.search-bar:focus-within { background: #fff; border-color: #e31b1b; box-shadow: 0 0 0 3px rgba(227,27,27,0.1); }
+.search-bar input { border: none; background: transparent; outline: none; font-size: 15px; width: 100%; }
 
-/* Membership tier badges */
+.loading-state { text-align: center; padding: 60px; color: #e31b1b; font-size: 16px; font-weight: 600; }
+.empty-state { text-align: center; padding: 40px; color: #6c757d; border: 1px dashed #dee2e6; border-radius: 8px; }
+
+/* Advanced Pagination Controls */
+.pagination-controls {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 0; border-top: 1px solid #eee; margin-top: 10px;
+}
+.pagination-controls.top { border-top: none; border-bottom: 1px solid #eee; margin-bottom: 20px; padding-top: 0; }
+
+.pagination-numbers { display: flex; align-items: center; gap: 6px; }
+.page-num-btn, .page-nav-btn {
+  height: 38px; min-width: 38px; border-radius: 8px; border: 1px solid #dee2e6;
+  background: #fff; font-weight: 600; color: #495057; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.page-nav-btn { padding: 0 15px; }
+.page-num-btn:hover, .page-nav-btn:hover:not(:disabled) { border-color: #e31b1b; color: #e31b1b; background: #fff5f5; }
+.page-num-btn.active { background: #e31b1b; color: #fff; border-color: #e31b1b; }
+.page-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #f8f9fa; }
+.page-ellipsis { color: #adb5bd; padding: 0 4px; font-weight: 700; }
+
+.page-jump { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #495057; }
+.page-jump input {
+  width: 50px; height: 38px; border: 1px solid #dee2e6; border-radius: 8px;
+  text-align: center; font-weight: 700; outline: none;
+}
+.page-jump input:focus { border-color: #e31b1b; }
+.page-jump button {
+  height: 38px; padding: 0 15px; background: #212529; color: #fff;
+  border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+.pagination-summary { font-size: 13px; color: #6c757d; }
+
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 10px; }
+.data-table th { background: #f8f9fa; padding: 14px 20px; font-weight: 700; color: #495057; text-align: left; border-bottom: 2px solid #dee2e6; }
+.data-table td { padding: 16px 20px; border-bottom: 1px solid #f1f3f5; color: #212529; }
+.data-table tr:hover td { background-color: #fff9f9; }
+
 .tier-badge {
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  border: 1px solid transparent; display: inline-block;
 }
-.tier-0 { background: #f5e6d3; color: #8B5E3C; border: 1px solid #d4a574; }  /* Đồng */
-.tier-1 { background: #f0f0f0; color: #555; border: 1px solid #bbb; }          /* Bạc */
-.tier-2 { background: #fff8e1; color: #B8860B; border: 1px solid #ffd700; }   /* Vàng */
-.tier-3 { background: #e8f5e9; color: #1a7a4a; border: 1px solid #4caf50; }   /* Bạch Kim */
-.loading-state { text-align: center; padding: 40px; color: #999; }
-.empty-state { text-align: center; padding: 40px; color: #999; }
-
-/* Load More button */
-.load-more-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 30px;
-  margin-bottom: 10px;
-}
-.btn-load-more {
-  padding: 12px 30px;
-  background: #fff;
-  color: #e31b1b;
-  border: 2px solid #e31b1b;
-  border-radius: 30px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-}
-.btn-load-more:hover:not(:disabled) { background: #e31b1b; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(227,27,27,0.2); }
-.btn-load-more:disabled { opacity: 0.6; cursor: not-allowed; }
-.page-footer-info { text-align: center; color: #888; font-size: 13px; margin-top: 5px; }
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th, .data-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.data-table th { background: #f9f9f9; font-weight: 600; color: #555; }
+.tier-0 { background: #fff4e6; color: #d9480f; border-color: #ffd8a8; }
 
 .actions { display: flex; gap: 8px; }
 .btn-icon {
-  width: 32px; height: 32px;
-  border-radius: 4px; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; color: white;
+  width: 36px; height: 36px; border-radius: 8px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; color: #fff; transition: transform 0.2s;
 }
-.btn-icon.edit { background: #ff9800; }
-.btn-icon.edit:hover { background: #f57c00; }
-.btn-icon.delete { background: #f44336; }
-.btn-icon.delete:hover { background: #d32f2f; }
+.btn-icon:hover { transform: scale(1.1); }
+.btn-icon.edit { background: #fab005; }
+.btn-icon.delete { background: #fa5252; }
 
-/* Modal */
+/* Modal Styles */
 .modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
 .modal-content {
-  background: white; border-radius: 8px; width: 90%; max-width: 520px;
-  padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  background: #fff; border-radius: 16px; width: 90%; max-width: 560px;
+  padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
   max-height: 90vh; overflow-y: auto;
 }
-.modal-content h2 { margin: 0 0 20px; color: #333; font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.modal-content h2 { margin: 0 0 25px; font-size: 22px; font-weight: 800; border-bottom: 1px solid #f1f3f5; padding-bottom: 15px; }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-group { margin-bottom: 15px; text-align: left; }
-.form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; font-size: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; }
 .form-group input, .form-group select {
-  width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; font-family: inherit;
-  box-sizing: border-box;
+  width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 15px;
+  background: #f8f9fa; transition: all 0.2s;
 }
-.form-group input:disabled { background: #f5f5f5; color: #888; cursor: not-allowed; }
+.form-group input:focus, .form-group select:focus { background: #fff; border-color: #e31b1b; outline: none; }
 
-.modal-actions {
-  display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;
-}
-
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
 .btn-primary {
-  padding: 10px 20px; background: #e31b1b; color: white;
-  border: none; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  padding: 12px 24px; background: #e31b1b; color: #fff;
+  border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s;
 }
-.btn-primary:hover:not(:disabled) { background: #cc1515; }
-.btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-
+.btn-primary:hover:not(:disabled) { background: #cc1515; box-shadow: 0 4px 12px rgba(227,27,27,0.2); }
 .btn-outline {
-  padding: 10px 20px; background: transparent; color: #555;
-  border: 1px solid #ccc; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  padding: 12px 24px; background: #fff; color: #495057;
+  border: 1px solid #dee2e6; border-radius: 10px; font-weight: 700; cursor: pointer;
 }
-.btn-outline:hover { background: #f5f5f5; }
+.btn-outline:hover { background: #f8f9fa; border-color: #adb5bd; }
 </style>
