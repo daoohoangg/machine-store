@@ -129,7 +129,7 @@ const { settings } = useSiteSettings()
           <div class="company-address">
             <p><strong>Địa chỉ:</strong> {{ settings.address }}</p>
             <p><strong>Điện thoại:</strong> {{ settings.hotline }}</p>
-            <p><strong>Email:</strong> {{ settings.email }}</p>
+
           </div>
         </div>
       </div>
