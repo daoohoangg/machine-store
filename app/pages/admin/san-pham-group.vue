@@ -79,11 +79,31 @@
 
         <div class="search-section">
           <h3>Thêm sản phẩm mới ({{ searchResults.length }})</h3>
+
+          <!-- Category Filter -->
+          <div class="category-filter-row">
+            <label class="category-filter-label"><i class="fa-solid fa-list"></i> Danh mục:</label>
+            <div class="category-select-wrapper">
+              <select v-model="selectedCategoryId" class="category-select" :disabled="categoriesLoading">
+                <option :value="null">— Tất cả danh mục —</option>
+                <template v-for="cat in categories" :key="cat.id">
+                  <option :value="cat.id">{{ cat.name }}</option>
+                  <option v-for="child in cat.children" :key="child.id" :value="child.id">&nbsp;&nbsp;↳ {{ child.name }}</option>
+                </template>
+              </select>
+              <i v-if="categoriesLoading" class="fa-solid fa-spinner fa-spin cat-spinner"></i>
+              <i v-else class="fa-solid fa-chevron-down cat-chevron"></i>
+            </div>
+            <button v-if="selectedCategoryId" class="btn-reset-cat" @click="selectedCategoryId = null" title="Bỏ lọc danh mục">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
           <div class="search-box">
             <input 
               type="text" 
               v-model="searchQuery" 
-              placeholder="Tìm kiếm sản phẩm toàn hệ thống..." 
+              placeholder="Tìm kiếm sản phẩm..." 
             />
             <i v-if="!searchPending && !isTyping" class="fa-solid fa-magnifying-glass search-icon"></i>
             <i v-else class="fa-solid fa-spinner fa-spin search-icon"></i>
@@ -140,6 +160,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useManualGroups } from '~/composables/useManualGroups'
 import { useHomeProducts, normalizeText } from '~/composables/useHomeProducts'
+import { useCategories } from '~/composables/useCategories'
 
 useHead({ title: 'Quản lý Nhóm Sản phẩm - Admin' })
 
@@ -154,10 +175,14 @@ const groupOptions = [
 const activeGroup = ref('outlet-shop')
 const searchQuery = ref('')
 const groupSearchQuery = ref('')
+const selectedCategoryId = ref<number | null>(null)
 const isSaving = ref(false)
 const showSuccess = ref(false)
 const loadingManual = ref(true)
 const showConfirmClear = ref(false)
+
+// Categories
+const { categories, isLoading: categoriesLoading, fetchCategories } = useCategories()
 
 const debouncedSearchQuery = ref('')
 const debouncedGroupSearchQuery = ref('')
@@ -183,11 +208,21 @@ watch(groupSearchQuery, (q) => {
 
 // For searching products
 const searchOptions = computed(() => {
-  const options = { limit: 100 } // Fetch more for selection
+  const options: Record<string, any> = { limit: 100 }
   if (debouncedSearchQuery.value) {
-    (options as any).search = debouncedSearchQuery.value
+    options.search = debouncedSearchQuery.value
+  }
+  if (selectedCategoryId.value) {
+    options.categoryId = selectedCategoryId.value
   }
   return options
+})
+
+// Reset search when category changes
+watch(selectedCategoryId, () => {
+  searchQuery.value = ''
+  debouncedSearchQuery.value = ''
+  currentSearchPage.value = 10
 })
 const { products: searchResultsRaw, pending: searchPending, loadMore } = useHomeProducts(searchOptions)
 const currentSearchPage = ref(10)
@@ -218,17 +253,50 @@ const currentGroupProducts = computed(() => {
 
 onMounted(async () => {
   initAuth()
-  await fetchManualGroups()
+  await Promise.all([
+    fetchManualGroups(),
+    fetchCategories()
+  ])
   loadingManual.value = false
 })
 
+// Collect all descendant category IDs for a given root ID (for client-side filtering)
+const getDescendantIds = (rootId: number): Set<number> => {
+  const ids = new Set<number>()
+  const walk = (cats: any[]) => {
+    for (const c of cats) {
+      if (c.id === rootId) {
+        // Gather self + all descendants
+        const gatherAll = (node: any) => {
+          ids.add(node.id)
+          node.children?.forEach(gatherAll)
+        }
+        gatherAll(c)
+        return
+      }
+      if (c.children?.length) walk(c.children)
+    }
+  }
+  walk(categories.value || [])
+  return ids
+}
+
 const searchResults = computed(() => {
-  const raw = searchResultsRaw.value || []
+  let raw = searchResultsRaw.value || []
+
+  // Client-side category filter (guards against fallback global fetch leaking other categories)
+  if (selectedCategoryId.value) {
+    const allowedIds = getDescendantIds(selectedCategoryId.value)
+    if (allowedIds.size > 0) {
+      raw = raw.filter(p => p.categoryId !== null && allowedIds.has(Number(p.categoryId)))
+    }
+  }
+
   if (!searchQuery.value) return raw
-  
+
   const q = normalizeText(searchQuery.value)
-  return raw.filter(p => 
-    normalizeText(p.title).includes(q) || 
+  return raw.filter(p =>
+    normalizeText(p.title).includes(q) ||
     normalizeText(p.productCode || '').includes(q) ||
     p.id?.toString().includes(q)
   )
@@ -617,6 +685,84 @@ h3 {
   cursor: pointer;
 }
 .btn-primary:disabled { opacity: 0.7; cursor: wait; }
+
+/* Category filter */
+.category-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.category-filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.category-select-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.category-select {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  color: #333;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.category-select:focus {
+  outline: none;
+  border-color: #e31b1b;
+}
+
+.category-select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.cat-chevron, .cat-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.btn-reset-cat {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  color: #888;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-reset-cat:hover {
+  border-color: #e31b1b;
+  color: #e31b1b;
+}
 
 .load-more-results {
   display: flex;
