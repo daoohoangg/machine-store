@@ -77,7 +77,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
-import { useMembershipPrices } from '~/composables/useMembershipPrices'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const props = withDefaults(defineProps<{
@@ -102,8 +101,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits(['image-error'])
 const { markImageAsFailed } = useImageGuard()
-const { calculateAdjustedPrice } = useMembershipPrices()
-const { userTier } = useAdminAuth()
+const { isUser, isAdmin } = useAdminAuth()
 
 const handleImageError = () => {
   if (props.product.image) {
@@ -164,22 +162,30 @@ const displayOldPrice = computed(() => {
   return null;
 })
 
-// Giá gốc của sản phẩm (chưa trừ chiết khấu thành viên)
-const basePrice = computed(() => {
+// Giá hiển thị chính (đã được tính đúng từ useHomeProducts/useManualGroups)
+// - Chưa đăng nhập: = apiPrice (giá bán lẻ)
+// - Đã đăng nhập  : = calculateAdjustedPrice(apiDiscount, userTier)
+const membershipPrice = computed(() => {
   const priceNum = typeof props.product.price === 'number'
     ? props.product.price
     : Number(String(props.product.price).replace(/[^\d]/g, ''))
   return priceNum
 })
 
-// Giá đã trừ chiết khấu theo cấp thành viên
-const membershipPrice = computed(() => {
-  return calculateAdjustedPrice(basePrice.value, userTier.value)
+// Giá gốc để gạch ngang (rawPrice = giá NPP trước khi apply tier)
+// Chỉ hiển thị khi đã đăng nhập và có sự khác biệt giá
+const basePrice = computed(() => {
+  const p = props.product as any
+  const raw = p.rawPrice || p.oldPrice || null
+  if (!raw) return membershipPrice.value
+  const rawNum = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d]/g, ''))
+  return rawNum > 0 ? rawNum : membershipPrice.value
 })
 
-// Chỉ hiển thị giá gốc bị gạch khi giá thành viên khác giá gốc
+// Hiển thị giá gạch khi đã đăng nhập và giá thành viên thấp hơn giá gốc
+const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 const showOriginalPrice = computed(() => {
-  return membershipPrice.value < basePrice.value && basePrice.value > 0
+  return isLoggedIn.value && basePrice.value > membershipPrice.value && membershipPrice.value > 0
 })
 
 const reviewCount = computed(() => {

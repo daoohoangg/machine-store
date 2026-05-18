@@ -14,7 +14,7 @@ export const useManualGroups = () => {
     'outlet-shop': [],
     'new-products': []
   }))
-  const { userTier } = useAdminAuth()
+  const { userTier, isUser, isAdmin } = useAdminAuth()
   const { calculateAdjustedPrice } = useMembershipPrices()
   const isLoading = useState('manual-groups-loading', () => false)
   const error = useState<any>('manual-groups-error', () => null)
@@ -74,17 +74,20 @@ export const useManualGroups = () => {
 
   // Reactive mapping
   const manualGroups = computed<ManualGroups>(() => {
+    const isLoggedIn = isUser.value || isAdmin.value
     const applyPrices = (list: any[]) => {
       return list.map(p => {
         const rawPrice = Number(p.rawPrice || p.price) || 0
         const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount) ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0)) : null
-        
+
+        // Chưa đăng nhập: trả về giá gốc không áp dụng tier
+        // Đã đăng nhập  : áp dụng tier chiết khấu
         return {
           ...p,
           rawPrice: p.rawPrice || p.price,
           rawOldPrice: p.rawOldPrice || p.oldPrice,
-          price: calculateAdjustedPrice(rawPrice, userTier.value),
-          oldPrice: rawOldPrice ? calculateAdjustedPrice(rawOldPrice, userTier.value) : null
+          price: isLoggedIn ? calculateAdjustedPrice(rawPrice, userTier.value) : rawPrice,
+          oldPrice: rawOldPrice ? (isLoggedIn ? calculateAdjustedPrice(rawOldPrice, userTier.value) : rawOldPrice) : null
         } as HomeProduct
       })
     }

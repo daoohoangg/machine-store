@@ -284,7 +284,7 @@ const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
 const { calculateAdjustedPrice } = useMembershipPrices()
-const { userTier } = useAdminAuth()
+const { userTier, isUser, isAdmin } = useAdminAuth()
 
 // Load all images from the logo directory dynamically
 const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
@@ -605,17 +605,22 @@ const formatPrice = (value: number | string) => {
 }
 
 // Giá theo cấp thành viên cho trang chi tiết
+// - Chưa đăng nhập: dùng product.price trực tiếp (= apiPrice từ useHomeProducts)
+// - Đã đăng nhập: áp dụng calculateAdjustedPrice(apiDiscount, userTier)
+const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 const productMembershipPrice = computed(() => {
   if (!product.value) return 0
   const priceNum = typeof product.value.price === 'number'
     ? product.value.price
     : Number(String(product.value.price).replace(/[^\d]/g, ''))
-  return calculateAdjustedPrice(priceNum, userTier.value)
+  // product.price đã được set đúng từ useHomeProducts (apiPrice khi chưa login)
+  // Đã login: calculateAdjustedPrice có thể giảm thêm theo tier
+  return isLoggedIn.value ? calculateAdjustedPrice(priceNum, userTier.value) : priceNum
 })
 
-// Chỉ hiện giá gốc gạch khi có chiết khấu thành viên
+// Chỉ hiện giá gốc gạch khi đã đăng nhập và có chiết khấu tier
 const showProductOriginalPrice = computed(() => {
-  if (!product.value) return false
+  if (!product.value || !isLoggedIn.value) return false
   const priceNum = typeof product.value.price === 'number'
     ? product.value.price
     : Number(String(product.value.price).replace(/[^\d]/g, ''))
