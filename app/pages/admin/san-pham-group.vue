@@ -18,6 +18,66 @@
         </button>
       </div>
 
+      <!-- Section Visibility Toggles -->
+      <div class="visibility-section">
+        <div class="visibility-header">
+          <i class="fa-solid fa-eye"></i>
+          <span>Hiển thị trang chủ</span>
+          <span class="visibility-hint">Bật/tắt hiển thị các khu vực trên trang chủ</span>
+        </div>
+        <div class="visibility-cards">
+          <div class="visibility-card" :class="{ hidden: !sectionVisibility.showOutletShop }">
+            <div class="vis-card-icon outlet">
+              <i class="fa-solid fa-tag"></i>
+            </div>
+            <div class="vis-card-info">
+              <div class="vis-card-name">OUTLET SHOP</div>
+              <div class="vis-card-desc">Khu vực khuyến mãi đặc biệt trên trang chủ</div>
+            </div>
+            <button 
+              class="toggle-btn" 
+              :class="{ active: sectionVisibility.showOutletShop }"
+              @click="toggleSection('showOutletShop')"
+              :title="sectionVisibility.showOutletShop ? 'Đang hiển thị - Nhấn để ẩn' : 'Đang ẩn - Nhấn để hiển thị'"
+            >
+              <i class="fa-solid" :class="sectionVisibility.showOutletShop ? 'fa-eye' : 'fa-eye-slash'"></i>
+              {{ sectionVisibility.showOutletShop ? 'Đang hiện' : 'Đang ẩn' }}
+            </button>
+          </div>
+
+          <div class="visibility-card" :class="{ hidden: !sectionVisibility.showNewProducts }">
+            <div class="vis-card-icon new-product">
+              <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="vis-card-info">
+              <div class="vis-card-name">Sản phẩm mới</div>
+              <div class="vis-card-desc">Khu vực sản phẩm mới nhất trên trang chủ</div>
+            </div>
+            <button 
+              class="toggle-btn" 
+              :class="{ active: sectionVisibility.showNewProducts }"
+              @click="toggleSection('showNewProducts')"
+              :title="sectionVisibility.showNewProducts ? 'Đang hiển thị - Nhấn để ẩn' : 'Đang ẩn - Nhấn để hiển thị'"
+            >
+              <i class="fa-solid" :class="sectionVisibility.showNewProducts ? 'fa-eye' : 'fa-eye-slash'"></i>
+              {{ sectionVisibility.showNewProducts ? 'Đang hiện' : 'Đang ẩn' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="visibility-actions">
+          <button class="btn-save-visibility" @click="handleSaveVisibility" :disabled="isSavingVisibility">
+            <i class="fa-solid" :class="isSavingVisibility ? 'fa-spinner fa-spin' : 'fa-floppy-disk'"></i>
+            {{ isSavingVisibility ? 'Đang lưu...' : 'Lưu cài đặt hiển thị' }}
+          </button>
+          <transition name="fade">
+            <span v-if="showVisibilitySuccess" class="vis-success-msg">
+              <i class="fa-solid fa-circle-check"></i> Đã lưu!
+            </span>
+          </transition>
+        </div>
+      </div>
+
       <div class="group-selector">
         <button 
           v-for="g in groupOptions" 
@@ -161,6 +221,7 @@ import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useManualGroups } from '~/composables/useManualGroups'
 import { useHomeProducts, normalizeText } from '~/composables/useHomeProducts'
 import { useCategories } from '~/composables/useCategories'
+import { useSectionVisibility } from '~/composables/useSectionVisibility'
 
 useHead({ title: 'Quản lý Nhóm Sản phẩm - Admin' })
 
@@ -251,11 +312,30 @@ const currentGroupProducts = computed(() => {
   )
 })
 
+// Section Visibility
+const { visibility: sectionVisibility, fetchVisibility, saveVisibility, isSaving: isSavingVisibility } = useSectionVisibility()
+const showVisibilitySuccess = ref(false)
+
+const toggleSection = (key: 'showOutletShop' | 'showNewProducts') => {
+  sectionVisibility.value[key] = !sectionVisibility.value[key]
+}
+
+const handleSaveVisibility = async () => {
+  try {
+    await saveVisibility()
+    showVisibilitySuccess.value = true
+    setTimeout(() => { showVisibilitySuccess.value = false }, 3000)
+  } catch (e: any) {
+    alert('Lỗi khi lưu cài đặt hiển thị: ' + e.message)
+  }
+}
+
 onMounted(async () => {
   initAuth()
   await Promise.all([
     fetchManualGroups(),
-    fetchCategories()
+    fetchCategories(),
+    fetchVisibility()
   ])
   loadingManual.value = false
 })
@@ -377,6 +457,176 @@ watch(activeGroup, () => {
 .align-items-center { align-items: center; }
 .gap-15 { gap: 15px; }
 
+/* ---- Section Visibility ---- */
+.visibility-section {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.visibility-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #333;
+}
+
+.visibility-header i {
+  color: #e31b1b;
+  font-size: 16px;
+}
+
+.visibility-hint {
+  font-size: 13px;
+  font-weight: 400;
+  color: #888;
+  margin-left: 4px;
+}
+
+.visibility-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.visibility-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fafafa;
+  flex: 1;
+  min-width: 280px;
+  transition: all 0.25s;
+}
+
+.visibility-card.hidden {
+  opacity: 0.6;
+  border-style: dashed;
+  background: #f5f5f5;
+}
+
+.vis-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.vis-card-icon.outlet {
+  background: linear-gradient(135deg, #4d90e0, #2563eb);
+}
+
+.vis-card-icon.new-product {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.vis-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.vis-card-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.vis-card-desc {
+  font-size: 12px;
+  color: #888;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #ccc;
+  background: #fff;
+  color: #999;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.toggle-btn.active {
+  border-color: #28a745;
+  background: #f0fff4;
+  color: #28a745;
+}
+
+.toggle-btn:not(.active) {
+  border-color: #dc3545;
+  background: #fff5f5;
+  color: #dc3545;
+}
+
+.toggle-btn:hover {
+  filter: brightness(0.93);
+}
+
+.visibility-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 14px;
+}
+
+.btn-save-visibility {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  background: #e31b1b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save-visibility:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.btn-save-visibility:hover:not(:disabled) {
+  background: #c41515;
+}
+
+.vis-success-msg {
+  color: #28a745;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---- Group Selector ---- */
 .group-selector {
   display: flex;
   gap: 10px;

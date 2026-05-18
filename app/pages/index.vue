@@ -16,7 +16,7 @@
     <div class="full-width-section">
       <HomePromoRow class="hide-on-mobile" />
       <div class="container">
-        <OrderOutletShopStrip class="mt-section" />
+        <OrderOutletShopStrip v-if="sectionVisibility.showOutletShop" class="mt-section" />
         <HomeCategoryRow class="mt-section" />
         <ProductSuggestion />
         
@@ -68,6 +68,11 @@ import { computed } from 'vue'
 
 const { categories } = useCategories()
 const { products } = useHomeProducts()
+const { visibility: sectionVisibility, fetchVisibility } = useSectionVisibility()
+
+onMounted(() => {
+  fetchVisibility()
+})
 
 const top3Categories = computed(() => {
   return categories.value?.slice(0, 3) || []

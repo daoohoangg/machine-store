@@ -1,5 +1,5 @@
 <template>
-  <section class="category-row-section" v-if="newProducts.length > 0">
+  <section class="category-row-section" v-if="newProducts.length > 0 && visibility.showNewProducts">
     <div class="section-head">
       <h3>Sản phẩm mới</h3>
       <NuxtLink to="/nhom-san-pham/new-products" class="view-all">Xem tất cả ></NuxtLink>
@@ -19,9 +19,11 @@
 import { useGroups } from '~/composables/useGroups'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useManualGroups } from '~/composables/useManualGroups'
+import { useSectionVisibility } from '~/composables/useSectionVisibility'
 
 const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
+const { visibility, fetchVisibility } = useSectionVisibility()
 
 const manualProducts = computed(() => {
   return manualGroups.value['new-products'] || []
@@ -32,6 +34,7 @@ onMounted(() => {
     fetchGroups()
   }
   fetchManualGroups()
+  fetchVisibility()
 })
 
 const newProductsGroupId = computed(() => {
