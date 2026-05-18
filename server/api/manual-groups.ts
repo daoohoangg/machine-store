@@ -80,11 +80,11 @@ export default defineEventHandler(async (event) => {
           throw new Error('Invalid request body')
         }
 
-        // 1. Delete all existing manual groups
+        // 1. Delete all existing manual groups (bỏ qua rows settings bắt đầu bằng '__')
         const { error: deleteError } = await supabase
           .from('manual_groups')
           .delete()
-          .neq('id', -1)
+          .not('group_key', 'like', '__%')
 
         if (deleteError) throw deleteError
 

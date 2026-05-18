@@ -1,90 +1,74 @@
 import { defineEventHandler, readBody, getMethod } from 'h3'
-import * as fs from 'node:fs'
-import * as path from 'node:path'
 import { useSupabase } from '../utils/supabase'
 
-const CONFIG_KEY = 'section_visibility'
-const jsonPath = path.resolve(process.cwd(), 'app/data/section-visibility.json')
+// Lưu visibility settings vào bảng manual_groups sẵn có (không cần tạo bảng mới)
+// group_key = '__visibility__', product_id = 'settings'
+const VISIBILITY_GROUP_KEY = '__visibility__'
+const VISIBILITY_PRODUCT_ID = 'settings'
 
 const defaultVisibility = {
   showOutletShop: true,
   showNewProducts: true,
 }
 
-// Read from JSON file fallback
-const readFromFile = (): typeof defaultVisibility => {
-  try {
-    if (fs.existsSync(jsonPath)) {
-      const raw = fs.readFileSync(jsonPath, 'utf-8')
-      return { ...defaultVisibility, ...JSON.parse(raw) }
-    }
-  } catch (e) {
-    console.warn('[SectionVisibility] Could not read JSON file:', e)
-  }
-  return { ...defaultVisibility }
-}
-
-// Write to JSON file fallback
-const writeToFile = (value: typeof defaultVisibility) => {
-  try {
-    fs.writeFileSync(jsonPath, JSON.stringify(value, null, 2), 'utf-8')
-  } catch (e) {
-    console.warn('[SectionVisibility] Could not write JSON file:', e)
-  }
-}
-
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
+  const supabase = useSupabase()
 
   if (method === 'GET') {
-    // Try Supabase first, fallback to JSON file
     try {
-      const supabase = useSupabase()
       const { data, error } = await supabase
-        .from('site_config')
-        .select('value')
-        .eq('key', CONFIG_KEY)
+        .from('manual_groups')
+        .select('product_data')
+        .eq('group_key', VISIBILITY_GROUP_KEY)
+        .eq('product_id', VISIBILITY_PRODUCT_ID)
         .maybeSingle()
 
-      if (!error && data) {
-        return { ...defaultVisibility, ...data.value }
+      if (error) {
+        console.warn('[SectionVisibility] GET error:', error.message)
+        return { ...defaultVisibility }
       }
-      // Table doesn't exist or error - try JSON file
-    } catch (e: any) {
-      console.warn('[SectionVisibility] Supabase not available, using JSON file:', e.message)
-    }
 
-    return readFromFile()
+      if (!data) return { ...defaultVisibility }
+
+      return { ...defaultVisibility, ...(data.product_data || {}) }
+    } catch (e: any) {
+      console.error('[SectionVisibility] GET exception:', e.message)
+      return { ...defaultVisibility }
+    }
   }
 
   if (method === 'POST') {
-    const body = await readBody(event)
-    const value = {
-      showOutletShop: body.showOutletShop ?? true,
-      showNewProducts: body.showNewProducts ?? true,
-    }
-
-    // Try Supabase first
     try {
-      const supabase = useSupabase()
-      const { error } = await supabase
-        .from('site_config')
-        .upsert({ key: CONFIG_KEY, value }, { onConflict: 'key' })
-
-      if (!error) {
-        // Also save to file as backup
-        writeToFile(value)
-        return { success: true, value }
+      const body = await readBody(event)
+      const value = {
+        showOutletShop: body.showOutletShop ?? true,
+        showNewProducts: body.showNewProducts ?? true,
       }
-      // Supabase failed (e.g. table not exists) - fallback to file
-      console.warn('[SectionVisibility] Supabase upsert failed, using file fallback')
-    } catch (e: any) {
-      console.warn('[SectionVisibility] Supabase not available for save, using JSON file:', e.message)
-    }
 
-    // Fallback: save to JSON file
-    writeToFile(value)
-    return { success: true, value, storage: 'file' }
+      // Xóa row cũ nếu có
+      await supabase
+        .from('manual_groups')
+        .delete()
+        .eq('group_key', VISIBILITY_GROUP_KEY)
+        .eq('product_id', VISIBILITY_PRODUCT_ID)
+
+      // Insert row mới
+      const { error } = await supabase
+        .from('manual_groups')
+        .insert({
+          group_key: VISIBILITY_GROUP_KEY,
+          product_id: VISIBILITY_PRODUCT_ID,
+          product_data: value
+        })
+
+      if (error) throw error
+
+      return { success: true, value }
+    } catch (e: any) {
+      console.error('[SectionVisibility] POST error:', e.message)
+      return { success: false, error: e.message }
+    }
   }
 
   return { success: false, error: 'Method not allowed' }
