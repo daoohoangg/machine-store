@@ -308,7 +308,7 @@ const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
 const { calculateAdjustedPrice } = useMembershipPrices()
 const { userTier, isUser, isAdmin } = useAdminAuth()
-const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers } = useWholesalePricing()
+const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers, loadProductWholesaleTiers } = useWholesalePricing()
 
 // Load all images from the logo directory dynamically
 const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
@@ -433,6 +433,7 @@ const categoryName = computed(() => {
 watch(product, (newProd) => {
   if (newProd) {
     fetchGeminiDescription(newProd)
+    loadProductWholesaleTiers(newProd.id)
   }
 }, { immediate: true })
 
@@ -645,7 +646,7 @@ const productMembershipPrice = computed(() => {
 // Wholesale pricing
 const wholesalePriceTable = computed(() => {
   if (!product.value) return []
-  return getWholesalePriceTable(productMembershipPrice.value)
+  return getWholesalePriceTable(productMembershipPrice.value, product.value.id)
 })
 
 const isWholesaleRowActive = (row: any) => {
@@ -657,7 +658,7 @@ const isWholesaleRowActive = (row: any) => {
 // Display price adjusts based on quantity (wholesale)
 const displayPrice = computed(() => {
   if (!product.value) return 0
-  return calculateWholesalePrice(productMembershipPrice.value, quantity.value)
+  return calculateWholesalePrice(productMembershipPrice.value, quantity.value, product.value.id)
 })
 
 // Chỉ hiện giá gốc gạch khi đã đăng nhập và có chiết khấu tier
@@ -693,7 +694,7 @@ const pushToViewed = (item: HomeProduct) => {
 const handleAddToCart = async () => {
   if (!product.value) return
 
-  const wholesaleUnitPrice = calculateWholesalePrice(productMembershipPrice.value, quantity.value)
+  const wholesaleUnitPrice = calculateWholesalePrice(productMembershipPrice.value, quantity.value, product.value.id)
   const productWithWholesale = {
     ...product.value,
     price: wholesaleUnitPrice,

@@ -18,6 +18,8 @@ export const useCart = () => {
   const isInitialized = useState<boolean>('tuanminh_cart_init', () => false)
 
   // 1. Initialize from localStorage on client side
+  const { calculateWholesalePrice, loadMultipleProductsWholesaleTiers } = useWholesalePricing()
+
   if (!isInitialized.value && process.client) {
     const savedCart = localStorage.getItem('tuanminh_cart')
     if (savedCart) {
@@ -27,6 +29,12 @@ export const useCart = () => {
           ...item,
           selected: item.selected !== undefined ? item.selected : true
         }))
+        
+        // Bulk load product-specific wholesale tiers for items in the cart
+        const productIds = cart.value.map(item => String(item.id))
+        if (productIds.length > 0) {
+          loadMultipleProductsWholesaleTiers(productIds)
+        }
       } catch (e) {
         console.error('Không thể đọc giỏ hàng từ bộ nhớ cục bộ')
       }
@@ -50,13 +58,11 @@ export const useCart = () => {
     return cart.value.filter(item => item.selected).reduce((acc, item) => acc + item.quantity, 0)
   })
 
-  const { calculateWholesalePrice } = useWholesalePricing()
-
   const totalPrice = computed(() => {
     return cart.value
       .filter(item => item.selected)
       .reduce((acc, item) => {
-        const unitPrice = calculateWholesalePrice(item.price, item.quantity)
+        const unitPrice = calculateWholesalePrice(item.price, item.quantity, item.id)
         return acc + (unitPrice * item.quantity)
       }, 0)
   })
@@ -158,6 +164,10 @@ export const useCart = () => {
     const wasEmpty = cart.value.length === 0
 
     const realId = String(product.id || product.item_id || product.title)
+    
+    // Tải cấu hình sỉ của sản phẩm này (nếu chưa có)
+    loadMultipleProductsWholesaleTiers([realId])
+
     const priceNum = product.price ? Number(product.price.toString().replace(/\./g, '')) : 0
     const oldPriceNum = product.oldPrice ? Number(product.oldPrice.toString().replace(/\./g, '')) : null
 
