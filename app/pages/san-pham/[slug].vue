@@ -129,11 +129,17 @@
             </div>
           </button>
           <div class="btn-group-half">
-            <button type="button" class="btn-consult">
-              <i class="fa-solid fa-headset"></i>
-              <div class="btn-text">
-                <strong>Tư vấn</strong>
-                <span>Chúng tôi sẽ gọi lại cho bạn</span>
+            <button type="button" class="btn-consult" @click="handleConsultClick">
+              <i class="fa-solid" :class="showConsultPhone ? 'fa-phone-volume' : 'fa-headset'"></i>
+              <div class="btn-text" style="text-align: left;">
+                <template v-if="showConsultPhone">
+                  <strong>Hotline: {{ settings.hotline }}</strong>
+                  <span>Nhấp để gọi tư vấn ngay</span>
+                </template>
+                <template v-else>
+                  <strong>Tư vấn</strong>
+                  <span>Chúng tôi sẽ gọi lại cho bạn</span>
+                </template>
               </div>
             </button>
             <!-- <button type="button" class="btn-installment">
@@ -309,6 +315,18 @@ const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts(
 const { calculateAdjustedPrice } = useMembershipPrices()
 const { userTier, isUser, isAdmin } = useAdminAuth()
 const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers, loadProductWholesaleTiers } = useWholesalePricing()
+const { settings } = useSiteSettings()
+
+const showConsultPhone = ref(false)
+const handleConsultClick = () => {
+  if (showConsultPhone.value) {
+    if (process.client) {
+      window.location.href = `tel:${settings.value.hotline.replace(/\./g, '')}`
+    }
+  } else {
+    showConsultPhone.value = true
+  }
+}
 
 // Load all images from the logo directory dynamically
 const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })

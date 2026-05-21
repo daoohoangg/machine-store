@@ -5,13 +5,17 @@ export interface TierAdjustment {
   percent: number
 }
 
-// Default tiers centered around discounts
 const defaultTiers: TierAdjustment[] = [
-  { name: 'Chiết khấu 3%', percent: 3 },
-  { name: 'Chiết khấu 5%', percent: 5 },
-  { name: 'Chiết khấu 7%', percent: 7 },
-  { name: 'Đại lý cấp 1, 2 (Mặc định)', percent: 0 },
-  { name: 'Đại lý cấp 3 (Giảm 2%)', percent: 2 }
+  { name: 'Thành viên (Hạng mặc định)', percent: 0 },
+  { name: 'ĐẠI LÍ CẤP 2 (Giá NPP + 2%)', percent: 32.0 },
+  { name: 'ĐẠI LÍ CẤP 2 (Giá NPP + 1%)', percent: 32.666667 },
+  { name: 'ĐẠI LÍ CẤP 1 (Giá NPP)', percent: 33.333 },
+  { name: 'NHÀ PHÂN PHỐI (Giá NPP + 3%)', percent: 31.333333 },
+  { name: 'NHÀ PHÂN PHỐI (Giá NPP + 2%)', percent: 32.0 },
+  { name: 'NHÀ PHÂN PHỐI (Giá NPP + 1%)', percent: 32.666667 },
+  { name: 'NHÀ PHÂN PHỐI (Giá NPP + CK quý 3%)', percent: 31.333333 },
+  { name: 'đại lý cấp 1, 2 ( Giá NPP )', percent: 33.333 },
+  { name: 'đại lý cấp 3 ( +5% giá NPP )', percent: 30 }
 ]
 
 export const useMembershipPrices = () => {
