@@ -35,8 +35,15 @@
               </div>
               
               <div class="item-price-row">
-                <span class="current-price">{{ formatPrice(item.price) }}đ</span>
-                <span v-if="item.oldPrice" class="old-price">{{ formatPrice(item.oldPrice) }}đ</span>
+                <template v-if="getWholesaleDiscount(item.quantity) > 0">
+                  <span class="current-price ws-discounted">{{ formatPrice(calculateWholesalePrice(item.price, item.quantity)) }}đ</span>
+                  <span class="old-price">{{ formatPrice(item.price) }}đ</span>
+                  <span class="ws-badge"><i class="fa-solid fa-boxes-stacked"></i> Giá sỉ -{{ getWholesaleDiscount(item.quantity) }}%</span>
+                </template>
+                <template v-else>
+                  <span class="current-price">{{ formatPrice(item.price) }}đ</span>
+                  <span v-if="item.oldPrice" class="old-price">{{ formatPrice(item.oldPrice) }}đ</span>
+                </template>
               </div>
             </div>
 
@@ -64,6 +71,10 @@
           <span class="total-label">Tổng tiền:</span>
           <span class="total-amount">{{ formatPrice(totalPrice) }}đ</span>
         </div>
+        <div v-if="wholesaleDiscount > 0" class="ws-savings-row">
+          <span><i class="fa-solid fa-tag"></i> Tiết kiệm giá sỉ:</span>
+          <span class="ws-savings-amount">-{{ formatPrice(wholesaleDiscount) }}đ</span>
+        </div>
         
         <button class="checkout-btn" @click="goCheckout">Mua ngay</button>
         
@@ -75,16 +86,20 @@
 
 <script setup>
 import { useCart } from '~/composables/useCart'
+import { useWholesalePricing } from '~/composables/useWholesalePricing'
 
 const { 
   cart, 
   totalItems, 
   totalPrice, 
+  wholesaleDiscount,
   isAllSelected,
   updateQuantity,
   removeFromCart,
   toggleSelection
 } = useCart()
+
+const { getWholesaleDiscount, calculateWholesalePrice } = useWholesalePricing()
 
 const emit = defineEmits(['close'])
 const router = useRouter()
@@ -298,6 +313,46 @@ const goCheckout = () => {
 }
 .checkout-btn:hover {
   background: #008000;
+}
+
+.ws-discounted {
+  color: #d4161c !important;
+}
+
+.ws-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e8f4fd;
+  color: #1a73e8;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-top: 3px;
+  width: fit-content;
+}
+
+.ws-badge i {
+  font-size: 10px;
+}
+
+.ws-savings-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #28a745;
+}
+
+.ws-savings-row i {
+  margin-right: 3px;
+}
+
+.ws-savings-amount {
+  font-weight: 700;
 }
 
 </style>

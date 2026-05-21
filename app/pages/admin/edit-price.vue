@@ -60,13 +60,85 @@
           </template>
         </div>
       </div>
+
+      <!-- Wholesale Pricing Section -->
+      <div class="section-divider"></div>
+      
+      <h2 class="section-title">📦 Cấu hình giá sỉ theo số lượng</h2>
+      <p class="subtitle">Thiết lập mức giảm giá khi khách hàng mua số lượng lớn. Áp dụng cho tất cả sản phẩm.</p>
+
+      <div class="wholesale-tier-list">
+        <div v-for="(tier, index) in localWholesaleTiers" :key="'ws-'+index" class="wholesale-tier-item">
+          <div class="ws-field">
+            <span class="tier-label">Số lượng sản phẩm</span>
+            <input v-model.number="tier.min_quantity" type="number" min="1" placeholder="Số lượng sản phẩm" class="ws-input" />
+          </div>
+          <div class="ws-field">
+            <span class="tier-label">Mức giảm (%)</span>
+            <input v-model.number="tier.discount_percent" type="number" step="0.1" min="0" max="100" placeholder="Mức giảm" class="ws-input" />
+          </div>
+          <div class="ws-actions">
+            <button class="ws-btn-remove" @click="removeWholesaleTier(index)" title="Xóa mức này">
+              <i class="fa-solid fa-circle-minus"></i>
+            </button>
+            <button class="ws-btn-add" @click="addWholesaleTier(index)" title="Thêm mức mới">
+              <i class="fa-solid fa-circle-plus"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Empty state: show add button when no tiers -->
+        <div v-if="localWholesaleTiers.length === 0" class="wholesale-tier-item ws-empty">
+          <div class="ws-field">
+            <span class="tier-label">Số lượng sản phẩm</span>
+            <input type="number" disabled placeholder="Số lượng sản phẩm" class="ws-input" />
+          </div>
+          <div class="ws-field">
+            <span class="tier-label">Mức giảm (%)</span>
+            <input type="number" disabled placeholder="Mức giảm" class="ws-input" />
+          </div>
+          <div class="ws-actions">
+            <button class="ws-btn-add" @click="addWholesaleTier(-1)" title="Thêm mức mới">
+              <i class="fa-solid fa-circle-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-save-area">
+        <button class="btn-primary" @click="handleSaveWholesale" :disabled="isSavingWholesale">
+          <span v-if="isSavingWholesale"><i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...</span>
+          <span v-else>Cập nhật giá sỉ</span>
+        </button>
+      </div>
+
+      <div v-if="wholesaleStatusMsg" :class="['status-msg', isWholesaleError ? 'error' : 'success']">
+        <i :class="isWholesaleError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check'"></i>
+        {{ wholesaleStatusMsg }}
+      </div>
+
+      <div class="price-preview-zone ws-preview" v-if="localWholesaleTiers.length > 0">
+        <h3>💡 Xem trước giá sỉ (Giá gốc: 1.000.000đ):</h3>
+        <div class="preview-grid">
+          <div class="preview-item header">Số lượng</div>
+          <div class="preview-item header">Giảm</div>
+          <div class="preview-item header">Đơn giá</div>
+          
+          <template v-for="row in wholesalePreviewRows" :key="'wsp-'+row.label">
+            <div class="preview-item">{{ row.label }}</div>
+            <div class="preview-item">{{ row.discount }}%</div>
+            <div class="preview-item highlighted">{{ formatPrice(row.unitPrice) }}đ</div>
+          </template>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useMembershipPrices, type TierAdjustment } from '~/composables/useMembershipPrices'
+import { useWholesalePricing, type WholesaleTier } from '~/composables/useWholesalePricing'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 
 const { isAdmin } = useAdminAuth()
@@ -139,6 +211,61 @@ const calculatePreview = (base: number, percent: number) => {
 const formatPrice = (p: number) => {
   return p.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
+
+// ── Wholesale Pricing ──
+const { tiers: wholesaleTiers, loadWholesaleTiers, saveWholesaleTiers, getWholesalePriceTable } = useWholesalePricing()
+
+const localWholesaleTiers = ref<WholesaleTier[]>([])
+const isSavingWholesale = ref(false)
+const wholesaleStatusMsg = ref('')
+const isWholesaleError = ref(false)
+
+// Load wholesale tiers on mount - add to existing onMounted
+const initWholesale = async () => {
+  await loadWholesaleTiers()
+  localWholesaleTiers.value = JSON.parse(JSON.stringify(wholesaleTiers.value))
+}
+initWholesale()
+
+const addWholesaleTier = (afterIndex: number) => {
+  const newTier: WholesaleTier = { min_quantity: 0, discount_percent: 0 }
+  if (afterIndex < 0 || localWholesaleTiers.value.length === 0) {
+    localWholesaleTiers.value.push(newTier)
+  } else {
+    localWholesaleTiers.value.splice(afterIndex + 1, 0, newTier)
+  }
+}
+
+const removeWholesaleTier = (index: number) => {
+  localWholesaleTiers.value.splice(index, 1)
+}
+
+const handleSaveWholesale = async () => {
+  isSavingWholesale.value = true
+  wholesaleStatusMsg.value = ''
+  
+  try {
+    const validTiers = localWholesaleTiers.value.filter(t => t.min_quantity > 0 && t.discount_percent > 0)
+    await saveWholesaleTiers(validTiers)
+    localWholesaleTiers.value = JSON.parse(JSON.stringify(validTiers))
+    
+    isWholesaleError.value = false
+    wholesaleStatusMsg.value = 'Lưu cấu hình giá sỉ thành công!'
+    
+    setTimeout(() => {
+      wholesaleStatusMsg.value = ''
+    }, 3000)
+  } catch (e: any) {
+    isWholesaleError.value = true
+    wholesaleStatusMsg.value = e.statusMessage || 'Có lỗi xảy ra khi lưu cấu hình giá sỉ'
+  } finally {
+    isSavingWholesale.value = false
+  }
+}
+
+const wholesalePreviewRows = computed(() => {
+  return getWholesalePriceTable(1000000)
+})
 </script>
 
 <style scoped>
@@ -360,5 +487,106 @@ h1 {
   .btn-remove { position: absolute; top: 10px; right: 10px; }
   .admin-actions { flex-direction: column; align-items: stretch; }
   .main-buttons { flex-direction: column; }
+}
+
+.section-divider {
+  border-top: 2px solid #eee;
+  margin: 40px 0 30px;
+}
+
+.section-title {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 5px;
+}
+
+.wholesale-tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.wholesale-tier-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 12px;
+  align-items: end;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fdfdfd;
+}
+
+.wholesale-tier-item.ws-empty {
+  opacity: 0.6;
+}
+
+.ws-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ws-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.ws-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.ws-btn-remove {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 24px;
+  padding: 4px;
+  transition: transform 0.15s;
+}
+.ws-btn-remove:hover { transform: scale(1.15); }
+
+.ws-btn-add {
+  background: none;
+  border: none;
+  color: #28a745;
+  cursor: pointer;
+  font-size: 24px;
+  padding: 4px;
+  transition: transform 0.15s;
+}
+.ws-btn-add:hover { transform: scale(1.15); }
+
+.ws-save-area {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.ws-preview {
+  background: #e8f4fd !important;
+  border-color: #b3d9f2 !important;
+}
+
+.ws-preview h3 {
+  color: #0c5460 !important;
+}
+
+@media (max-width: 768px) {
+  .wholesale-tier-item {
+    grid-template-columns: 1fr;
+  }
+  .ws-actions {
+    justify-content: flex-end;
+  }
 }
 </style>

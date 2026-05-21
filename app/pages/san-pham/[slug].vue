@@ -54,7 +54,7 @@
 
         <div class="price-box-red">
           <div class="price-main">
-            <p class="current-price">{{ formatPrice(productMembershipPrice) }} đ</p>
+            <p class="current-price">{{ formatPrice(displayPrice) }} đ</p>
             <div class="price-sub">
               <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
               <span v-if="showProductOriginalPrice" class="old-price">{{ formatPrice(product.price) }}đ</span>
@@ -73,6 +73,28 @@
               <div class="cd-stock">Còn <strong>508</strong> Chiếc</div>
             </div>
           </div>
+        </div>
+
+        <!-- Wholesale Pricing Table -->
+        <div v-if="wholesalePriceTable.length > 0" class="wholesale-box">
+          <div class="wholesale-header">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Giá bán buôn/ sỉ</span>
+          </div>
+          <table class="wholesale-table">
+            <thead>
+              <tr>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in wholesalePriceTable" :key="row.label" :class="{ 'ws-active': isWholesaleRowActive(row) }">
+                <td>{{ row.label }}</td>
+                <td class="ws-price">{{ formatPrice(row.unitPrice) }}đ</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="qty-row">
@@ -275,6 +297,7 @@ import { useImageGuard } from '~/composables/useImageGuard'
 import { useViewedProducts } from '~/composables/useViewedProducts'
 import { useMembershipPrices } from '~/composables/useMembershipPrices'
 import { useAdminAuth } from '~/composables/useAdminAuth'
+import { useWholesalePricing } from '~/composables/useWholesalePricing'
 
 const route = useRoute()
 const router = useRouter()
@@ -285,6 +308,7 @@ const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
 const { calculateAdjustedPrice } = useMembershipPrices()
 const { userTier, isUser, isAdmin } = useAdminAuth()
+const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers } = useWholesalePricing()
 
 // Load all images from the logo directory dynamically
 const brandImages = import.meta.glob('~/assets/img/brand/logo h\u00e3ng/*.{png,jpg,jpeg,svg}', { eager: true, import: 'default' })
@@ -618,13 +642,31 @@ const productMembershipPrice = computed(() => {
   return isLoggedIn.value ? calculateAdjustedPrice(priceNum, userTier.value) : priceNum
 })
 
+// Wholesale pricing
+const wholesalePriceTable = computed(() => {
+  if (!product.value) return []
+  return getWholesalePriceTable(productMembershipPrice.value)
+})
+
+const isWholesaleRowActive = (row: any) => {
+  if (!row) return false
+  if (row.maxQty === null) return quantity.value >= row.minQty
+  return quantity.value >= row.minQty && quantity.value <= row.maxQty
+}
+
+// Display price adjusts based on quantity (wholesale)
+const displayPrice = computed(() => {
+  if (!product.value) return 0
+  return calculateWholesalePrice(productMembershipPrice.value, quantity.value)
+})
+
 // Chỉ hiện giá gốc gạch khi đã đăng nhập và có chiết khấu tier
 const showProductOriginalPrice = computed(() => {
   if (!product.value || !isLoggedIn.value) return false
   const priceNum = typeof product.value.price === 'number'
     ? product.value.price
     : Number(String(product.value.price).replace(/[^\d]/g, ''))
-  return productMembershipPrice.value < priceNum && priceNum > 0
+  return displayPrice.value < priceNum && priceNum > 0
 })
 
 const decreaseQty = () => {
@@ -651,8 +693,15 @@ const pushToViewed = (item: HomeProduct) => {
 const handleAddToCart = async () => {
   if (!product.value) return
 
+  const wholesaleUnitPrice = calculateWholesalePrice(productMembershipPrice.value, quantity.value)
+  const productWithWholesale = {
+    ...product.value,
+    price: wholesaleUnitPrice,
+    oldPrice: wholesaleUnitPrice < productMembershipPrice.value ? productMembershipPrice.value : product.value.oldPrice
+  }
+
   for (let i = 0; i < quantity.value; i += 1) {
-    await addToCart(product.value)
+    await addToCart(productWithWholesale)
   }
 }
 
@@ -1443,5 +1492,74 @@ watch(
   .related-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+/* Wholesale Pricing */
+.wholesale-box {
+  border: 1px solid #d0e3f5;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.wholesale-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0f7ff;
+  border-bottom: 1px solid #d0e3f5;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a5fa6;
+}
+
+.wholesale-header i {
+  color: #2e86de;
+  font-size: 18px;
+}
+
+.wholesale-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.wholesale-table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fafcfe;
+}
+
+.wholesale-table tbody td {
+  padding: 11px 14px;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.wholesale-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.wholesale-table tbody tr.ws-active {
+  background: #eef6ff;
+}
+
+.wholesale-table tbody tr.ws-active td {
+  font-weight: 600;
+}
+
+.ws-price {
+  color: #1a73e8;
+  font-weight: 700;
+  font-size: 15px !important;
+}
+
+.wholesale-table tbody tr.ws-active .ws-price {
+  color: #d4161c;
 }
 </style>

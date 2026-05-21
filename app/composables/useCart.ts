@@ -1,4 +1,5 @@
 import { watch, computed } from 'vue'
+import { useWholesalePricing } from '~/composables/useWholesalePricing'
 
 export interface CartItem {
   id: string; // Real numeric ID from Abaha CRM
@@ -49,10 +50,27 @@ export const useCart = () => {
     return cart.value.filter(item => item.selected).reduce((acc, item) => acc + item.quantity, 0)
   })
 
+  const { calculateWholesalePrice } = useWholesalePricing()
+
   const totalPrice = computed(() => {
     return cart.value
       .filter(item => item.selected)
+      .reduce((acc, item) => {
+        const unitPrice = calculateWholesalePrice(item.price, item.quantity)
+        return acc + (unitPrice * item.quantity)
+      }, 0)
+  })
+
+  // Original total without wholesale discounts (for showing savings)
+  const totalPriceOriginal = computed(() => {
+    return cart.value
+      .filter(item => item.selected)
       .reduce((acc, item) => acc + (item.price * item.quantity), 0)
+  })
+
+  // Total wholesale discount amount
+  const wholesaleDiscount = computed(() => {
+    return totalPriceOriginal.value - totalPrice.value
   })
 
   const isAllSelected = computed({
@@ -217,6 +235,8 @@ export const useCart = () => {
     totalItems,
     selectedItemsCount,
     totalPrice,
+    totalPriceOriginal,
+    wholesaleDiscount,
     isAllSelected,
     addToCart,
     removeFromCart,

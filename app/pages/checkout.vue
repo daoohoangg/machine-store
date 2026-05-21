@@ -97,8 +97,14 @@
             </div>
 
             <div class="item-price">
-              <p>{{ formatPrice(item.price) }}đ</p>
-              <p v-if="item.oldPrice" class="old">{{ formatPrice(item.oldPrice) }}đ</p>
+              <template v-if="getWholesaleDiscount(item.quantity) > 0">
+                <p class="ws-checkout-price">{{ formatPrice(calculateWholesalePrice(item.price, item.quantity)) }}đ</p>
+                <p class="old">{{ formatPrice(item.price) }}đ</p>
+              </template>
+              <template v-else>
+                <p>{{ formatPrice(item.price) }}đ</p>
+                <p v-if="item.oldPrice" class="old">{{ formatPrice(item.oldPrice) }}đ</p>
+              </template>
             </div>
 
             <div class="qty">
@@ -121,6 +127,10 @@
           <p v-if="voucherStatus" :class="['voucher-status', voucherStatus.type]">{{ voucherStatus.text }}</p>
 
           <p><span>Tiền hàng:</span> <strong>{{ formatPrice(totalPrice) }}đ</strong></p>
+          <p v-if="wholesaleDiscount > 0" class="ws-savings-checkout">
+            <span>📦 Tiết kiệm giá sỉ:</span>
+            <strong>-{{ formatPrice(wholesaleDiscount) }}đ</strong>
+          </p>
           <p v-if="discountValue > 0" class="discount-row">
             <span>Giảm giá ({{ appliedVoucher?.code }}):</span> 
             <strong>-{{ formatPrice(discountValue) }}đ</strong>
@@ -141,6 +151,7 @@ import { useOrder } from '~/composables/useOrder'
 import { useLocations } from '~/composables/useLocations'
 import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useAbahaApi } from '~/composables/useAbahaApi'
+import { useWholesalePricing } from '~/composables/useWholesalePricing'
 
 definePageMeta({
   layout: 'checkout'
@@ -149,12 +160,14 @@ definePageMeta({
 const {
   cart,
   totalPrice,
+  wholesaleDiscount,
   isAllSelected,
   updateQuantity,
   removeFromCart,
   toggleSelection,
   clearCart
 } = useCart()
+const { calculateWholesalePrice, getWholesaleDiscount } = useWholesalePricing()
 const { createOrder, submitOrderToBackend } = useOrder()
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useLocations()
 const { isUser, isAdmin, userName, userPhone, initAuth, setUser } = useAdminAuth()
@@ -801,5 +814,18 @@ textarea {
   padding: 30px;
   text-align: center;
   color: #888;
+}
+
+.ws-checkout-price {
+  color: #d4161c !important;
+  font-weight: 700;
+}
+
+.ws-savings-checkout {
+  color: #28a745 !important;
+}
+
+.ws-savings-checkout strong {
+  color: #28a745 !important;
 }
 </style>
