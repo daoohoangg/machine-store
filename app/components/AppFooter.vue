@@ -5,27 +5,13 @@ const { settings } = useSiteSettings()
 // Mở app Zalo trực tiếp trên mobile, fallback về web
 const openZalo = (e) => {
   e.preventDefault()
+  const zaloUrl = settings.value.zalo || 'https://zalo.me/dienmaytuanminh'
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-  const webUrl = settings.value.zalo || 'https://chat.zalo.me'
-
+  
   if (isMobile) {
-    const match = webUrl.match(/[?&]c=(\d+)/)
-    const convId = match ? match[1] : null
-
-    if (convId) {
-      const deepLink = `zalo://conversation?conversationId=${convId}`
-      const start = Date.now()
-      window.location.href = deepLink
-      setTimeout(() => {
-        if (Date.now() - start < 2000) {
-          window.open(webUrl, '_blank')
-        }
-      }, 1500)
-    } else {
-      window.open(webUrl, '_blank')
-    }
+    window.location.href = zaloUrl
   } else {
-    window.open(webUrl, '_blank')
+    window.open(zaloUrl, '_blank')
   }
 }
 </script>

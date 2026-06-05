@@ -63,7 +63,7 @@ export const useSiteSettings = () => {
     address: 'Thôn Phượng Trì, Xã Văn Giang, Tỉnh Hưng Yên',
     email: 'lehoang145817629@gmail.com',
     facebook: 'https://web.facebook.com/profile.php?id=61585011406117&locale=vi_VN&_rdc=1&_rdr#',
-    zalo: 'https://chat.zalo.me/?c=3465497484082176611',
+    zalo: 'https://zalo.me/dienmaytuanminh',
     youtube: '#',
     tiktok: '#',
     policies: JSON.parse(JSON.stringify(defaultPolicies))

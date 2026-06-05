@@ -43,33 +43,13 @@ const zaloHref = computed(() => settings.value.zalo || '#')
 
 // Mở app Zalo trực tiếp trên mobile, fallback về web
 const openZalo = () => {
+  const zaloUrl = settings.value.zalo || 'https://zalo.me/dienmaytuanminh'
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-  const webUrl = settings.value.zalo || 'https://chat.zalo.me'
-
+  
   if (isMobile) {
-    // Lấy conversation ID từ URL (nếu có)
-    const match = webUrl.match(/[?&]c=(\d+)/)
-    const convId = match ? match[1] : null
-
-    if (convId) {
-      // Deep link mở thẳng cuộc trò chuyện trong app Zalo
-      const deepLink = `zalo://conversation?conversationId=${convId}`
-      const start = Date.now()
-
-      // Thử mở app Zalo
-      window.location.href = deepLink
-
-      // Nếu sau 1.5s vẫn còn trên trang (app chưa mở được), fallback về web
-      setTimeout(() => {
-        if (Date.now() - start < 2000) {
-          window.open(webUrl, '_blank')
-        }
-      }, 1500)
-    } else {
-      window.open(webUrl, '_blank')
-    }
+    window.location.href = zaloUrl
   } else {
-    window.open(webUrl, '_blank')
+    window.open(zaloUrl, '_blank')
   }
 }
 </script>
