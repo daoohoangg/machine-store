@@ -28,6 +28,7 @@ const openZalo = (e) => {
     window.open(webUrl, '_blank')
   }
 }
+</script>
 
 <template>
   <footer class="app-footer">
