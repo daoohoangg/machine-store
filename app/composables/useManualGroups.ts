@@ -14,7 +14,7 @@ export const useManualGroups = () => {
     'outlet-shop': [],
     'new-products': []
   }))
-  const { userTier, isUser, isAdmin } = useAdminAuth()
+  const { userTier, isUser, isAdmin, isAgencyAccount } = useAdminAuth()
   const { calculateAdjustedPrice } = useMembershipPrices()
   const isLoading = useState('manual-groups-loading', () => false)
   const error = useState<any>('manual-groups-error', () => null)
@@ -75,25 +75,46 @@ export const useManualGroups = () => {
   // Reactive mapping
   const manualGroups = computed<ManualGroups>(() => {
     const isLoggedIn = isUser.value || isAdmin.value
-    const applyPrices = (list: any[]) => {
+
+    // Outlet shop: LUÔN hiển thị giá "price" (giá bán lẻ), không áp dụng giá đại lý
+    const applyOutletPrices = (list: any[]) => {
       return list.map(p => {
         const rawPrice = Number(p.rawPrice || p.price) || 0
-        const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount) ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0)) : null
-
-        // Chưa đăng nhập: trả về giá gốc không áp dụng tier
-        // Đã đăng nhập  : áp dụng tier chiết khấu
+        const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
+          ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
+          : null
         return {
           ...p,
           rawPrice: p.rawPrice || p.price,
           rawOldPrice: p.rawOldPrice || p.oldPrice,
-          price: isLoggedIn ? calculateAdjustedPrice(rawPrice, userTier.value) : rawPrice,
-          oldPrice: rawOldPrice ? (isLoggedIn ? calculateAdjustedPrice(rawOldPrice, userTier.value) : rawOldPrice) : null
+          price: rawPrice,
+          oldPrice: rawOldPrice || null
+        } as HomeProduct
+      })
+    }
+
+    // Các nhóm khác: áp dụng giá đại lý nếu tài khoản là đại lý
+    const applyPrices = (list: any[]) => {
+      return list.map(p => {
+        const rawPrice = Number(p.rawPrice || p.price) || 0
+        const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
+          ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
+          : null
+
+        // Chưa đăng nhập hoặc không phải đại lý: trả về giá gốc không áp dụng tier
+        // Đại lý đã đăng nhập: áp dụng tier chiết khấu
+        return {
+          ...p,
+          rawPrice: p.rawPrice || p.price,
+          rawOldPrice: p.rawOldPrice || p.oldPrice,
+          price: (isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawPrice, userTier.value) : rawPrice,
+          oldPrice: rawOldPrice ? ((isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawOldPrice, userTier.value) : rawOldPrice) : null
         } as HomeProduct
       })
     }
 
     return {
-      'outlet-shop': applyPrices(rawManualGroups.value['outlet-shop']),
+      'outlet-shop': applyOutletPrices(rawManualGroups.value['outlet-shop']),
       'new-products': applyPrices(rawManualGroups.value['new-products'])
     }
   })

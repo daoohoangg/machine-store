@@ -14,7 +14,7 @@ export interface ViewedProduct {
 }
 
 export const useViewedProducts = () => {
-  const { userTier, isUser, isAdmin } = useAdminAuth()
+  const { userTier, isUser, isAdmin, isAgencyAccount } = useAdminAuth()
   const { calculateAdjustedPrice } = useMembershipPrices()
   const viewedProducts = useState<ViewedProduct[]>('tuanminh-viewed-products-list', () => [])
   const maxItems = 5
@@ -68,8 +68,8 @@ export const useViewedProducts = () => {
       const baseOld = p.rawOldPrice || p.oldPrice
       return {
         ...p,
-        price: isLoggedIn ? calculateAdjustedPrice(base, userTier.value) : base,
-        oldPrice: baseOld ? (isLoggedIn ? calculateAdjustedPrice(baseOld, userTier.value) : baseOld) : null
+        price: (isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(base, userTier.value) : base,
+        oldPrice: baseOld ? ((isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(baseOld, userTier.value) : baseOld) : null
       }
     })
   })

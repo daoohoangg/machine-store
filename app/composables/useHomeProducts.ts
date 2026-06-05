@@ -213,7 +213,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
   })
 
   // Load auth and pricing context
-  const { userTier, isUser, isAdmin } = useAdminAuth()
+  const { userTier, isUser, isAdmin, isAgencyAccount } = useAdminAuth()
   const { tiers, calculateAdjustedPrice } = useMembershipPrices()
 
   // Manual loading state for loadMore
@@ -230,14 +230,20 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
       const apiDiscount = Number(item.discount) || 0
       const apiPrice    = Number(item.price)    || 0
 
-      // Logic giá theo trạng thái đăng nhập:
-      // - Chưa đăng nhập: dùng apiPrice (giá bán lẻ)
-      // - Đã đăng nhập  : dùng apiDiscount (giá NPP/gốc) rồi áp dụng tier chiết khấu
+      // Logic giá theo trạng thái đăng nhập và loại tài khoản:
+      // - Chưa đăng nhập       : dùng apiPrice (giá bán lẻ)
+      // - Đăng nhập - thường   : dùng apiPrice (giá bán lẻ)
+      // - Đăng nhập - đại lý   : dùng apiDiscount (giá NPP gốc) rồi áp dụng tier chiết khấu
       const isLoggedIn = isUser.value || isAdmin.value
-      const rawPriceBase = isLoggedIn && apiDiscount > 0 ? apiDiscount : apiPrice
+      // Chỉ đại lý mới nhìn thấy giá NPP (discount từ API)
+      const rawPriceBase = (isLoggedIn && isAgencyAccount.value && apiDiscount > 0)
+        ? apiDiscount
+        : apiPrice
 
-      // Apply membership tier adjustment (chỉ có hiệu lực khi đã đăng nhập)
-      const price = isLoggedIn ? calculateAdjustedPrice(rawPriceBase, userTier.value) : rawPriceBase
+      // Apply membership tier adjustment (chỉ áp dụng cho đại lý)
+      const price = (isLoggedIn && isAgencyAccount.value)
+        ? calculateAdjustedPrice(rawPriceBase, userTier.value)
+        : rawPriceBase
       
       const discountText = inferDiscount(price, rawPriceBase)
       

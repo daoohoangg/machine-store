@@ -119,5 +119,25 @@ export const useAdminAuth = () => {
     }
   }
 
-  return { isAdmin, adminName, isUser, userName, userPhone, userTier, setUser, login, logout, initAuth }
+  /**
+   * Trả về true nếu tài khoản có role là đại lý (tier chứa từ khóa liên quan đại lý/NPP).
+   * Đại lý sẽ thấy giá từ trường "discount" (giá NPP gốc).
+   * Tài khoản thường sẽ thấy giá từ trường "price" (giá bán lẻ).
+   */
+  const isAgencyAccount = computed(() => {
+    if (!userTier.value) return false
+    const tier = userTier.value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .toLowerCase()
+    return (
+      tier.includes('dai ly') ||
+      tier.includes('dai li') ||
+      tier.includes('nha phan phoi') ||
+      tier.includes('npp')
+    )
+  })
+
+  return { isAdmin, adminName, isUser, userName, userPhone, userTier, isAgencyAccount, setUser, login, logout, initAuth }
 }

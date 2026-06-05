@@ -313,7 +313,7 @@ const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
 const { calculateAdjustedPrice } = useMembershipPrices()
-const { userTier, isUser, isAdmin } = useAdminAuth()
+const { userTier, isUser, isAdmin, isAgencyAccount } = useAdminAuth()
 const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers, loadProductWholesaleTiers } = useWholesalePricing()
 const { settings } = useSiteSettings()
 
@@ -648,17 +648,22 @@ const formatPrice = (value: number | string) => {
 }
 
 // Giá theo cấp thành viên cho trang chi tiết
-// - Chưa đăng nhập: dùng product.price trực tiếp (= apiPrice từ useHomeProducts)
-// - Đã đăng nhập: áp dụng calculateAdjustedPrice(apiDiscount, userTier)
+// - Chưa đăng nhập          : dùng product.price trực tiếp (= apiPrice từ useHomeProducts)
+// - Đăng nhập - thường      : dùng product.price trực tiếp (= apiPrice, không có chiết khấu đặc biệt)
+// - Đăng nhập - đại lý      : product.price đã là giá NPP (apiDiscount), áp dụng thêm tier
 const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 const productMembershipPrice = computed(() => {
   if (!product.value) return 0
   const priceNum = typeof product.value.price === 'number'
     ? product.value.price
     : Number(String(product.value.price).replace(/[^\d]/g, ''))
-  // product.price đã được set đúng từ useHomeProducts (apiPrice khi chưa login)
-  // Đã login: calculateAdjustedPrice có thể giảm thêm theo tier
-  return isLoggedIn.value ? calculateAdjustedPrice(priceNum, userTier.value) : priceNum
+  // product.price đã được set đúng từ useHomeProducts:
+  //   - Đại lý: = apiDiscount (giá NPP)
+  //   - Thường: = apiPrice (giá bán lẻ)
+  // Chỉ áp dụng thêm tier chiết khấu cho đại lý
+  return (isLoggedIn.value && isAgencyAccount.value)
+    ? calculateAdjustedPrice(priceNum, userTier.value)
+    : priceNum
 })
 
 // Wholesale pricing
