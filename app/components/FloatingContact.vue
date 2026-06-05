@@ -3,7 +3,7 @@
     <a :href="settings.facebook" target="_blank" class="contact-item facebook" aria-label="Facebook">
       <i class="fa-brands fa-facebook"></i>
     </a>
-    <a :href="settings.zalo" target="_blank" class="contact-item zalo" aria-label="Zalo">
+    <a :href="zaloHref" target="_blank" class="contact-item zalo" aria-label="Zalo" @click.prevent="openZalo">
       <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" />
     </a>
     <div class="contact-item hotline" @click="toggleHotline" :class="{ active: isHotlineOpen }">
@@ -36,6 +36,41 @@ const isAdminPage = computed(() => route.path.startsWith('/admin'))
 
 const toggleHotline = () => {
   isHotlineOpen.value = !isHotlineOpen.value
+}
+
+// Trả về deep link Zalo (dùng cho href fallback)
+const zaloHref = computed(() => settings.value.zalo || '#')
+
+// Mở app Zalo trực tiếp trên mobile, fallback về web
+const openZalo = () => {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const webUrl = settings.value.zalo || 'https://chat.zalo.me'
+
+  if (isMobile) {
+    // Lấy conversation ID từ URL (nếu có)
+    const match = webUrl.match(/[?&]c=(\d+)/)
+    const convId = match ? match[1] : null
+
+    if (convId) {
+      // Deep link mở thẳng cuộc trò chuyện trong app Zalo
+      const deepLink = `zalo://conversation?conversationId=${convId}`
+      const start = Date.now()
+
+      // Thử mở app Zalo
+      window.location.href = deepLink
+
+      // Nếu sau 1.5s vẫn còn trên trang (app chưa mở được), fallback về web
+      setTimeout(() => {
+        if (Date.now() - start < 2000) {
+          window.open(webUrl, '_blank')
+        }
+      }, 1500)
+    } else {
+      window.open(webUrl, '_blank')
+    }
+  } else {
+    window.open(webUrl, '_blank')
+  }
 }
 </script>
 

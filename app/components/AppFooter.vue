@@ -1,7 +1,33 @@
 <script setup>
 import { useSiteSettings } from '~/composables/useSiteSettings'
 const { settings } = useSiteSettings()
-</script>
+
+// Mở app Zalo trực tiếp trên mobile, fallback về web
+const openZalo = (e) => {
+  e.preventDefault()
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  const webUrl = settings.value.zalo || 'https://chat.zalo.me'
+
+  if (isMobile) {
+    const match = webUrl.match(/[?&]c=(\d+)/)
+    const convId = match ? match[1] : null
+
+    if (convId) {
+      const deepLink = `zalo://conversation?conversationId=${convId}`
+      const start = Date.now()
+      window.location.href = deepLink
+      setTimeout(() => {
+        if (Date.now() - start < 2000) {
+          window.open(webUrl, '_blank')
+        }
+      }, 1500)
+    } else {
+      window.open(webUrl, '_blank')
+    }
+  } else {
+    window.open(webUrl, '_blank')
+  }
+}
 
 <template>
   <footer class="app-footer">
@@ -37,7 +63,7 @@ const { settings } = useSiteSettings()
             <p><strong><i class="fa-solid fa-clock"></i> Thời gian</strong></p>
             <p>8h - 17h30 (Thứ 2 - Thứ 7)</p>
             <div class="zalo-chat">
-              <a :href="settings.zalo" target="_blank" class="chat-link">
+              <a :href="settings.zalo" target="_blank" class="chat-link" @click="openZalo">
                 Chat Zalo 
                 <img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" />
               </a>
@@ -87,7 +113,7 @@ const { settings } = useSiteSettings()
         <div class="footer-col">
           <h5>Kết nối với chúng tôi</h5>
           <ul class="social-links">
-            <li><a :href="settings.zalo"><img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" /> Zalo</a></li>
+            <li><a :href="settings.zalo" @click="openZalo"><img src="https://meta.vn/images/icons/zalo.svg" alt="Zalo" class="social-icon-img" /> Zalo</a></li>
             <li><a :href="settings.facebook"><img src="https://meta.vn/images/icons/facebook-icon.svg" alt="Facebook" class="social-icon-img" /> Facebook</a></li>
             <li><a :href="settings.youtube"><img src="https://meta.vn/images/icons/youtube-icon.svg" alt="Youtube" class="social-icon-img" /> Youtube</a></li>
             <li><a :href="settings.tiktok"><img src="https://meta.vn/Data/2025/Thang06/tiktok-meta.svg" alt="Tiktok" class="social-icon-img" /> Tiktok</a></li>
