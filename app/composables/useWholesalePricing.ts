@@ -1,4 +1,5 @@
 import { useState } from '#imports'
+import { useAdminAuth } from './useAdminAuth'
 
 export interface WholesaleTier {
   min_quantity: number
@@ -154,6 +155,11 @@ export const useWholesalePricing = () => {
    * Returns the highest tier the quantity qualifies for
    */
   const getWholesaleDiscount = (quantity: number, productId?: string): number => {
+    // Only apply wholesale discounts to logged-in users
+    const { isUser, isAdmin } = useAdminAuth()
+    const isLoggedIn = isUser.value || isAdmin.value
+    if (!isLoggedIn) return 0
+
     // 1. Try product-specific tiers first
     if (productId && productTiersMap.value[productId] && productTiersMap.value[productId].length > 0) {
       const sorted = [...productTiersMap.value[productId]].sort((a, b) => b.min_quantity - a.min_quantity)
@@ -190,6 +196,11 @@ export const useWholesalePricing = () => {
    * Returns array of rows with quantity range labels and unit prices
    */
   const getWholesalePriceTable = (basePrice: number, productId?: string): WholesalePriceRow[] => {
+    // Only show wholesale price table to logged-in users
+    const { isUser, isAdmin } = useAdminAuth()
+    const isLoggedIn = isUser.value || isAdmin.value
+    if (!isLoggedIn) return []
+
     let activeTiers = sortedTiers.value
     if (productId && productTiersMap.value[productId] && productTiersMap.value[productId].length > 0) {
       activeTiers = [...productTiersMap.value[productId]].sort((a, b) => a.min_quantity - b.min_quantity)
