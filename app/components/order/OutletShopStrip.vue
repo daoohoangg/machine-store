@@ -59,6 +59,10 @@ import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProduct
 const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
 
+import { useAdminAuth } from '~/composables/useAdminAuth'
+const { isUser, isAdmin } = useAdminAuth()
+const isLoggedIn = computed(() => isUser.value || isAdmin.value)
+
 const manualProducts = computed(() => {
   return manualGroups.value['outlet-shop'] || []
 })
@@ -125,6 +129,7 @@ const formatDiscount = (item: any) => {
 }
 
 const getOldPriceVal = (item: any) => {
+  if (!isLoggedIn.value) return null;
   if (item.oldPrice && item.oldPrice > item.price) return item.oldPrice;
   const priceNum = typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^\d]/g, ''))
   if (priceNum > 0) {
