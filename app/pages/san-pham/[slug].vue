@@ -57,7 +57,7 @@
             <p class="current-price">{{ formatPrice(displayPrice) }} đ</p>
             <div class="price-sub">
               <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
-              <span v-if="showProductOriginalPrice" class="old-price">{{ formatPrice(product.price) }}đ</span>
+              <span v-if="showProductOriginalPrice" class="old-price">{{ formatPrice(product.rawPrice) }}đ</span>
               <small>(Đã gồm VAT)</small>
             </div>
           </div>
@@ -661,9 +661,7 @@ const productMembershipPrice = computed(() => {
   //   - Đại lý: = apiDiscount (giá NPP)
   //   - Thường: = apiPrice (giá bán lẻ)
   // Chỉ áp dụng thêm tier chiết khấu cho đại lý
-  return (isLoggedIn.value && isAgencyAccount.value)
-    ? calculateAdjustedPrice(priceNum, userTier.value)
-    : priceNum
+  return priceNum // Giá đã được áp dụng chiết khấu từ useHomeProducts
 })
 
 // Wholesale pricing
@@ -686,12 +684,12 @@ const displayPrice = computed(() => {
 
 // Chỉ hiện giá gốc gạch khi đã đăng nhập và có chiết khấu tier
 const showProductOriginalPrice = computed(() => {
-  if (!product.value || !isLoggedIn.value) return false
-  const priceNum = typeof product.value.price === 'number'
-    ? product.value.price
-    : Number(String(product.value.price).replace(/[^\d]/g, ''))
-  return displayPrice.value < priceNum && priceNum > 0
-})
+    if (!product.value || !isLoggedIn.value) return false
+    const priceNum = typeof product.value.price === 'number'
+      ? product.value.price
+      : Number(String(product.value.price).replace(/[^\d]/g, ''))
+    return product.value.rawPrice && product.value.rawPrice > priceNum && priceNum > 0
+  })
 
 const decreaseQty = () => {
   quantity.value = Math.max(1, quantity.value - 1)

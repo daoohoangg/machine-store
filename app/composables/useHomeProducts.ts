@@ -259,7 +259,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         productCode: item.product_code || item.code || String(item.id),
         slug: item.slug || `product-${item.id}`,
         title: item.name || 'Sản phẩm',
-        price: rawPriceBase,    // giá gốc (item.discount từ API) để ProductCard tính membership
+        price: price,    // giá gốc (item.discount từ API) để ProductCard tính membership
         rawPrice: rawPriceBase, // alias rõ ràng
         oldPrice: null,         // không cần - ProductCard tự tính từ rawPriceBase vs membershipPrice
         discount: discountText,
@@ -325,3 +325,5 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     }
   }
 }
+
+
