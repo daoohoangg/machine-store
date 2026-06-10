@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header class="app-header">
     <div class="top-banner" v-if="showPromo">
       <NuxtLink to="/">
@@ -122,9 +122,8 @@ const displayAccountName = computed(() => {
   return name
 })
 
-const handleLogout = () => {
-  logout()
-  const router = useRouter()
+const handleLogout = async () => {
+  await logout()
   if (router.currentRoute.value.path === '/admin') {
     router.push('/')
   }
@@ -653,3 +652,5 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+

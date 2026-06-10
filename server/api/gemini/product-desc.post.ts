@@ -6,82 +6,102 @@ export default defineEventHandler(async (event) => {
   const { title, brand, category, specs } = body
 
   if (!config.geminiApiKey) {
-    console.warn('⚠️ Missing Gemini API Key. Returning fallback mock description data.')
+    console.warn('?? Missing Gemini API Key. Returning fallback mock description data.')
     return {
       textBlocks: [
-        `${title} là một trong những sản phẩm nổi bật nhất của thương hiệu ${brand}, mang đến giải pháp tối ưu cho công việc hàng ngày của bạn. Với thiết kế tinh tế và độ hoàn thiện cao, đây là sự lựa chọn hàng đầu trong phân khúc ${category}.`,
-        `Nhờ việc tích hợp các công nghệ tiên tiến, thiết bị đảm bảo khả năng vận hành bền bỉ và mạnh mẽ. Hệ thống được tinh chỉnh để tiết kiệm tối đa điện năng trong khi vẫn duy trì hiệu suất ở mức cao nhất, đáp ứng các tiêu chuẩn khắt khe.`,
-        `Thao tác sử dụng cực kỳ thân thiện với người dùng. ${title} được trang bị các cơ chế an toàn tự động, giúp chủ động phòng tránh rủi ro trong quá trình thao tác. Bạn hoàn toàn có thể an tâm khi sử dụng sản phẩm này cho gia đình hoặc doanh nghiệp.`,
-        `Chính sách bảo hành và hậu mãi đến từ hãng ${brand} cũng là một điểm cộng rất lớn. Bộ sản phẩm chính hãng đi kèm đầy đủ các phụ kiện thay thế cơ bản, giúp tiết kiệm thời gian và chi phí phát sinh sau một thời gian vận hành.`
+        `${title} l� m?t trong nh?ng s?n ph?m n?i b?t nh?t c?a thuong hi?u ${brand}, mang d?n gi?i ph�p t?i uu cho c�ng vi?c h�ng ng�y c?a b?n. V?i thi?t k? tinh t? v� d? ho�n thi?n cao, d�y l� s? l?a ch?n h�ng d?u trong ph�n kh�c ${category}.`,
+        `Nh? vi?c t�ch h?p c�c c�ng ngh? ti�n ti?n, thi?t b? d?m b?o kh? nang v?n h�nh b?n b? v� m?nh m?. H? th?ng du?c tinh ch?nh d? ti?t ki?m t?i da di?n nang trong khi v?n duy tr� hi?u su?t ? m?c cao nh?t, d�p ?ng c�c ti�u chu?n kh?t khe.`,
+        `Thao t�c s? d?ng c?c k? th�n thi?n v?i ngu?i d�ng. ${title} du?c trang b? c�c co ch? an to�n t? d?ng, gi�p ch? d?ng ph�ng tr�nh r?i ro trong qu� tr�nh thao t�c. B?n ho�n to�n c� th? an t�m khi s? d?ng s?n ph?m n�y cho gia d�nh ho?c doanh nghi?p.`,
+        `Ch�nh s�ch b?o h�nh v� h?u m�i d?n t? h�ng ${brand} cung l� m?t di?m c?ng r?t l?n. B? s?n ph?m ch�nh h�ng di k�m d?y d? c�c ph? ki?n thay th? co b?n, gi�p ti?t ki?m th?i gian v� chi ph� ph�t sinh sau m?t th?i gian v?n h�nh.`
       ]
     }
   }
 
   // Create a strict prompt asking for exactly an array of paragraphs.
   const prompt = `
-Viết bài giới thiệu chi tiết, hấp dẫn và thuyết phục về sản phẩm thiết bị máy móc sau:
-- Tên sản phẩm: ${title || 'Sản phẩm'}
-- Thương hiệu: ${brand || 'Chưa rõ'}
-- Danh mục: ${category || 'Thiết bị'}
-- Một số thông số chính (nếu có): ${specs || ''}
+Vi?t b�i gi?i thi?u chi ti?t, h?p d?n v� thuy?t ph?c v? s?n ph?m thi?t b? m�y m�c sau:
+- T�n s?n ph?m: ${title || 'S?n ph?m'}
+- Thuong hi?u: ${brand || 'Chua r�'}
+- Danh m?c: ${category || 'Thi?t b?'}
+- M?t s? th�ng s? ch�nh (n?u c�): ${specs || ''}
 
-Yêu cầu ĐẶC BIỆT: Trả về kết quả là một mảng chuỗi JSON hợp lệ (ví dụ: ["Đoạn 1", "Đoạn 2", "Đoạn 3"]). MỖI PHẦN TỬ TRONG MẢNG là một đoạn văn bản giới thiệu về một khía cạnh hoặc tính năng của sản phẩm. Không trả về bất kỳ định dạng markdown nào. Chỉ trả về một Array chứa các đoạn văn (String). Nhớ format text tự nhiên, không chứa HTML.
+Y�u c?u �?C BI?T: Tr? v? k?t qu? l� m?t m?ng chu?i JSON h?p l? (v� d?: ["�o?n 1", "�o?n 2", "�o?n 3"]). M?I PH?N T? TRONG M?NG l� m?t do?n van b?n gi?i thi?u v? m?t kh�a c?nh ho?c t�nh nang c?a s?n ph?m. Kh�ng tr? v? b?t k? d?nh d?ng markdown n�o. Ch? tr? v? m?t Array ch?a c�c do?n van (String). Nh? format text t? nhi�n, kh�ng ch?a HTML.
 `
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            responseMimeType: "application/json",
-          }
-        }),
-      }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Gemini API Error:', errorText)
-      throw createError({
-        statusCode: response.status,
-        statusMessage: 'Failed to fetch content from Gemini API',
-      })
-    }
-
-    const data = await response.json()
-    const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
-
-    // Attempt to parse JSON strictly since we requested a JSON array
-    let textBlocks: string[] = []
+  // Retry logic with exponential backoff
+  const maxRetries = 3
+  let lastError: any = null
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      textBlocks = JSON.parse(textOutput)
-    } catch (e) {
-      // Fallback: split by newlines if Gemini failed to obey JSON exactly
-      textBlocks = textOutput.split('\n').filter((t: string) => t.trim().length > 10)
-    }
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              responseMimeType: "application/json",
+            }
+          }),
+        }
+      )
 
-    // Force array shape if completely malformed
-    if (!Array.isArray(textBlocks) || textBlocks.length === 0) {
-      textBlocks = [textOutput]
-    }
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`Gemini API Error (attempt ${attempt + 1}/${maxRetries}):`, response.status, errorText)
+        
+        // If 429 (rate limit), wait and retry
+        if (response.status === 429 && attempt < maxRetries - 1) {
+          const waitTime = Math.pow(2, attempt) * 1000 // Exponential backoff: 1s, 2s, 4s
+          console.warn(`Rate limited. Retrying in ${waitTime}ms...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+          continue
+        }
+        
+        throw createError({
+          statusCode: response.status,
+          statusMessage: 'Failed to fetch content from Gemini API',
+        })
+      }
 
-    return {
-      textBlocks
+      const data = await response.json()
+      const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+
+      // Attempt to parse JSON strictly since we requested a JSON array
+      let textBlocks: string[] = []
+      try {
+        textBlocks = JSON.parse(textOutput)
+      } catch (e) {
+        // Fallback: split by newlines if Gemini failed to obey JSON exactly
+        textBlocks = textOutput.split('\n').filter((t: string) => t.trim().length > 10)
+      }
+
+      // Force array shape if completely malformed
+      if (!Array.isArray(textBlocks) || textBlocks.length === 0) {
+        textBlocks = [textOutput]
+      }
+
+      return {
+        textBlocks
+      }
+    } catch (err: any) {
+      lastError = err
+      if (attempt === maxRetries - 1) {
+        throw err
+      }
+      // Continue to next retry
     }
-  } catch (err: any) {
-    console.error('Error in /api/gemini/product-desc:', err)
-    throw createError({
-      statusCode: err.statusCode || 500,
-      statusMessage: err.statusMessage || err.message || 'Internal Server Error'
-    })
   }
+  
+  throw lastError || createError({
+    statusCode: 500,
+    statusMessage: 'Failed to get response from Gemini API after retries'
+  })
 })
