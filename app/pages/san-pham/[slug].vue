@@ -297,6 +297,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProductCard from '~/components/product/ProductCard.vue'
 import { slugifyProduct, useHomeProducts, type HomeProduct } from '~/composables/useHomeProducts'
+import { useManualGroups } from '~/composables/useManualGroups'
 import { useCategories } from '~/composables/useCategories'
 import { useCart } from '~/composables/useCart'
 import { useImageGuard } from '~/composables/useImageGuard'
@@ -308,6 +309,7 @@ import { useWholesalePricing } from '~/composables/useWholesalePricing'
 const route = useRoute()
 const router = useRouter()
 const { products } = useHomeProducts()
+const { manualGroups } = useManualGroups()
 const { categories, fetchCategories } = useCategories()
 const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
@@ -425,9 +427,19 @@ const product = computed<HomeProduct | null>(() => {
   const slug = routeSlug.value
   if (!slug) return null
 
+  // Check outlet-shop first (has correct discounted prices)
+  const outletProducts = manualGroups.value['outlet-shop'] || []
+  const outletMatch = (
+    outletProducts.find((item) => item.slug === slug)
+    || outletProducts.find((item) => String(item.id) === String(slug))
+    || outletProducts.find((item) => slugifyProduct(item.title) === slug)
+    || null
+  )
+  if (outletMatch) return outletMatch
+
   return (
     products.value.find((item) => item.slug === slug)
-    || products.value.find((item) => item.id === slug)
+    || products.value.find((item) => String(item.id) === String(slug))
     || products.value.find((item) => slugifyProduct(item.title) === slug)
     || null
   )
@@ -1598,6 +1610,7 @@ watch(
   color: #d4161c;
 }
 </style>
+
 
 
 
