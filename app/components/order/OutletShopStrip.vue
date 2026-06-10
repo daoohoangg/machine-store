@@ -434,3 +434,4 @@ const formatPrice = (value: number | null) => {
   }
 }
 </style>
+

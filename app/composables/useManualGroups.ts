@@ -78,11 +78,26 @@ export const useManualGroups = () => {
 
     // Outlet shop: LUÔN hiển thị giá "price" (giá bán lẻ), không áp dụng giá đại lý
     const applyOutletPrices = (list: any[]) => {
+      const isLoggedIn = isUser.value || isAdmin.value
       return list.map(p => {
-        const rawPrice = Number(p.rawPrice || p.price) || 0
+        // rawOldPrice đại diện cho giá cao nhất để làm giá gạch ngang
         const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
           ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
           : null
+        const rawPrice = Number(p.rawPrice || p.price) || 0
+        
+        // Chưa đăng nhập: Lấy giá price bình thường (không có discount)
+        if (!isLoggedIn) {
+          return {
+            ...p,
+            rawPrice: p.rawPrice || p.price,
+            rawOldPrice: null,
+            price: p.price,
+            oldPrice: null
+          } as HomeProduct
+        }
+        
+        // Đã đăng nhập: Áp dụng giá discount (giá thấp là price, giá cao là oldPrice)
         return {
           ...p,
           rawPrice: p.rawPrice || p.price,
@@ -130,3 +145,6 @@ export const useManualGroups = () => {
     clearGroup
   }
 }
+
+
+
