@@ -22,6 +22,8 @@ export interface HomeProduct {
   images?: string[]
   specs?: string[]
   fullSpecs?: string[]
+  originalPrice?: number
+  originalDiscount?: number
 }
 
 const inferDiscount = (price: number, oldPrice: number | null): string | null => {
@@ -273,7 +275,9 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         isNew: false,
         sold: Number(item.sales) || 0,
         specs: specs,
-        fullSpecs: detailedSpecs.length > 0 ? detailedSpecs : [cleanedContent]
+        fullSpecs: detailedSpecs.length > 0 ? detailedSpecs : [cleanedContent],
+        originalPrice: apiPrice,
+        originalDiscount: apiDiscount
       }
     }).filter((item: HomeProduct) => {
       return item.image && !item.image.includes('placehold') && !item.image.includes('noimage')

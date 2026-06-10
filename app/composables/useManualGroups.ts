@@ -84,15 +84,16 @@ export const useManualGroups = () => {
         const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
           ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
           : null
-        const rawPrice = Number(p.rawPrice || p.price) || 0
+        const retailPrice = Number(p.originalPrice || p.price) || 0
+        const rawPrice = retailPrice;
         
         // Chưa đăng nhập: Lấy giá price bình thường (không có discount)
         if (!isLoggedIn) {
           return {
             ...p,
-            rawPrice: p.rawPrice || p.price,
+            rawPrice: rawPrice,
             rawOldPrice: null,
-            price: p.price,
+            price: retailPrice,
             oldPrice: null
           } as HomeProduct
         }
@@ -100,9 +101,9 @@ export const useManualGroups = () => {
         // Đã đăng nhập: Áp dụng giá discount (giá thấp là price, giá cao là oldPrice)
         return {
           ...p,
-          rawPrice: p.rawPrice || p.price,
+          rawPrice: rawPrice,
           rawOldPrice: p.rawOldPrice || p.oldPrice,
-          price: rawPrice,
+          price: retailPrice,
           oldPrice: rawOldPrice || null
         } as HomeProduct
       })
@@ -111,16 +112,24 @@ export const useManualGroups = () => {
     // Các nhóm khác: áp dụng giá đại lý nếu tài khoản là đại lý
     const applyPrices = (list: any[]) => {
       return list.map(p => {
-        const rawPrice = Number(p.rawPrice || p.price) || 0
+        // Lấy giá bán lẻ từ originalPrice (nếu không có thì fallback)
+        const retailPrice = Number(p.originalPrice || p.price) || 0
+        // Lấy giá NPP từ originalDiscount (nếu không có thì fallback)
+        const nppPrice = Number(p.originalDiscount || p.discount) || 0
+
+        // Chưa đăng nhập hoặc không phải đại lý: dùng giá bán lẻ
+        // Đại lý đã đăng nhập: dùng giá NPP rồi áp dụng tier chiết khấu
+        const rawPrice = (isLoggedIn && isAgencyAccount.value && nppPrice > 0)
+          ? nppPrice
+          : retailPrice
+
         const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
           ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
           : null
 
-        // Chưa đăng nhập hoặc không phải đại lý: trả về giá gốc không áp dụng tier
-        // Đại lý đã đăng nhập: áp dụng tier chiết khấu
         return {
           ...p,
-          rawPrice: p.rawPrice || p.price,
+          rawPrice: rawPrice,
           rawOldPrice: p.rawOldPrice || p.oldPrice,
           price: (isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawPrice, userTier.value) : rawPrice,
           oldPrice: rawOldPrice ? ((isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawOldPrice, userTier.value) : rawOldPrice) : null
