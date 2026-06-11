@@ -73,33 +73,6 @@ export const useManualGroups = () => {
   const manualGroups = computed<ManualGroups>(() => {
     const isLoggedIn = isUser.value || isAdmin.value
 
-    const applyOutletPrices = (list: any[]) => {
-      const isLoggedIn = isUser.value || isAdmin.value
-      return list.map(p => {
-        const retailPrice = Number(p.originalPrice || p.price) || 0
-        const nppPrice = Number(p.originalDiscount || p.discount) || 0
-        
-        if (!isLoggedIn) {
-          return {
-            ...p,
-            rawPrice: retailPrice,
-            price: retailPrice,
-            oldPrice: null
-          } as HomeProduct
-        }
-        
-        const basePrice = (nppPrice > 0) ? nppPrice : retailPrice
-        const finalPrice = (isAgencyAccount.value) ? calculateAdjustedPrice(basePrice, userTier.value) : basePrice
-        
-        return {
-          ...p,
-          rawPrice: retailPrice,
-          price: finalPrice,
-          oldPrice: retailPrice > finalPrice ? retailPrice : null
-        } as HomeProduct
-      })
-    }
-
     const applyPrices = (list: any[]) => {
       return list.map(p => {
         const retailPrice = Number(p.originalPrice || p.price) || 0
@@ -124,7 +97,7 @@ export const useManualGroups = () => {
     }
 
     return {
-      'outlet-shop': applyOutletPrices(rawManualGroups.value['outlet-shop']),
+      'outlet-shop': applyPrices(rawManualGroups.value['outlet-shop']),
       'new-products': applyPrices(rawManualGroups.value['new-products'])
     }
   })
