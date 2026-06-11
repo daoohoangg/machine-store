@@ -1,11 +1,11 @@
 <template>
   <section class="suggestion-section">
     <div class="section-head">
-      <h3>💡 Gợi ý cho bạn</h3>
+      <h3>Goi y cho ban</h3>
     </div>
 
     <div v-if="pending && randomProducts.length === 0" class="loading-state">
-      Đang tải gợi ý...
+      Dang tai goi y...
     </div>
 
     <div v-else-if="randomProducts.length > 0" class="product-grid">
@@ -19,26 +19,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import ProductCard from '~/components/product/ProductCard.vue'
 
 const { products, pending } = useHomeProducts()
 const { isImageFailed } = useImageGuard()
 
+const isClient = ref(false)
+
+onMounted(() => {
+  isClient.value = true
+})
+
 const randomProducts = computed(() => {
   const validProducts = products.value.filter(p => !isImageFailed(p.image))
   
   if (validProducts.length === 0) return []
-
-  // Shuffle array using Fisher-Yates algorithm
-  const shuffled = [...validProducts]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
   
-  // Return exactly 18 products (3 rows of 6)
-  return shuffled.slice(0, 18).map(item => ({
+  return validProducts.slice(0, 18).map(item => ({
     id: item.id,
     slug: item.slug,
     title: item.title,
@@ -106,7 +104,6 @@ const randomProducts = computed(() => {
     gap: 8px;
   }
   
-  /* Show only exactly 6 items on mobile (2 cols, 3 rows) */
   .product-grid > *:nth-child(n+7) {
     display: none;
   }

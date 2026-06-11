@@ -1,4 +1,4 @@
-import { useState } from '#imports'
+import { useState, useRequestHeaders } from '#imports'
 
 export const useAdminAuth = () => {
   const isAdmin = useState('admin-auth', () => false)
@@ -6,7 +6,6 @@ export const useAdminAuth = () => {
   const adminName = useState('admin-name', () => '')
   const userName = useState('user-name', () => '')
   const userPhone = useState('user-phone', () => '')
-  // Restore userTier t? localStorage ngay l?p t?c d? giá hi?n th? dúng t? l?n render d?u
   const userTier = useState('user-tier', () => {
     if (import.meta.client) {
       return localStorage.getItem('user_tier') || ''
@@ -15,36 +14,39 @@ export const useAdminAuth = () => {
   })
 
   const initAuth = async () => {
-    if (import.meta.client) {
-      // 1. Re-verify with server to get actual profile (Syncs with Abaha CRM)
-      try {
-        const data = await $fetch('/api/auth/me')
-        if (data && (data as any).authenticated) {
-          const payload = data as any
-          if (payload.user?.isAdmin) {
-            isAdmin.value = true
-            adminName.value = payload.user.name || 'Admin'
-            userPhone.value = payload.user.phone || ''
+    try {
+      // Forward headers from client if running on server to preserve cookies
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
+      
+      const data = await $fetch('/api/auth/me', { headers })
+      if (data && (data as any).authenticated) {
+        const payload = data as any
+        if (payload.user?.isAdmin) {
+          isAdmin.value = true
+          adminName.value = payload.user.name || 'Admin'
+          userPhone.value = payload.user.phone || ''
+          if (import.meta.client) {
             localStorage.setItem('admin_auth', 'true')
             localStorage.setItem('admin_name', adminName.value)
             localStorage.setItem('user_phone', userPhone.value)
-          } else {
-            isUser.value = true
-            userName.value = payload.user.name || payload.user.phone
-            userPhone.value = payload.user.phone || ''
-            userTier.value = payload.user.premium_name || ''
+          }
+        } else {
+          isUser.value = true
+          userName.value = payload.user.name || payload.user.phone
+          userPhone.value = payload.user.phone || ''
+          userTier.value = payload.user.premium_name || ''
+          if (import.meta.client) {
             localStorage.setItem('user_auth', 'true')
             localStorage.setItem('user_name', userName.value)
             localStorage.setItem('user_phone', userPhone.value)
             localStorage.setItem('user_tier', userTier.value)
           }
-        } else {
-          // If server says not authenticated, clear local state
-          logout()
         }
-      } catch (err) {
-        console.error('[Auth Init Error]:', err)
+      } else {
+        if (import.meta.client) logout()
       }
+    } catch (err) {
+      console.error('[Auth Init Error]:', err)
     }
   }
 
@@ -74,11 +76,9 @@ export const useAdminAuth = () => {
   }
 
   const login = async (phone: string) => {
-    // Normalize: strip 'Admin ' prefix if present from old UI
     const normalizedPhone = phone.replace(/^Admin\s+/i, '').trim()
 
     try {
-      // Always call server to ensure the admin_token httpOnly cookie is set
       const { data, error } = await useFetch('/api/admin/login', {
         method: 'POST',
         body: { phone: normalizedPhone }
@@ -93,7 +93,7 @@ export const useAdminAuth = () => {
       }
     } catch (err: any) {
       console.error('[Admin Login Composable Error]:', err)
-      return { success: false, error: err.statusMessage || 'Ðang nh?p th?t b?i. S? di?n tho?i sai quy?n!' }
+      return { success: false, error: err.statusMessage || 'Ðang nh?p th?t b?i' }
     }
   }
 
@@ -105,15 +105,12 @@ export const useAdminAuth = () => {
     userPhone.value = ''
     userTier.value = ''
     if (import.meta.client) {
-      // Call server to clear httpOnly cookies
       try {
         await $fetch('/api/admin/logout', { method: 'POST' })
-        console.log('[Logout] Server cookies cleared')
       } catch (err) {
         console.warn('[Logout] Failed to clear server cookies:', err)
       }
       
-      // Xóa thông tin xác th?c
       localStorage.removeItem('admin_auth')
       localStorage.removeItem('admin_name')
       localStorage.removeItem('admin_auth_expires_at')
@@ -121,21 +118,14 @@ export const useAdminAuth = () => {
       localStorage.removeItem('user_name')
       localStorage.removeItem('user_phone')
       localStorage.removeItem('user_tier')
-      // Xóa d? li?u don hàng & gi? hàng c?a user
       localStorage.removeItem('abaha_order_id')
       localStorage.removeItem('tuanminh_cart')
-      // Xóa d? li?u duy?t web & cài d?t
       localStorage.removeItem('tuanminh_viewed_products_v2')
       localStorage.removeItem('recent_searches')
       localStorage.removeItem('site_settings')
     }
   }
 
-  /**
-   * Tr? v? true n?u tài kho?n có role là d?i lý (tier ch?a t? khóa liên quan d?i lý/NPP).
-   * Ð?i lý s? th?y giá t? tru?ng "discount" (giá NPP g?c).
-   * Tài kho?n thu?ng s? th?y giá t? tru?ng "price" (giá bán l?).
-   */
   const isAgencyAccount = computed(() => {
     if (!userTier.value) return false
     const tier = userTier.value

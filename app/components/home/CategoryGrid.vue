@@ -128,24 +128,8 @@ const categories = computed(() => {
 
 const maxVisibleCategories = 16
 const isExpanded = ref(false)
-const randomCategories = ref<any[]>([])
-
-// Randomize once when categories are loaded
-watch(categories, (newCats) => {
-  if (newCats.length > 0 && randomCategories.value.length === 0) {
-    // Shuffle the array
-    const shuffled = [...newCats].sort(() => 0.5 - Math.random())
-    randomCategories.value = shuffled
-  }
-}, { immediate: true })
-
 const displayedCategories = computed(() => {
   if (isExpanded.value) return categories.value // Show original sorted list when expanded
-  
-  // Show 16 random items
-  if (randomCategories.value.length > 0) {
-    return randomCategories.value.slice(0, maxVisibleCategories)
-  }
   return categories.value.slice(0, maxVisibleCategories)
 })
 
@@ -304,3 +288,4 @@ const toggleCategories = () => {
   }
 }
 </style>
+

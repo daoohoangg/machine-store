@@ -1,0 +1,130 @@
+<script setup lang="ts">
+import { computed, ref, onMounted, watch } from 'vue'
+import { useImageGuard } from '~/composables/useImageGuard'
+import { useManualGroups } from '~/composables/useManualGroups'
+
+const { manualGroups, fetchManualGroups } = useManualGroups()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
+const scrollContainer = ref<HTMLElement | null>(null)
+
+import { useAdminAuth } from '~/composables/useAdminAuth'
+const { isUser, isAdmin } = useAdminAuth()
+const isLoggedIn = computed(() => isUser.value || isAdmin.value)
+
+onMounted(() => {
+  fetchManualGroups()
+})
+
+watch(manualGroups, (newVal) => {
+  if (newVal['outlet-shop'] && newVal['outlet-shop'].length > 0) {
+    const firstItem = newVal['outlet-shop'][0]
+    console.log('[OutletShop DEBUG] First item from manualGroups:', {
+      id: firstItem.id,
+      title: firstItem.title,
+      price: firstItem.price,
+      rawPrice: (firstItem as any).rawPrice,
+      oldPrice: firstItem.oldPrice,
+      discount: firstItem.discount,
+      originalPrice: (firstItem as any).originalPrice,
+      originalDiscount: (firstItem as any).originalDiscount
+    })
+  }
+}, { deep: true })
+
+const getDeterministicDiscount = (item: any) => {
+  const idStr = String(item.id || item.title.length + '-' + item.title.charCodeAt(0))
+  const hash = idStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return (hash % 21) + 10
+}
+
+const getNumericDiscount = (item: any) => {
+  if (item.discount) {
+    const match = String(item.discount).match(/\d+/)
+    if (match) return Number(match[0])
+  }
+  return getDeterministicDiscount(item)
+}
+
+const getDiscountPercent = (item: any) => {
+  return `-${getNumericDiscount(item)}%`
+}
+
+const getMembershipPrice = (item: any) => {
+  const priceNum = typeof item.price === 'number'
+    ? item.price
+    : Number(String(item.price).replace(/[^\d]/g, ''))
+  return priceNum
+}
+
+const getBasePrice = (item: any) => {
+  const raw = (item as any).rawPrice || item.oldPrice || null
+  if (!raw) return getMembershipPrice(item)
+  const rawNum = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d]/g, ''))
+  return rawNum > 0 ? rawNum : getMembershipPrice(item)
+}
+
+const getShowOriginalPrice = (item: any) => {
+  const basePrice = getBasePrice(item)
+  const membershipPrice = getMembershipPrice(item)
+  return basePrice > membershipPrice && membershipPrice > 0
+}
+
+const items = computed(() => {
+  const products = manualGroups.value['outlet-shop'] || []
+  
+  if (!products.length) return []
+
+  const result = products
+    .filter((item) => !isImageFailed(item.image))
+    .slice(0, 10)
+    .map((item, idx) => {
+      const membershipPrice = getMembershipPrice(item)
+      const basePrice = getBasePrice(item)
+      const showOriginalPrice = getShowOriginalPrice(item)
+      
+      const mapped = {
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        brand: item.brand || 'Sunhouse',
+        image: item.image,
+        membershipPrice: membershipPrice,
+        basePrice: basePrice,
+        showOriginalPrice: showOriginalPrice,
+        discountPercent: isLoggedIn.value ? getDiscountPercent(item) : null,
+        endIn: `${Math.max(3, 20 - idx * 2)} ngay`,
+        stock: Math.max(2, 18 - idx * 2)
+      }
+      
+      if (idx === 0) {
+        console.log('[OutletShop] First item mapped:', {
+          id: mapped.id,
+          title: mapped.title,
+          membershipPrice: mapped.membershipPrice,
+          basePrice: mapped.basePrice,
+          showOriginalPrice: mapped.showOriginalPrice,
+          discountPercent: mapped.discountPercent
+        })
+      }
+      
+      return mapped
+    })
+  
+  return result
+})
+
+const scroll = (direction: 'left' | 'right') => {
+  if (!scrollContainer.value) return
+  const scrollAmount = 600
+  const currentScroll = scrollContainer.value.scrollLeft
+  scrollContainer.value.scroll({
+    left: direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount,
+    behavior: 'smooth'
+  })
+}
+
+const formatPrice = (value: number | null) => {
+  if (!value || value <= 0) return ''
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+</script>

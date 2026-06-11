@@ -1,49 +1,51 @@
-﻿<template>
+<template>
   <section class="outlet-shop">
     <div class="outlet-head">
       <h3>OUTLET SHOP</h3>
       <div class="head-actions">
         <div class="nav-buttons" v-if="items.length > 4">
-          <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">‹</button>
-          <button class="nav-btn next" @click="scroll('right')" aria-label="Next">›</button>
+          <button class="nav-btn prev" @click="scroll('left')" aria-label="Previous">&lsaquo;</button>
+          <button class="nav-btn next" @click="scroll('right')" aria-label="Next">&rsaquo;</button>
         </div>
-        <NuxtLink to="/nhom-san-pham/outlet-shop">Xem tất cả ›</NuxtLink>
+        <NuxtLink to="/nhom-san-pham/outlet-shop">Xem tat ca &rsaquo;</NuxtLink>
       </div>
     </div>
 
     <div class="outlet-grid-wrapper">
       <div class="outlet-grid" ref="scrollContainer">
-        <NuxtLink v-for="item in items" :key="item.title" :to="`/san-pham/${item.slug}`" class="outlet-card">
-          <div v-if="item.discountPercent" class="discount-ribbon">{{ item.discountPercent }}</div>
+        <div v-for="item in items" :key="item.id" class="outlet-card-wrapper">
+          <NuxtLink :to="`/san-pham/${item.slug}`" class="outlet-card">
+            <div v-if="item.discountPercent" class="discount-ribbon">{{ item.discountPercent }}</div>
 
-          <div class="thumb">
-            <img
-              v-if="item.image"
-              :src="item.image"
-              :alt="item.title"
-              loading="lazy"
-              @error="markImageAsFailed(item.image)"
-            />
-            <div v-else class="thumb-placeholder"></div>
-          </div>
-
-          <div class="card-info">
-            <p class="title">{{ item.title }}</p>
-            <p class="brand">{{ item.brand || 'Sunhouse' }}</p>
-          </div>
-
-          <div class="price-box">
-            <div class="price-col">
-              <strong>{{ formatPrice(item.price) }}đ</strong>
-              <small v-if="item.oldPrice">{{ formatPrice(item.oldPrice) }}đ</small>
+            <div class="thumb">
+              <img
+                v-if="item.image"
+                :src="item.image"
+                :alt="item.title"
+                loading="lazy"
+                @error="markImageAsFailed(item.image)"
+              />
+              <div v-else class="thumb-placeholder"></div>
             </div>
-            <div class="countdown-col">
-              <span class="countdown-label">Kết thúc sau</span>
-              <span class="countdown-val">{{ item.endIn }}</span>
-              <span class="stock-val">Còn <strong>{{ item.stock }}</strong></span>
+
+            <div class="card-info">
+              <p class="title">{{ item.title }}</p>
+              <p class="brand">{{ item.brand || 'Sunhouse' }}</p>
             </div>
-          </div>
-        </NuxtLink>
+
+            <div class="price-box">
+              <div class="price-col">
+                <strong class="current-price">{{ formatPrice(item.membershipPrice) }}d</strong>
+                <small v-if="item.showOriginalPrice" class="old-price">{{ formatPrice(item.basePrice) }}d</small>
+              </div>
+              <div class="countdown-col">
+                <span class="countdown-label">Ket thuc sau</span>
+                <span class="countdown-val">{{ item.endIn }}</span>
+                <span class="stock-val">Con <strong>{{ item.stock }}</strong></span>
+              </div>
+            </div>
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </section>
@@ -52,58 +54,29 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
-import { useGroups } from '~/composables/useGroups'
 import { useManualGroups } from '~/composables/useManualGroups'
-import { useHomeProducts, type FetchOptions } from '~/composables/useHomeProducts'
+import { useHomeProducts } from '~/composables/useHomeProducts'
 
-const { groups, fetchGroups } = useGroups()
 const { manualGroups, fetchManualGroups } = useManualGroups()
+const { isImageFailed, markImageAsFailed } = useImageGuard()
+const scrollContainer = ref<HTMLElement | null>(null)
 
 import { useAdminAuth } from '~/composables/useAdminAuth'
 const { isUser, isAdmin } = useAdminAuth()
 const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 
+onMounted(() => {
+  fetchManualGroups()
+})
+
 const manualProducts = computed(() => {
   return manualGroups.value['outlet-shop'] || []
 })
 
-onMounted(() => {
-  if (!groups.value.length) {
-    fetchGroups()
-  }
-  fetchManualGroups()
-})
-
-const outletGroupId = computed(() => {
-  if (!groups.value) return null
-  const group = groups.value.find(g => 
-    g.slug === 'outlet-shop' || 
-    g.slug === 'flash-sale' || 
-    g.name?.toUpperCase().includes('OUTLET SHOP') || 
-    g.name?.toUpperCase().includes('FLASH SALE')
-  )
-  return group?.id || null
-})
-
-const fetchOptions = computed<FetchOptions>(() => {
-  if (outletGroupId.value) {
-    return { group_id: outletGroupId.value, limit: 100 }
-  }
-  // Fallback if not found yet
-  return { search: 'Outlet Shop', limit: 100 }
-})
-
-const { products } = useHomeProducts(fetchOptions)
-const { isImageFailed, markImageAsFailed } = useImageGuard()
-const scrollContainer = ref<HTMLElement | null>(null)
-
-const discountValue = (discount: string | null, price: number, oldPrice: number | null) => {
-  if (oldPrice && oldPrice > price) return oldPrice - price
-  if (!discount) return 0
-  const number = Number(discount.replace(/[^\d]/g, ''))
-  if (Number.isNaN(number) || number <= 0) return 0
-  return number
-}
+const { products: apiProducts } = useHomeProducts(computed(() => ({
+  search: 'Outlet Shop',
+  limit: 100
+})))
 
 const getDeterministicDiscount = (item: any) => {
   const idStr = String(item.id || item.title.length + '-' + item.title.charCodeAt(0))
@@ -111,66 +84,68 @@ const getDeterministicDiscount = (item: any) => {
   return (hash % 21) + 10
 }
 
-const formatDiscount = (item: any) => {
+const getNumericDiscount = (item: any) => {
   if (item.discount) {
-     const match = item.discount.match(/-?\d+\s*%/)
-     if (match) return match[0].replace(/\s+/g, '')
+    const match = String(item.discount).match(/\d+/)
+    if (match) return Number(match[0])
   }
-  
-  if (item.oldPrice && item.price) {
-    const p = typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^\d]/g, ''))
-    const o = typeof item.oldPrice === 'number' ? item.oldPrice : Number(String(item.oldPrice).replace(/[^\d]/g, ''))
-    if (o > p && p > 0) {
-      return `-${Math.round(((o - p) / o) * 100)}%`
-    }
-  }
-
-  return `-${getDeterministicDiscount(item)}%`
+  return getDeterministicDiscount(item)
 }
 
-const getOldPriceVal = (item: any) => {
-  if (!isLoggedIn.value) return null;
-  if (item.oldPrice && item.oldPrice > item.price) return item.oldPrice;
-  const priceNum = typeof item.price === 'number' ? item.price : Number(String(item.price).replace(/[^\d]/g, ''))
-  if (priceNum > 0) {
-    const d = getDeterministicDiscount(item);
-    const factor = 1 - (d / 100)
-    return Math.round((priceNum / factor) / 1000) * 1000;
-  }
-  return null;
+const getDiscountPercent = (item: any) => {
+  return `-${getNumericDiscount(item)}%`
+}
+
+const getMembershipPrice = (item: any) => {
+  const priceNum = typeof item.price === 'number'
+    ? item.price
+    : Number(String(item.price).replace(/[^\d]/g, ''))
+  return priceNum
+}
+
+const getBasePrice = (item: any) => {
+  const raw = (item as any).rawPrice || item.oldPrice || null
+  if (!raw) return getMembershipPrice(item)
+  const rawNum = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d]/g, ''))
+  return rawNum > 0 ? rawNum : getMembershipPrice(item)
+}
+
+const getShowOriginalPrice = (item: any) => {
+  const basePrice = getBasePrice(item)
+  const membershipPrice = getMembershipPrice(item)
+  return basePrice > membershipPrice && membershipPrice > 0
 }
 
 const items = computed(() => {
-  const allAvailable = manualProducts.value.length > 0 ? [...manualProducts.value] : [...products.value]
-  const unique = Array.from(new Map(allAvailable.map(p => [p.id, p])).values())
-
+  const all = manualProducts.value.length > 0 ? [...manualProducts.value] : [...apiProducts.value]
+  const unique = Array.from(new Map(all.map(p => [p.id, p])).values())
+  
   if (!unique.length) return []
 
-  return unique
+  const result = unique
     .filter((item) => !isImageFailed(item.image))
-    .sort((a, b) => {
-      const manualIds = manualGroups.value['outlet-shop'].map(p => String(p.id))
-      const aManualIdx = manualIds.indexOf(String(a.id))
-      const bManualIdx = manualIds.indexOf(String(b.id))
-      
-      if (aManualIdx !== -1 && bManualIdx !== -1) return aManualIdx - bManualIdx
-      if (aManualIdx !== -1) return -1
-      if (bManualIdx !== -1) return 1
-      
-      return discountValue(b.discount, b.price, b.oldPrice) - discountValue(a.discount, a.price, a.oldPrice)
-    })
     .slice(0, 10)
-    .map((item, idx) => ({
-      slug: item.slug,
-      title: item.title,
-      brand: item.brand || 'Sunhouse',
-      price: item.price,
-      oldPrice: getOldPriceVal(item),
-      discountPercent: formatDiscount(item),
-      endIn: `${Math.max(3, 20 - idx * 2)} ngày`,
-      stock: Math.max(2, 18 - idx * 2),
-      image: item.image
-    }))
+    .map((item, idx) => {
+      const membershipPrice = getMembershipPrice(item)
+      const basePrice = getBasePrice(item)
+      const showOriginalPrice = getShowOriginalPrice(item)
+      
+      return {
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        brand: item.brand || 'Sunhouse',
+        image: item.image,
+        membershipPrice: membershipPrice,
+        basePrice: basePrice,
+        showOriginalPrice: showOriginalPrice,
+        discountPercent: isLoggedIn.value ? getDiscountPercent(item) : null,
+        endIn: `${Math.max(3, 20 - idx * 2)} ngay`,
+        stock: Math.max(2, 18 - idx * 2)
+      }
+    })
+  
+  return result
 })
 
 const scroll = (direction: 'left' | 'right') => {
@@ -268,9 +243,12 @@ const formatPrice = (value: number | null) => {
   display: none;
 }
 
-.outlet-card {
+.outlet-card-wrapper {
   flex: 0 0 calc(20% - 9.6px);
   min-width: 200px;
+}
+
+.outlet-card {
   background: #fff;
   border: 2px solid #3b82f6;
   border-radius: 4px;
@@ -280,6 +258,7 @@ const formatPrice = (value: number | null) => {
   flex-direction: column;
   text-decoration: none;
   color: inherit;
+  height: 100%;
 }
 
 .outlet-card:hover {
@@ -367,14 +346,15 @@ const formatPrice = (value: number | null) => {
   flex-direction: column;
 }
 
-.price-col strong {
+.current-price {
   display: block;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
+  margin: 0;
 }
 
-.price-col small {
+.old-price {
   display: block;
   font-size: 11px;
   text-decoration: line-through;
@@ -410,7 +390,7 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 1200px) {
-  .outlet-card {
+  .outlet-card-wrapper {
     flex: 0 0 calc(25% - 9px);
   }
 
@@ -420,7 +400,7 @@ const formatPrice = (value: number | null) => {
 }
 
 @media (max-width: 768px) {
-  .outlet-card {
+  .outlet-card-wrapper {
     flex: 0 0 calc(60% - 6px);
     min-width: 180px;
   }
@@ -429,9 +409,8 @@ const formatPrice = (value: number | null) => {
     display: none;
   }
 
-  .price-col strong {
+  .current-price {
     font-size: 14px;
   }
 }
 </style>
-

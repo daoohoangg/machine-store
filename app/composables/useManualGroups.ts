@@ -1,4 +1,4 @@
-﻿import { useState } from '#imports'
+import { useState } from '#imports'
 
 import type { HomeProduct } from './useHomeProducts'
 import { useAdminAuth } from './useAdminAuth'
@@ -45,7 +45,7 @@ export const useManualGroups = () => {
         body: rawManualGroups.value
       })
       if (resp && resp.success === false) {
-        throw new Error(resp.error || 'Lỗi server khi lưu nhóm')
+        throw new Error(resp.error || 'Loi server khi luu nhom')
       }
     } catch (err) {
       error.value = err
@@ -58,8 +58,6 @@ export const useManualGroups = () => {
 
   const addToGroup = (groupName: keyof ManualGroups, product: HomeProduct) => {
     if (!rawManualGroups.value[groupName].some(p => String(p.id) === String(product.id))) {
-      // Store the RAW product if possible. If the product passed in is already adjusted, 
-      // we might need to be careful, but HomeProduct usually has raw values if we just fetched it.
       rawManualGroups.value[groupName].unshift(product)
     }
   }
@@ -72,11 +70,9 @@ export const useManualGroups = () => {
     rawManualGroups.value[groupName] = []
   }
 
-  // Reactive mapping
   const manualGroups = computed<ManualGroups>(() => {
     const isLoggedIn = isUser.value || isAdmin.value
 
-    // Outlet shop: LUÔN hiển thị giá "price" (giá bán lẻ), không áp dụng giá đại lý
     const applyOutletPrices = (list: any[]) => {
       const isLoggedIn = isUser.value || isAdmin.value
       return list.map(p => {
@@ -106,13 +102,9 @@ export const useManualGroups = () => {
 
     const applyPrices = (list: any[]) => {
       return list.map(p => {
-        // Lấy giá bán lẻ từ originalPrice (nếu không có thì fallback)
         const retailPrice = Number(p.originalPrice || p.price) || 0
-        // Lấy giá NPP từ originalDiscount (nếu không có thì fallback)
         const nppPrice = Number(p.originalDiscount || p.discount) || 0
 
-        // Chưa đăng nhập hoặc không phải đại lý: dùng giá bán lẻ
-        // Đại lý đã đăng nhập: dùng giá NPP rồi áp dụng tier chiết khấu
         const rawPrice = (isLoggedIn && isAgencyAccount.value && nppPrice > 0)
           ? nppPrice
           : retailPrice
@@ -148,6 +140,3 @@ export const useManualGroups = () => {
     clearGroup
   }
 }
-
-
-
