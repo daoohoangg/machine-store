@@ -1,4 +1,4 @@
-import { useState } from '#imports'
+﻿import { useState } from '#imports'
 
 import type { HomeProduct } from './useHomeProducts'
 import { useAdminAuth } from './useAdminAuth'
@@ -80,36 +80,30 @@ export const useManualGroups = () => {
     const applyOutletPrices = (list: any[]) => {
       const isLoggedIn = isUser.value || isAdmin.value
       return list.map(p => {
-        // rawOldPrice đại diện cho giá cao nhất để làm giá gạch ngang
-        const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
-          ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
-          : null
         const retailPrice = Number(p.originalPrice || p.price) || 0
-        const rawPrice = retailPrice;
+        const nppPrice = Number(p.originalDiscount || p.discount) || 0
         
-        // Chưa đăng nhập: Lấy giá price bình thường (không có discount)
         if (!isLoggedIn) {
           return {
             ...p,
-            rawPrice: rawPrice,
-            rawOldPrice: null,
+            rawPrice: retailPrice,
             price: retailPrice,
             oldPrice: null
           } as HomeProduct
         }
         
-        // Đã đăng nhập: Áp dụng giá discount (giá thấp là price, giá cao là oldPrice)
+        const basePrice = (nppPrice > 0) ? nppPrice : retailPrice
+        const finalPrice = (isAgencyAccount.value) ? calculateAdjustedPrice(basePrice, userTier.value) : basePrice
+        
         return {
           ...p,
-          rawPrice: rawPrice,
-          rawOldPrice: p.rawOldPrice || p.oldPrice,
-          price: retailPrice,
-          oldPrice: rawOldPrice || null
+          rawPrice: retailPrice,
+          price: finalPrice,
+          oldPrice: retailPrice > finalPrice ? retailPrice : null
         } as HomeProduct
       })
     }
 
-    // Các nhóm khác: áp dụng giá đại lý nếu tài khoản là đại lý
     const applyPrices = (list: any[]) => {
       return list.map(p => {
         // Lấy giá bán lẻ từ originalPrice (nếu không có thì fallback)

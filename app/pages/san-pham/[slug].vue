@@ -707,14 +707,17 @@ const displayPrice = computed(() => {
   return calculateWholesalePrice(productMembershipPrice.value, quantity.value, product.value.id)
 })
 
-// Chỉ hiện giá gốc gạch khi đã đăng nhập và có chiết khấu tier
+// Hiển giá gạch ngang (giá gốc) khi product.rawPrice > product.price
 const showProductOriginalPrice = computed(() => {
-    if (!product.value || !isLoggedIn.value) return false
-    const priceNum = typeof product.value.price === 'number'
-      ? product.value.price
-      : Number(String(product.value.price).replace(/[^\d]/g, ''))
-    return product.value.rawPrice && product.value.rawPrice > priceNum && priceNum > 0
-  })
+  if (!product.value) return false
+  const priceNum = typeof product.value.price === 'number'
+    ? product.value.price
+    : Number(String(product.value.price).replace(/[^\d]/g, ''))
+  const rawNum = typeof product.value.rawPrice === 'number'
+    ? product.value.rawPrice
+    : Number(String((product.value as any).rawPrice || 0).replace(/[^\d]/g, ''))
+  return rawNum > 0 && rawNum > priceNum && priceNum > 0
+})
 
 const decreaseQty = () => {
   quantity.value = Math.max(1, quantity.value - 1)

@@ -1,4 +1,4 @@
-import { useAbahaApi } from './useAbahaApi'
+﻿import { useAbahaApi } from './useAbahaApi'
 import { useAdminAuth } from './useAdminAuth'
 import { useMembershipPrices } from './useMembershipPrices'
 
@@ -7,8 +7,8 @@ export interface HomeProduct {
   productCode?: string
   slug: string
   title: string
-  price: number        // giá gốc từ API (chưa áp dụng membership)
-  rawPrice: number     // alias của price gốc, dùng cho các component tính lại
+  price: number        // giÃ¡ gá»‘c tá»« API (chÆ°a Ã¡p dá»¥ng membership)
+  rawPrice: number     // alias cá»§a price gá»‘c, dÃ¹ng cho cÃ¡c component tÃ­nh láº¡i
   oldPrice: number | null
   discount: string | null
   image: string
@@ -36,19 +36,19 @@ const inferDiscount = (price: number, oldPrice: number | null): string | null =>
 const decodeHTMLEntities = (text: string) => {
   const entities: Record<string, string> = {
     '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ',
-    '&agrave;': 'à', '&aacute;': 'á', '&acirc;': 'â', '&atilde;': 'ã',
-    '&egrave;': 'è', '&eacute;': 'é', '&ecirc;': 'ê',
-    '&igrave;': 'ì', '&iacute;': 'í',
-    '&ograve;': 'ò', '&oacute;': 'ó', '&ocirc;': 'ô', '&otilde;': 'õ',
-    '&ugrave;': 'ù', '&uacute;': 'ú',
-    '&yacute;': 'ý',
-    '&Agrave;': 'À', '&Aacute;': 'Á', '&Acirc;': 'Â', '&Atilde;': 'Ã',
-    '&Egrave;': 'È', '&Eacute;': 'É', '&Ecirc;': 'Ê',
-    '&Igrave;': 'Ì', '&Iacute;': 'Í',
-    '&Ograve;': 'Ò', '&Oacute;': 'Ó', '&Ocirc;': 'Ô', '&Otilde;': 'Õ',
-    '&Ugrave;': 'Ù', '&Uacute;': 'Ú',
-    '&Yacute;': 'Ý',
-    '&deg;': '°'
+    '&agrave;': 'Ã ', '&aacute;': 'Ã¡', '&acirc;': 'Ã¢', '&atilde;': 'Ã£',
+    '&egrave;': 'Ã¨', '&eacute;': 'Ã©', '&ecirc;': 'Ãª',
+    '&igrave;': 'Ã¬', '&iacute;': 'Ã­',
+    '&ograve;': 'Ã²', '&oacute;': 'Ã³', '&ocirc;': 'Ã´', '&otilde;': 'Ãµ',
+    '&ugrave;': 'Ã¹', '&uacute;': 'Ãº',
+    '&yacute;': 'Ã½',
+    '&Agrave;': 'Ã€', '&Aacute;': 'Ã', '&Acirc;': 'Ã‚', '&Atilde;': 'Ãƒ',
+    '&Egrave;': 'Ãˆ', '&Eacute;': 'Ã‰', '&Ecirc;': 'ÃŠ',
+    '&Igrave;': 'ÃŒ', '&Iacute;': 'Ã',
+    '&Ograve;': 'Ã’', '&Oacute;': 'Ã“', '&Ocirc;': 'Ã”', '&Otilde;': 'Ã•',
+    '&Ugrave;': 'Ã™', '&Uacute;': 'Ãš',
+    '&Yacute;': 'Ã',
+    '&deg;': 'Â°'
   }
   return text.replace(/&[#a-zA-Z0-9]+;/g, (match) => entities[match] || match)
 }
@@ -76,7 +76,7 @@ export const normalizeText = (text: string) => {
   return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
+    .replace(/[Ä‘Ä]/g, 'd')
     .toLowerCase()
     .trim()
 }
@@ -172,8 +172,8 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         }
       }
     } else {
-      // If searching, fetch more pages to ensure better coverage (10 pages = 1000 items)
-      const pagesToFetch = filters.search ? 10 : 8
+      // search: 5 trang, thÆ°á»ng: 4 trang â€” giáº£m táº£i server, váº«n Ä‘á»§ sáº£n pháº©m hiá»ƒn thá»‹
+      const pagesToFetch = filters.search ? 5 : 4
       for (let i = 1; i <= pagesToFetch; i++) {
         promises.push(fetchCoreItems({ ...filters, page: i, limit: 100 }))
       }
@@ -187,7 +187,7 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
     if (filters.categoryId && allProducts.length < 20 && !filters.search) {
       console.log('[useHomeProducts] Direct fetch yields low results, fetching global pool fallback...')
       const fallbackPromises = []
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 5; i++) {
         fallbackPromises.push(fetchCoreItems({ ...filters, categoryId: null, page: i, limit: 100 }))
       }
       const fallbackData = await Promise.all(fallbackPromises)
@@ -224,25 +224,24 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
   // Reactive mapping of products based on current tier and loaded tiers
   const products = computed(() => {
     const rawList = rawProductsData.value || []
-    // Truy cập `tiers.value` để computed tự re-run khi tiers load xong từ Supabase
+    // Truy cáº­p `tiers.value` Ä‘á»ƒ computed tá»± re-run khi tiers load xong tá»« Supabase
     void tiers.value
     return rawList.map((item: any): HomeProduct => {
-      // item.discount từ API = giá niêm yết gốc (Giá NPP / list price)
-      // item.price từ API   = giá bán lẻ thông thường (giá hiển thị khi chưa đăng nhập)
-      const apiDiscount = Number(item.discount) || 0
+      // item.price    tu API = gia ban le goc (cao hon) -- vi du: 7.215.000d -- hien thi khi CHUA dang nhap
+      // item.discount tu API = gia uu dai / thanh vien (thap hon) -- vi du: 4.810.000d -- hien thi khi DA dang nhap
       const apiPrice    = Number(item.price)    || 0
+      const apiDiscount = Number(item.discount)  || 0
 
-      // Logic giá theo trạng thái đăng nhập và loại tài khoản:
-      // - Chưa đăng nhập       : dùng apiPrice (giá bán lẻ)
-      // - Đăng nhập - thường   : dùng apiPrice (giá bán lẻ)
-      // - Đăng nhập - đại lý   : dùng apiDiscount (giá NPP gốc) rồi áp dụng tier chiết khấu
+      // Logic giÃ¡ theo tráº¡ng thÃ¡i Ä‘Äƒng nháº­p:
+      // - ChÆ°a Ä‘Äƒng nháº­p : dÃ¹ng apiPrice (giÃ¡ bÃ¡n láº»)
+      // - ÄÃ£ Ä‘Äƒng nháº­p   : dÃ¹ng apiDiscount (giÃ¡ Æ°u Ä‘Ã£i) náº¿u cÃ³, rá»“i Ã¡p dá»¥ng tier chiáº¿t kháº¥u náº¿u lÃ  Ä‘áº¡i lÃ½
       const isLoggedIn = isUser.value || isAdmin.value
-      // Chỉ đại lý mới nhìn thấy giá NPP (discount từ API)
-      const rawPriceBase = (isLoggedIn && isAgencyAccount.value && apiDiscount > 0)
+      // Táº¥t cáº£ user Ä‘Ã£ Ä‘Äƒng nháº­p Ä‘á»u tháº¥y giÃ¡ discount (giÃ¡ Æ°u Ä‘Ã£i/NPP)
+      const rawPriceBase = (isLoggedIn && apiDiscount > 0)
         ? apiDiscount
         : apiPrice
 
-      // Apply membership tier adjustment (chỉ áp dụng cho đại lý)
+      // Apply membership tier adjustment (chá»‰ Ã¡p dá»¥ng cho Ä‘áº¡i lÃ½)
       const price = (isLoggedIn && isAgencyAccount.value)
         ? calculateAdjustedPrice(rawPriceBase, userTier.value)
         : rawPriceBase
@@ -260,15 +259,15 @@ export const useHomeProducts = (optionsOrCategoryIdMaybe?: MaybeRefOrGetter<Fetc
         id: String(item.id),
         productCode: item.product_code || item.code || String(item.id),
         slug: item.slug || `product-${item.id}`,
-        title: item.name || 'Sản phẩm',
-        price: price,    // giá gốc (item.discount từ API) để ProductCard tính membership
-        rawPrice: rawPriceBase, // alias rõ ràng
-        oldPrice: null,         // không cần - ProductCard tự tính từ rawPriceBase vs membershipPrice
+        title: item.name || 'Sáº£n pháº©m',
+        price: price,       // giÃ¡ hiá»ƒn thá»‹ (Æ°u Ä‘Ã£i/discount náº¿u Ä‘Äƒng nháº­p, bÃ¡n láº» náº¿u chÆ°a)
+        rawPrice: apiPrice,  // giÃ¡ bÃ¡n láº» gá»‘c (luÃ´n lÃ  apiPrice) â€” dÃ¹ng lÃ m giÃ¡ gáº¡ch ngang
+        oldPrice: null,      // khÃ´ng cáº§n â€” ProductCard tá»± tÃ­nh tá»« rawPrice vs price
         discount: discountText,
         image: mainImage,
         images: gallery.length ? gallery : [mainImage],
         brand: item.brand || 'No Brand',
-        category: item.category_name || item.category || 'Sản phẩm',
+        category: item.category_name || item.category || 'Sáº£n pháº©m',
         categoryId: item.category_id || item.cat_id || null,
         rating: Number(item.rate) || 5,
         reviews: Number(item.comment_count) || 0,

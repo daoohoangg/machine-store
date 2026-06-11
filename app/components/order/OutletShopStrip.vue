@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="outlet-shop">
     <div class="outlet-head">
       <h3>OUTLET SHOP</h3>

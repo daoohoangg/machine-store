@@ -182,10 +182,11 @@ const basePrice = computed(() => {
   return rawNum > 0 ? rawNum : membershipPrice.value
 })
 
-// Hiển thị giá gạch khi đã đăng nhập và giá thành viên thấp hơn giá gốc
-const isLoggedIn = computed(() => isUser.value || isAdmin.value)
+// Hiển thị giá gạch khi giá hiện tại (discount/ưu đãi) thấp hơn giá gốc (rawPrice/originalPrice)
+// Đã đăng nhập: price=apiDiscount, basePrice=rawPrice=apiPrice → hiển nếu có chênh lệch
+// Chưa đăng nhập: price=apiPrice, basePrice=rawPrice=apiPrice → bằng nhau → không hiển
 const showOriginalPrice = computed(() => {
-  return isLoggedIn.value && basePrice.value > membershipPrice.value && membershipPrice.value > 0
+  return basePrice.value > membershipPrice.value && membershipPrice.value > 0
 })
 
 const reviewCount = computed(() => {
