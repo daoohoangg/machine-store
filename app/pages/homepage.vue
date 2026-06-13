@@ -81,6 +81,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 import { useCategories, type Category } from '~/composables/useCategories'
+import { useCategoryVisibility } from '~/composables/useCategoryVisibility'
 import ProductCard from '~/components/product/ProductCard.vue'
 import CategorySidebar from '~/components/category/CategorySidebar.vue'
 import CategoryToolbar from '~/components/category/CategoryToolbar.vue'
@@ -89,6 +90,7 @@ import { useImageGuard } from '~/composables/useImageGuard'
 
 const route = useRoute()
 const { categories, fetchCategories } = useCategories()
+const { fetchVisibility, isCategoryVisible } = useCategoryVisibility()
 
 const categoryId = computed(() => route.query.categoryId as string)
 const searchName = computed(() => route.query.searchName as string)
@@ -116,25 +118,33 @@ const { isImageFailed } = useImageGuard()
 
 const subCategories = computed<Category[]>(() => {
   if (!categories.value.length) return []
-  
+
   const cid = Number(categoryId.value)
-  if (!cid) return categories.value // return root categories if no category selected
-  
-  // Recursively search for the active category to find its children
-  let selectedCat = null
-  const findCat = (list: Category[]) => {
-    for (const c of list) {
-      if (c.id === cid) {
-        selectedCat = c
-        return true
+  let resultCategories: Category[] = []
+
+  if (!cid) {
+    // return root categories if no category selected
+    resultCategories = categories.value
+  } else {
+    // Recursively search for the active category to find its children
+    let selectedCat = null
+    const findCat = (list: Category[]) => {
+      for (const c of list) {
+        if (c.id === cid) {
+          selectedCat = c
+          return true
+        }
+        if (c.children && findCat(c.children)) return true
       }
-      if (c.children && findCat(c.children)) return true
+      return false
     }
-    return false
+
+    findCat(categories.value)
+    resultCategories = selectedCat?.children || []
   }
-  
-  findCat(categories.value)
-  return selectedCat?.children || []
+
+  // Filter out hidden categories
+  return resultCategories.filter(cat => isCategoryVisible(cat.id))
 })
 
 // Calculate the full breadcrumb path from root down to active category
@@ -315,6 +325,7 @@ const processedProducts = computed(() => {
 if (categories.value.length === 0) {
   fetchCategories()
 }
+fetchVisibility()
 
 const SITE_URL = 'https://huspanda.vn'
 

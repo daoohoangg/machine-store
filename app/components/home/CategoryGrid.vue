@@ -37,11 +37,14 @@
 import { computed, ref, onMounted } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 import { useCategories } from '~/composables/useCategories'
+import { useCategoryVisibility } from '~/composables/useCategoryVisibility'
 
 const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
+const { fetchVisibility, isCategoryVisible } = useCategoryVisibility()
 
 onMounted(() => {
   fetchCategories()
+  fetchVisibility()
 })
 
 const iconByName = (name: string) => {
@@ -102,24 +105,30 @@ const categoryDiscountMap = computed(() => {
 
 const categories = computed(() => {
   const list: any[] = []
-  
+
   apiCategories.value.forEach((parent) => {
     if (parent.children && parent.children.length > 0) {
       parent.children.forEach((child) => {
-        list.push({
-          id: child.id,
-          name: child.name,
-          icon: iconByName(child.name),
-          discount: categoryDiscountMap.value.get(normalizeCategoryName(child.name)) || null
-        })
+        // Chỉ hiển thị nếu danh mục cha và con đều được bật
+        if (isCategoryVisible(parent.id) && isCategoryVisible(child.id)) {
+          list.push({
+            id: child.id,
+            name: child.name,
+            icon: iconByName(child.name),
+            discount: categoryDiscountMap.value.get(normalizeCategoryName(child.name)) || null
+          })
+        }
       })
     } else {
-      list.push({
-        id: parent.id,
-        name: parent.name,
-        icon: iconByName(parent.name),
-        discount: categoryDiscountMap.value.get(normalizeCategoryName(parent.name)) || null
-      })
+      // Hiển thị danh mục gốc nếu được bật
+      if (isCategoryVisible(parent.id)) {
+        list.push({
+          id: parent.id,
+          name: parent.name,
+          icon: iconByName(parent.name),
+          discount: categoryDiscountMap.value.get(normalizeCategoryName(parent.name)) || null
+        })
+      }
     }
   })
 

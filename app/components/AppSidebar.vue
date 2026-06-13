@@ -64,10 +64,12 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCategories } from '~/composables/useCategories'
+import { useCategoryVisibility } from '~/composables/useCategoryVisibility'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useMobileMenu } from '~/composables/useMobileMenu'
 
 const { categories: apiCategories, isLoading, fetchCategories } = useCategories()
+const { fetchVisibility, isCategoryVisible } = useCategoryVisibility()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { isMobileMenuOpen, closeMobileMenu } = useMobileMenu()
 const route = useRoute()
@@ -100,15 +102,19 @@ const normalizeCategoryName = (value: string | null | undefined) => {
 }
 
 const categories = computed(() => {
-  return apiCategories.value.map((cat) => ({
-    ...cat,
-    name: normalizeCategoryName(cat.name),
-    icon: iconByName(cat.name),
-    children: cat.children?.map(child => ({
-      ...child,
-      name: normalizeCategoryName(child.name)
+  return apiCategories.value
+    .filter(cat => isCategoryVisible(cat.id))
+    .map((cat) => ({
+      ...cat,
+      name: normalizeCategoryName(cat.name),
+      icon: iconByName(cat.name),
+      children: cat.children
+        ?.filter(child => isCategoryVisible(child.id))
+        .map(child => ({
+          ...child,
+          name: normalizeCategoryName(child.name)
+        }))
     }))
-  }))
 })
 
 const maxVisibleCategories = 10 // Adjusted to match deal-grid with bigger fonts
@@ -121,6 +127,7 @@ const hasMoreCategories = computed(() => categories.value.length > maxVisibleCat
 
 onMounted(() => {
   fetchCategories()
+  fetchVisibility()
 })
 
 // Close menu whenever the route changes

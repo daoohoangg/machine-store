@@ -1,15 +1,12 @@
 import { defineEventHandler, readBody, getMethod } from 'h3'
 import { useSupabase } from '../utils/supabase'
 
-// Lưu visibility settings vào bảng manual_groups sẵn có (không cần tạo bảng mới)
-// group_key = '__visibility__', product_id = 'settings'
-const VISIBILITY_GROUP_KEY = '__visibility__'
-const VISIBILITY_PRODUCT_ID = 'settings'
+// Lưu category visibility settings vào bảng manual_groups
+// group_key = '__category_visibility__', product_id = 'settings'
+const CATEGORY_VISIBILITY_GROUP_KEY = '__category_visibility__'
+const CATEGORY_VISIBILITY_PRODUCT_ID = 'settings'
 
-const defaultVisibility = {
-  showOutletShop: true,
-  showNewProducts: true,
-}
+const defaultVisibility = {}
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -20,12 +17,12 @@ export default defineEventHandler(async (event) => {
       const { data, error } = await supabase
         .from('manual_groups')
         .select('product_data')
-        .eq('group_key', VISIBILITY_GROUP_KEY)
-        .eq('product_id', VISIBILITY_PRODUCT_ID)
+        .eq('group_key', CATEGORY_VISIBILITY_GROUP_KEY)
+        .eq('product_id', CATEGORY_VISIBILITY_PRODUCT_ID)
         .maybeSingle()
 
       if (error) {
-        console.warn('[SectionVisibility] GET error:', error.message)
+        console.warn('[CategoryVisibility] GET error:', error.message)
         return { ...defaultVisibility }
       }
 
@@ -33,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
       return { ...defaultVisibility, ...(data.product_data || {}) }
     } catch (e: any) {
-      console.error('[SectionVisibility] GET exception:', e.message)
+      console.error('[CategoryVisibility] GET exception:', e.message)
       return { ...defaultVisibility }
     }
   }
@@ -41,17 +38,22 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST') {
     try {
       const body = await readBody(event)
-      const value = {
-        showOutletShop: body.showOutletShop ?? true,
-        showNewProducts: body.showNewProducts ?? true,
+
+      // Validate: body should be an object with number keys and boolean values
+      const value: any = {}
+      for (const key in body) {
+        const catId = Number(key)
+        if (!isNaN(catId)) {
+          value[catId] = Boolean(body[key])
+        }
       }
 
       // Upsert để tự động cập nhật hoặc thêm mới, không bị lỗi duplicate
       const { error } = await supabase
         .from('manual_groups')
         .upsert({
-          group_key: VISIBILITY_GROUP_KEY,
-          product_id: VISIBILITY_PRODUCT_ID,
+          group_key: CATEGORY_VISIBILITY_GROUP_KEY,
+          product_id: CATEGORY_VISIBILITY_PRODUCT_ID,
           product_data: value
         }, { onConflict: 'group_key,product_id' })
 
@@ -59,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
       return { success: true, value }
     } catch (e: any) {
-      console.error('[SectionVisibility] POST error:', e.message)
+      console.error('[CategoryVisibility] POST error:', e.message)
       return { success: false, error: e.message }
     }
   }

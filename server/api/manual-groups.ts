@@ -75,27 +75,43 @@ export default defineEventHandler(async (event) => {
     if (method === 'POST' || method === 'PUT') {
       try {
         const body = await readBody(event)
-        
+
         if (!body || typeof body !== 'object') {
           throw new Error('Invalid request body')
         }
 
-        // 1. Delete all existing manual groups (bỏ qua rows settings bắt đầu bằng '__')
-        const { error: deleteError } = await supabase
-          .from('manual_groups')
-          .delete()
-          .not('group_key', 'like', '__%')
+        // 1. Collect all group_keys from the new data to delete only those
+        const groupKeysToUpdate = Object.keys(body).filter(k => !k.startsWith('__'))
 
-        if (deleteError) throw deleteError
+        if (groupKeysToUpdate.length > 0) {
+          // Delete old entries for only the groups being updated
+          for (const groupKey of groupKeysToUpdate) {
+            const { error: deleteError } = await supabase
+              .from('manual_groups')
+              .delete()
+              .eq('group_key', groupKey)
 
-        // 2. Prepare items for insertion
-        const itemsToInsert: any[] = []
+            if (deleteError) throw deleteError
+          }
+        }
+
+        // 2. Prepare items for upsert and deduplicate
+        const itemsToUpsert: any[] = []
+        const seenCombinations = new Set<string>()
+
         for (const groupKey in body) {
+          if (groupKey.startsWith('__')) continue // Skip internal settings
+
           const products = body[groupKey]
           if (Array.isArray(products)) {
             for (const product of products) {
               if (!product || !product.id) continue;
-              itemsToInsert.push({
+
+              const combinationKey = `${groupKey}_${product.id}`
+              if (seenCombinations.has(combinationKey)) continue;
+
+              seenCombinations.add(combinationKey)
+              itemsToUpsert.push({
                 group_key: groupKey,
                 product_id: String(product.id),
                 product_data: product
@@ -104,14 +120,14 @@ export default defineEventHandler(async (event) => {
           }
         }
 
-        if (itemsToInsert.length > 0) {
-          const { error: insertError } = await supabase
+        if (itemsToUpsert.length > 0) {
+          const { error: upsertError } = await supabase
             .from('manual_groups')
-            .insert(itemsToInsert)
+            .upsert(itemsToUpsert, { onConflict: 'group_key,product_id' })
 
-          if (insertError) throw insertError
+          if (upsertError) throw upsertError
         }
-        
+
         return { success: true }
       } catch (e: any) {
         console.error('Supabase Manual Groups POST/PUT error:', e)

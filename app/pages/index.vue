@@ -64,18 +64,24 @@ import CategoryGroupBlock from '~/components/home/CategoryGroupBlock.vue'
 import FeaturedBrands from '~/components/home/FeaturedBrands.vue'
 import HomeVoucher from '~/components/home/HomeVoucher.vue'
 import HomeNews from '~/components/home/HomeNews.vue'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useCategories } from '~/composables/useCategories'
+import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useSectionVisibility } from '~/composables/useSectionVisibility'
+import { useCategoryVisibility } from '~/composables/useCategoryVisibility'
 
 const { categories } = useCategories()
 const { products } = useHomeProducts()
 const { visibility: sectionVisibility, fetchVisibility } = useSectionVisibility()
+const { isCategoryVisible, fetchVisibility: fetchCategoryVisibility } = useCategoryVisibility()
 
 onMounted(() => {
   fetchVisibility()
+  fetchCategoryVisibility()
 })
 
 const top3Categories = computed(() => {
-  return categories.value?.slice(0, 3) || []
+  return categories.value?.filter(cat => isCategoryVisible(cat.id)).slice(0, 3) || []
 })
 
 const SITE_URL = 'https://huspanda.vn'
