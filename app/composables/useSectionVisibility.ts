@@ -18,8 +18,14 @@ export const useSectionVisibility = () => {
   const fetchVisibility = async () => {
     if (isLoaded.value) return
     try {
-      const data = await $fetch<SectionVisibility>('/api/section-visibility')
-      visibility.value = { ...defaultVisibility, ...data }
+      // Fetch từ manual_groups API với metadata status
+      const data = await $fetch<any>('/api/manual-groups-status')
+      if (data) {
+        visibility.value = {
+          showOutletShop: data['outlet-shop'] !== false,
+          showNewProducts: data['new-products'] !== false,
+        }
+      }
     } catch (e) {
       console.error('[useSectionVisibility] fetch error:', e)
     } finally {
@@ -33,9 +39,12 @@ export const useSectionVisibility = () => {
     }
     isSaving.value = true
     try {
-      const res = await $fetch<any>('/api/section-visibility', {
+      const res = await $fetch<any>('/api/manual-groups-status', {
         method: 'POST',
-        body: visibility.value,
+        body: {
+          'outlet-shop': visibility.value.showOutletShop,
+          'new-products': visibility.value.showNewProducts,
+        },
       })
       if (res && res.success === false) {
         throw new Error(res.error || 'Lỗi server')
