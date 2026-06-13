@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="product" class="product-detail-page">
     <nav class="breadcrumb" aria-label="breadcrumb">
       <NuxtLink to="/">Trang chủ</NuxtLink>

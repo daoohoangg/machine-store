@@ -128,7 +128,7 @@
               <img :src="p.image" :alt="p.title" class="p-thumb" />
               <div class="p-info">
                 <div class="p-name">{{ p.title }}</div>
-                <div class="p-price">{{ formatPrice(p.price) }}đ</div>
+                <div class="p-price">{{ formatPrice(p.originalPrice || p.price) }}đ</div>
               </div>
               <button class="btn-action btn-remove" @click="removeFromActiveGroup(p.id)" title="Gỡ khỏi nhóm">
                 <i class="fa-solid fa-trash-can"></i>
@@ -183,7 +183,7 @@
               <img :src="p.image" :alt="p.title" class="p-thumb" />
               <div class="p-info">
                 <div class="p-name">{{ p.title }}</div>
-                <div class="p-price">{{ formatPrice(p.price) }}đ</div>
+                <div class="p-price">{{ formatPrice(p.originalPrice || p.price) }}đ</div>
               </div>
               <button 
                 class="btn-action btn-add" 
@@ -1063,3 +1063,4 @@ h3 {
   .management-layout { grid-template-columns: 1fr; }
 }
 </style>
+

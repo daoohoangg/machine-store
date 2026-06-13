@@ -39,8 +39,8 @@ export const useMembershipPrices = () => {
     }
   }
 
-  // Tự động load nếu đang trên client và chưa load
-  if (import.meta.client && !isLoaded.value && !isPending.value) {
+  // Tự động load tiers cả trên server và client để đảm bảo SSR render giá chính xác
+  if (!isLoaded.value && !isPending.value) {
     loadTiers()
   }
 

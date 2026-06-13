@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <article class="product-card">
     <div v-if="isOutletShop && discountPercent" class="discount-ribbon">{{ discountPercent }}</div>
 

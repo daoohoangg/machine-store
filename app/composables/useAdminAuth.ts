@@ -6,18 +6,36 @@ export const useAdminAuth = () => {
   const adminName = useState('admin-name', () => '')
   const userName = useState('user-name', () => '')
   const userPhone = useState('user-phone', () => '')
-  const userTier = useState('user-tier', () => {
-    if (import.meta.client) {
-      return localStorage.getItem('user_tier') || ''
+  const userTier = useState('user-tier', () => '')
+
+  // Restore auth state from localStorage on client (after hydration) if server didn't set it
+  if (process.client) {
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('user_auth') === 'true' && !isUser.value) {
+        isUser.value = true
+        userName.value = localStorage.getItem('user_name') || ''
+        userPhone.value = localStorage.getItem('user_phone') || ''
+        userTier.value = localStorage.getItem('user_tier') || ''
+      }
+      if (localStorage.getItem('admin_auth') === 'true' && !isAdmin.value) {
+        isAdmin.value = true
+        adminName.value = localStorage.getItem('admin_name') || 'Admin'
+        userPhone.value = localStorage.getItem('user_phone') || ''
+      }
     }
-    return ''
-  })
+  }
 
   const initAuth = async () => {
     try {
       // Forward headers from client if running on server to preserve cookies
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : {}
-      
+      let headers = {}
+      if (process.server) {
+        const event = useRequestEvent()
+        if (event) {
+          headers = { cookie: event.node.req.headers.cookie || '' }
+        }
+      }
+
       const data = await $fetch('/api/auth/me', { headers })
       if (data && (data as any).authenticated) {
         const payload = data as any
@@ -93,7 +111,7 @@ export const useAdminAuth = () => {
       }
     } catch (err: any) {
       console.error('[Admin Login Composable Error]:', err)
-      return { success: false, error: err.statusMessage || '�ang nh?p th?t b?i' }
+      return { success: false, error: err.statusMessage || 'Đăng nhập thất bại' }
     }
   }
 
@@ -131,7 +149,7 @@ export const useAdminAuth = () => {
     const tier = userTier.value
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[�d]/g, 'd')
+      .replace(/[�d]/g, 'd')
       .toLowerCase()
     return (
       tier.includes('dai ly') ||

@@ -78,19 +78,26 @@ export const useManualGroups = () => {
         const retailPrice = Number(p.originalPrice || p.price) || 0
         const nppPrice = Number(p.originalDiscount || p.discount) || 0
 
-        const rawPrice = (isLoggedIn && isAgencyAccount.value && nppPrice > 0)
+        // T?t c? ngu?i dùng dã dang nh?p d?u dùng giá nppPrice (discount t? API) n?u có
+        const rawPriceBase = (isLoggedIn && nppPrice > 0)
           ? nppPrice
           : retailPrice
 
+        // Áp d?ng chi?t kh?u c?p b?c d?i lý (n?u là tài kho?n d?i lý)
+        const finalPrice = (isLoggedIn && isAgencyAccount.value) 
+          ? calculateAdjustedPrice(rawPriceBase, userTier.value) 
+          : rawPriceBase
+
+        // Giá g?ch ngang cu
         const rawOldPrice = (p.rawOldPrice || p.oldPrice || p.discount)
           ? Math.max(Number(p.rawOldPrice || 0), Number(p.oldPrice || 0), Number(p.discount || 0))
           : null
 
         return {
           ...p,
-          rawPrice: rawPrice,
+          rawPrice: retailPrice, // Luôn luu giá g?c bán l? d? làm giá g?c so sánh
           rawOldPrice: p.rawOldPrice || p.oldPrice,
-          price: (isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawPrice, userTier.value) : rawPrice,
+          price: finalPrice, // Giá hi?n th? sau cùng
           oldPrice: rawOldPrice ? ((isLoggedIn && isAgencyAccount.value) ? calculateAdjustedPrice(rawOldPrice, userTier.value) : rawOldPrice) : null
         } as HomeProduct
       })

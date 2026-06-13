@@ -23,7 +23,7 @@
       <div class="admin-header">
         <h1>Quản lý Website</h1>
         <div class="header-actions">
-          <NuxtLink to="/admin/san-pham-group" class="btn-outline group-mgr-btn"><i class="fa-solid fa-layer-group"></i> Quản lý Nhóm SP</NuxtLink>
+          <NuxtLink to="/admin/san-pham-group" class="btn-outline group-mgr-btn"><i class="fa-solid fa-layer-group"></i> Quản lý Nhóm Sản phẩm</NuxtLink>
           <NuxtLink to="/admin/baiviet" class="btn-outline news-mgr-btn"><i class="fa-solid fa-newspaper"></i> Quản lý Bài viết</NuxtLink>
           <NuxtLink to="/admin/accounts" class="btn-outline account-mgr-btn"><i class="fa-solid fa-users-gear"></i> Quản lý Tài khoản</NuxtLink>
           <NuxtLink to="/admin/edit-price" class="btn-outline price-mgr-btn"><i class="fa-solid fa-tags"></i> Cấu hình Giá</NuxtLink>

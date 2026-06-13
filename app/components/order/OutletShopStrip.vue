@@ -54,29 +54,19 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useImageGuard } from '~/composables/useImageGuard'
-import { useManualGroups } from '~/composables/useManualGroups'
-import { useHomeProducts } from '~/composables/useHomeProducts'
+import { useOutletShopProducts } from '~/composables/useOutletShopProducts'
+import { useAdminAuth } from '~/composables/useAdminAuth'
 
-const { manualGroups, fetchManualGroups } = useManualGroups()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const scrollContainer = ref<HTMLElement | null>(null)
 
-import { useAdminAuth } from '~/composables/useAdminAuth'
+const { products, fetchOutletShopProducts } = useOutletShopProducts()
 const { isUser, isAdmin } = useAdminAuth()
 const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 
 onMounted(() => {
-  fetchManualGroups()
+  fetchOutletShopProducts()
 })
-
-const manualProducts = computed(() => {
-  return manualGroups.value['outlet-shop'] || []
-})
-
-const { products: apiProducts } = useHomeProducts(computed(() => ({
-  search: 'Outlet Shop',
-  limit: 100
-})))
 
 const getDeterministicDiscount = (item: any) => {
   const idStr = String(item.id || item.title.length + '-' + item.title.charCodeAt(0))
@@ -85,51 +75,30 @@ const getDeterministicDiscount = (item: any) => {
 }
 
 const getNumericDiscount = (item: any) => {
-  if (item.discount) {
-    const match = String(item.discount).match(/\d+/)
+  if (item.discountText) {
+    const match = String(item.discountText).match(/\d+/)
     if (match) return Number(match[0])
   }
   return getDeterministicDiscount(item)
 }
 
 const getDiscountPercent = (item: any) => {
+  if (item.discountText) return item.discountText
   return `-${getNumericDiscount(item)}%`
 }
 
-const getMembershipPrice = (item: any) => {
-  const priceNum = typeof item.price === 'number'
-    ? item.price
-    : Number(String(item.price).replace(/[^\d]/g, ''))
-  return priceNum
-}
-
-const getBasePrice = (item: any) => {
-  const raw = (item as any).rawPrice || item.oldPrice || null
-  if (!raw) return getMembershipPrice(item)
-  const rawNum = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d]/g, ''))
-  return rawNum > 0 ? rawNum : getMembershipPrice(item)
-}
-
-const getShowOriginalPrice = (item: any) => {
-  const basePrice = getBasePrice(item)
-  const membershipPrice = getMembershipPrice(item)
-  return basePrice > membershipPrice && membershipPrice > 0
-}
-
 const items = computed(() => {
-  const all = manualProducts.value.length > 0 ? [...manualProducts.value] : [...apiProducts.value]
-  const unique = Array.from(new Map(all.map(p => [p.id, p])).values())
-  
-  if (!unique.length) return []
+  if (!products.value || !products.value.length) return []
 
-  const result = unique
+  return products.value
     .filter((item) => !isImageFailed(item.image))
     .slice(0, 10)
     .map((item, idx) => {
-      const membershipPrice = getMembershipPrice(item)
-      const basePrice = getBasePrice(item)
-      const showOriginalPrice = getShowOriginalPrice(item)
-      
+      // Products từ useOutletShopProducts đã được tính giá đúng
+      const membershipPrice = item.price
+      const basePrice = item.rawPrice
+      const showOriginalPrice = basePrice > membershipPrice && membershipPrice > 0
+
       return {
         id: item.id,
         slug: item.slug,
@@ -139,13 +108,11 @@ const items = computed(() => {
         membershipPrice: membershipPrice,
         basePrice: basePrice,
         showOriginalPrice: showOriginalPrice,
-        discountPercent: isLoggedIn.value ? getDiscountPercent(item) : null,
+        discountPercent: isLoggedIn.value ? getDiscountPercent({ ...item, discountText: item.discount }) : null,
         endIn: `${Math.max(3, 20 - idx * 2)} ngay`,
         stock: Math.max(2, 18 - idx * 2)
       }
     })
-  
-  return result
 })
 
 const scroll = (direction: 'left' | 'right') => {

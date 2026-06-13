@@ -101,7 +101,7 @@
                 </td>
                 <td class="actions">
                   <button class="btn-icon edit" @click="openEditModal(account)" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></button>
-                  <button v-if="account.phone !== currentAdminPhone" class="btn-icon delete" @click="confirmDelete(account)" title="Xoá"><i class="fa-solid fa-trash"></i></button>
+                  <button v-if="account.phone !== currentAdminPhone" class="btn-icon delete" @click="confirmDelete(account)" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -368,7 +368,7 @@ const saveAccount = async () => {
 }
 
 const confirmDelete = async (account: any) => {
-  if (!confirm(`Bạn có chắc chắn muốn xoá tài khoản ${account.phone}?`)) return
+  if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${account.phone}?`)) return
   
   try {
     const { error } = await useFetch('/api/admin/accounts', {
@@ -379,7 +379,7 @@ const confirmDelete = async (account: any) => {
     if (error.value) throw error.value
     await fetchAllData()
   } catch (err: any) {
-    alert(err.message || 'Lỗi khi xoá')
+    alert(err.message || 'Lỗi khi xóa')
   }
 }
 </script>

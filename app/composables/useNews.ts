@@ -34,7 +34,7 @@ const defaultNews: any[] = [
       <img src="https://picsum.photos/seed/machine2/800/500" alt="Máy bơm nước" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
       <h2>2. Các tiêu chí khi mua máy bơm</h2>
       <h3>A. Bơm dùng trong sinh hoạt</h3>
-      <p>Nếu là bơm nước thủy cục lên bồn chứa gia đình (tầng 1-3), bạn chỉ cần dòng bơm chân không công suất nhỏ (125W - 200W). Ưu điểm của dòng này là cực kì êm ái, đóng ngắt tự động chính xác.</p>
+      <p>Nếu là bơm nước thủy cục lên bồn chứa gia đình (tầng 1-3), bạn chỉ cần dòng bơm chân không công suất nhỏ (125W - 200W). Ưu điểm của dòng này là cực kỳ êm ái, đóng ngắt tự động chính xác.</p>
       <h3>B. Bơm tưới tiêu nông nghiệp</h3>
       <p>Đối với việc tưới cafe, hồ tiêu, sầu riêng hay bơm nước chống ngập, cần dòng bơm ly tâm trục đứng hoặc trục ngang công suất lớn từ 1.5HP - 5HP. Lưu ý xem xét chỉ số "Lưu lượng cực đại (Qmax)" và "Cột áp cực đại (Hmax)".</p>
       <h2>3. Khuyến nghị hãng máy bơm</h2>
@@ -118,7 +118,7 @@ const defaultNews: any[] = [
       <p>Đối với các tiệm sửa xe, xưởng mộc, hơi khí nén có bị lẫn dầu nhớt cũng không thành vấn đề. Nhưng trong y khoa (đặc biệt là Răng Hàm Mặt), luồng hơi đi vào miệng bệnh nhân bắt buộc phải SẠCH 100%, không mùi, không hóa chất.</p>
       <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80" alt="Máy nén khí nha khoa" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
       <h2>2. Cơ chế máy nén khí không dầu</h2>
-      <p>Dòng máy nén khí không dầu được tráng lớp nhựa chịu nhiệt Teflon trên thân xi lanh. Động cơ bơm mà không cần dầu bôi trơn, nhờ đó không khí đầu ra hoàn toàn tinh khiết. Kèm theo bộ lọc tách nước, bệnh nhân sẽ không ngửi thấy bất kì mùi khét nồng nào của động cơ.</p>
+      <p>Dòng máy nén khí không dầu được tráng lớp nhựa chịu nhiệt Teflon trên thân xi lanh. Động cơ bơm mà không cần dầu bôi trơn, nhờ đó không khí đầu ra hoàn toàn tinh khiết. Kèm theo bộ lọc tách nước, bệnh nhân sẽ không ngửi thấy bất kỳ mùi khét nồng nào của động cơ.</p>
       <h2>3. Lợi ích thêm</h2>
       <ul>
         <li>Giảm tiếng ồn xuống mức cực thấp (silence compressor), tạo không gian yên tĩnh thư giãn tại phòng khám.</li>
@@ -139,7 +139,7 @@ const defaultNews: any[] = [
       <img src="https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80" alt="Phân biệt thật giả máy Honda" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
       <h2>2. Ba điểm then chốt để kiểm tra</h2>
       <ol>
-        <li><strong>Dập nổi logo:</strong> Trên các nòng máy và sườn lốc máy của hàng thật, biểu tượng Honda được đúc khối, dập nổi kim loại cực kì sắc sảo. Hàng giả thường dán decal hoặc in phun lem nhem.</li>
+        <li><strong>Dập nổi logo:</strong> Trên các nòng máy và sườn lốc máy của hàng thật, biểu tượng Honda được đúc khối, dập nổi kim loại cực kỳ sắc sảo. Hàng giả thường dán decal hoặc in phun lem nhem.</li>
         <li><strong>Tem bào hành điện tử:</strong> Mọi mặt hàng chính hãng đều có tem cào phủ bạc chứa mã SMS. Quý khách chỉ việc nhắn tin mã số lên tổng đài hãng là sẽ biết thật hay giả ngay.</li>
         <li><strong>Nghe tiếng máy:</strong> Máy Honda thật khi kéo ga lên tiếng gầm giòn giã, dứt khoát chứ không bị nghẹt xả hay rè rền âm kim loại.</li>
       </ol>
@@ -157,7 +157,7 @@ const defaultNews: any[] = [
       <p>Chăn nuôi khép kín đang là xu thế. Việc mua một chiếc máy nghiền bột giúp bà con tận dụng trực tiếp nguồn nông sản thu hoạch được (lúa, ngô, khoai mạch) để nghiền nhuyễn nấu cám cho gia súc, gia cầm. Vừa đảm bảo hạt không bị mốc, vừa giảm 30-40% chi phí mua túi cám công nghiệp đắt đỏ.</p>
       <img src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=800&q=80" alt="Máy nghiền bột đa năng" style="max-width: 100%; border-radius: 8px; margin: 20px 0;" />
       <h2>2. Xay xát mỹ phẩm, dược liệu</h2>
-      <p>Máy nghiền bột inox với lồng búa đập siêu tốc không chỉ dùng nuôi heo gà. Các phiên bản mini đang cực hot khi giúp nghiền các loại hạt ngủ cốc thành bột mịn màng làm bột dinh dưỡng, hoặc nghiền lá nam, thảo dược trong đông y.</p>
+      <p>Máy nghiền bột inox với lồng búa đập siêu tốc không chỉ dùng nuôi heo gà. Các phiên bản mini đang cực hot khi giúp nghiền các loại hạt ngũ cốc thành bột mịn màng làm bột dinh dưỡng, hoặc nghiền lá nam, thảo dược trong đông y.</p>
       <h2>3. Các dòng máy hiện hành phổ biến</h2>
       <ul>
         <li><strong>Máy nghiền búa đập:</strong> Công suất khủng, chuyên ngấu nghiến bắp hạt nguyên cùi, cành cây khô. Tốc độ cực nhanh.</li>

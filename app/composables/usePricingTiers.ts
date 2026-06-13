@@ -1,4 +1,4 @@
-﻿import { computed } from 'vue'
+import { computed } from 'vue'
 import { useAdminAuth } from './useAdminAuth'
 import { useMembershipPrices } from './useMembershipPrices'
 
