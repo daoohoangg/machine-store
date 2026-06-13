@@ -285,6 +285,11 @@
     </div>
   </div>
 
+  <section v-else-if="isResolvingProduct" class="not-found">
+    <h1>Đang tải sản phẩm...</h1>
+    <p>Vui lòng chờ trong giây lát.</p>
+  </section>
+
   <section v-else class="not-found">
     <h1>Không tìm thấy sản phẩm</h1>
     <p>Liên kết không hợp lệ hoặc sản phẩm đã được gỡ khỏi hệ thống.</p>
@@ -302,20 +307,16 @@ import { useCategories } from '~/composables/useCategories'
 import { useCart } from '~/composables/useCart'
 import { useImageGuard } from '~/composables/useImageGuard'
 import { useViewedProducts } from '~/composables/useViewedProducts'
-import { useMembershipPrices } from '~/composables/useMembershipPrices'
-import { useAdminAuth } from '~/composables/useAdminAuth'
 import { useWholesalePricing } from '~/composables/useWholesalePricing'
 
 const route = useRoute()
 const router = useRouter()
-const { products } = useHomeProducts()
+const { products, pending: productsPending } = useHomeProducts()
 const { manualGroups } = useManualGroups()
 const { categories, fetchCategories } = useCategories()
 const { addToCart } = useCart()
 const { isImageFailed, markImageAsFailed } = useImageGuard()
 const { addViewedProduct, viewedProducts: historyProducts } = useViewedProducts()
-const { calculateAdjustedPrice } = useMembershipPrices()
-const { userTier, isUser, isAdmin, isAgencyAccount } = useAdminAuth()
 const { getWholesalePriceTable, calculateWholesalePrice, loadWholesaleTiers, loadProductWholesaleTiers } = useWholesalePricing()
 const { settings } = useSiteSettings()
 
@@ -427,7 +428,18 @@ const product = computed<HomeProduct | null>(() => {
   const slug = routeSlug.value
   if (!slug) return null
 
-  // Check outlet-shop first (has correct discounted prices)
+  const homeMatch = (
+    products.value.find((item) => item.slug === slug)
+    || products.value.find((item) => String(item.id) === String(slug))
+    || products.value.find((item) => slugifyProduct(item.title) === slug)
+    || null
+  )
+  if (homeMatch) return homeMatch
+
+  // If home products are still loading, wait instead of showing a manual/outlet
+  // copy that may have a different price and then swapping it after hydration.
+  if (productsPending.value) return null
+
   const outletProducts = manualGroups.value['outlet-shop'] || []
   const outletMatch = (
     outletProducts.find((item) => item.slug === slug)
@@ -437,13 +449,10 @@ const product = computed<HomeProduct | null>(() => {
   )
   if (outletMatch) return outletMatch
 
-  return (
-    products.value.find((item) => item.slug === slug)
-    || products.value.find((item) => String(item.id) === String(slug))
-    || products.value.find((item) => slugifyProduct(item.title) === slug)
-    || null
-  )
+  return null
 })
+
+const isResolvingProduct = computed(() => productsPending.value && !product.value)
 
 const categoryName = computed(() => {
   if (!product.value?.category || !categories.value.length) return ''
@@ -676,7 +685,6 @@ const formatPrice = (value: number | string) => {
 // - Chưa đăng nhập          : dùng product.price trực tiếp (= apiPrice từ useHomeProducts)
 // - Đăng nhập - thường      : dùng product.price trực tiếp (= apiPrice, không có chiết khấu đặc biệt)
 // - Đăng nhập - đại lý      : product.price đã là giá NPP (apiDiscount), áp dụng thêm tier
-const isLoggedIn = computed(() => isUser.value || isAdmin.value)
 const productMembershipPrice = computed(() => {
   if (!product.value) return 0
   const priceNum = typeof product.value.price === 'number'
@@ -1613,8 +1621,6 @@ watch(
   color: #d4161c;
 }
 </style>
-
-
 
 
 

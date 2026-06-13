@@ -149,7 +149,7 @@ export const useAdminAuth = () => {
     const tier = userTier.value
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[�d]/g, 'd')
+      .replace(/[đĐ]/g, 'd')
       .toLowerCase()
     return (
       tier.includes('dai ly') ||
